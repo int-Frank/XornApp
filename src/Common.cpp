@@ -2,9 +2,9 @@
 #include <fstream>
 #include <filesystem>
 
-#include "appDefaultData.h"
+#include "DefaultData.h"
 #include "DgMatrix33.h"
-#include "appCommon.h"
+#include "Common.h"
 
 GlobalData g_globalData = {};
 
@@ -14,7 +14,7 @@ bool FileExists(std::string const &filePath)
   return f.good();
 }
 
-ImVec2 ToImGui(a2d::vec2 const& v)
+ImVec2 ToImGui(xn::vec2 const& v)
 {
   return ImVec2(v.x(), v.y());
 }

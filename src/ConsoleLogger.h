@@ -1,9 +1,9 @@
 #ifndef CONSOLELOGGER_H
 #define CONSOLELOGGER_H
 
-#include "a2dLogger.h"
+#include "xnLogger.h"
 
-class ConsoleLogger : public a2d::Logger
+class ConsoleLogger : public xn::Logger
 {
 public:
 

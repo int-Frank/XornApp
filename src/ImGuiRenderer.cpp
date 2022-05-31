@@ -1,7 +1,7 @@
 
 #include "imgui.h"
-#include "appRenderer.h"
-#include "appCommon.h"
+#include "ImGuiRenderer.h"
+#include "Common.h"
 
 class ImGuiRenderer::PIMPL
 {
@@ -15,8 +15,8 @@ public:
 
   }
 
-  a2d::vec2 p0;
-  a2d::vec2 p1;
+  xn::vec2 p0;
+  xn::vec2 p1;
   ImDrawList *pDrawList;
 };
 
@@ -31,7 +31,7 @@ ImGuiRenderer::~ImGuiRenderer()
   delete m_pimpl;
 }
 
-void ImGuiRenderer::Set(a2d::vec2 const &p0, a2d::vec2 const &p1)
+void ImGuiRenderer::Set(xn::vec2 const &p0, xn::vec2 const &p1)
 {
   m_pimpl->p0 = p0;
   m_pimpl->p1 = p1;
@@ -45,13 +45,13 @@ void ImGuiRenderer::BeginDraw()
   m_pimpl->pDrawList->PushClipRect(ToImGui(m_pimpl->p0), ToImGui(m_pimpl->p1), true);
 }
 
-void ImGuiRenderer::DrawLine(a2d::seg const &s, a2d::LineProperties const &opts)
+void ImGuiRenderer::DrawLine(xn::seg const &s, xn::LineProperties const &opts)
 {
   m_pimpl->pDrawList->AddLine(ToImGui(s.GetP0()), ToImGui(s.GetP1()),
     IM_COL32(opts.clr.rgba8[0], opts.clr.rgba8[1], opts.clr.rgba8[2], opts.clr.rgba8[3]), opts.thickness);
 }
 
-void ImGuiRenderer::DrawFilledTriangle(a2d::vec2 const &p0, a2d::vec2 const &p1, a2d::vec2 const &p2, a2d::Colour clr)
+void ImGuiRenderer::DrawFilledTriangle(xn::vec2 const &p0, xn::vec2 const &p1, xn::vec2 const &p2, xn::Colour clr)
 {
   m_pimpl->pDrawList->AddTriangleFilled(ToImGui(p0), ToImGui(p1), ToImGui(p2),
     IM_COL32(clr.rgba8[0], clr.rgba8[1], clr.rgba8[2], clr.rgba8[3]));

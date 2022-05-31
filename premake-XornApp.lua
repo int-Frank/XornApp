@@ -1,4 +1,4 @@
-project "AdventuresIn2D"
+project "XornApp"
   kind "ConsoleApp"
   targetdir ("%{wks.location}/build/%{prj.name}-%{cfg.buildcfg}")
   objdir ("%{wks.location}/build/intermediate/%{prj.name}-%{cfg.buildcfg}")
@@ -17,8 +17,8 @@ project "AdventuresIn2D"
   includedirs
   {
     "src",
-    "3rdParty/Core2DApp/src",
-    "3rdParty/Core2DApp/3rdParty/DgLib/src",
+    "%{wks.location}/XornCore/src",
+    "%{wks.location}/DgLib/src",
 	"3rdParty/glad/include/glad",
 	"3rdParty/GLFW/include",
 	"3rdParty/ImGui"
@@ -27,7 +27,7 @@ project "AdventuresIn2D"
   links
   {
     "DgLib",
-	"Core2DLib",
+	"XornCore",
 	"3rdParty/GLFW/bin/glfw3.lib",
 	"opengl32.lib"
   }

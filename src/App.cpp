@@ -2,13 +2,13 @@
 #include <filesystem>
 #include <stdio.h>
 
-#include "a2dModule.h"
-#include "appApp.h"
-#include "appLogger.h"
-#include "appRenderer.h"
-#include "appDefaultData.h"
+#include "xnModule.h"
+#include "App.h"
+#include "Logger.h"
+#include "ImGuiRenderer.h"
+#include "DefaultData.h"
 #include "glfw3.h"
-#include "appImGuiUIContext.h"
+#include "ImGuiUIContext.h"
 
 // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
 // To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
@@ -22,9 +22,9 @@ static void glfw_error_callback(int error, const char *description)
   fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
-static a2d::LineProperties MakeFocus(a2d::LineProperties const &opt)
+static xn::LineProperties MakeFocus(xn::LineProperties const &opt)
 {
-  a2d::LineProperties result;
+  xn::LineProperties result;
   result.thickness = opt.thickness + 2.f;
 
   float mult = .6f;
@@ -285,7 +285,7 @@ void App::ShowOutputWindow()
 
   // Draw border and background color
   ImGuiIO &io = ImGui::GetIO();
-  m_pRenderer->Set(a2d::vec2(canvas_p0.x, canvas_p0.y), a2d::vec2(canvas_p1.x, canvas_p1.y));
+  m_pRenderer->Set(xn::vec2(canvas_p0.x, canvas_p0.y), xn::vec2(canvas_p1.x, canvas_p1.y));
   m_pRenderer->BeginDraw();
 
   // This will catch our interactions
@@ -311,8 +311,8 @@ void App::ShowOutputWindow()
 
   g_globalData.scroll = 0.f;
 
-  a2d::mat33 T_Camera_View;
-  T_Camera_View.Translation(a2d::vec2(canvas_sz.x / 2.f, canvas_sz.y / 2.f));
+  xn::mat33 T_Camera_View;
+  T_Camera_View.Translation(xn::vec2(canvas_sz.x / 2.f, canvas_sz.y / 2.f));
   T_Camera_View[4] *= -1.f;
   m_camera.T_World_View = m_camera.T_Camera_World.ToMatrix33().GetInverse() * T_Camera_View;
 
@@ -320,7 +320,7 @@ void App::ShowOutputWindow()
   for (auto const &obj : m_pCurrentProject->sceneObjects.objectList)
   {
     index++;
-    a2d::LineProperties opts = obj.valid ? DefaultData::data.validPolygon : DefaultData::data.invalidPolygon;
+    xn::LineProperties opts = obj.valid ? DefaultData::data.validPolygon : DefaultData::data.invalidPolygon;
 
     if (index == m_pCurrentProject->currentFocus)
       opts = MakeFocus(opts);
@@ -405,7 +405,7 @@ void App::OpenProject(std::string const &filePath)
 
 void App::NewProject(std::string const &boundaryFile)
 {
-  a2d::Geometry geom;
+  xn::PolygonGroup geom;
   if (!geom.ReadFromOBJ(boundaryFile))
   {
     LOG_ERROR("Failed to read boundary file '%s' while creating new project. New project aborted", boundaryFile.c_str());

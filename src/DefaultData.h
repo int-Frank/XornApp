@@ -2,8 +2,8 @@
 #define DEFAULTDATA_H
 
 #include <string>
-#include "appCommon.h"
-#include "a2dLineProperties.h"
+#include "Common.h"
+#include "xnLineProperties.h"
 
 struct DefaultData
 {
@@ -17,13 +17,13 @@ struct DefaultData
   std::string modelsPath;
   std::string pluginsPath;
 
-  a2d::Geometry defaultBoundary;
+  xn::PolygonGroup defaultBoundary;
   std::string defaultBoundaryName;
 
   ImVec2 buttonSize;
-  a2d::LineProperties validPolygon;
-  a2d::LineProperties invalidPolygon;
-  a2d::LineProperties focusPolygon;
+  xn::LineProperties validPolygon;
+  xn::LineProperties invalidPolygon;
+  xn::LineProperties focusPolygon;
 };
 
 #endif

@@ -1,8 +1,8 @@
-#include "appLogger.h"
+#include "Logger.h"
 
-a2d::Logger *g_pLogger = nullptr;
+xn::Logger *g_pLogger = nullptr;
 
-void SetLogger(a2d::Logger *pLogger)
+void SetLogger(xn::Logger *pLogger)
 {
   DestroyLogger();
   g_pLogger = pLogger;
@@ -14,7 +14,7 @@ void DestroyLogger()
   g_pLogger = nullptr;
 }
 
-a2d::Logger* GetLogger()
+xn::Logger* GetLogger()
 {
   return g_pLogger;
 }

@@ -2,9 +2,9 @@
 #include <filesystem>
 #include <sstream>
 
-#include "appProject.h"
-#include "appLogger.h"
-#include "appDefaultData.h"
+#include "Project.h"
+#include "Logger.h"
+#include "DefaultData.h"
 #include "DgQueryPolygonPolygon.h"
 
 SceneObject::SceneObject()
@@ -57,7 +57,7 @@ void Project::RemoveCurrentFocus()
 }
 
 // TODO This should be a Dg::Polygon2WithHoles (when it's done).
-bool Project::GetSanitisedGeometry(a2d::Geometry *pOut)
+bool Project::GetSanitisedGeometry(xn::PolygonGroup *pOut)
 {
   pOut->polygons.clear();
 
@@ -67,25 +67,25 @@ bool Project::GetSanitisedGeometry(a2d::Geometry *pOut)
     return false;
   }
 
-  pOut->polygons.push_back(a2d::Polygon()); //Reserve space for the boundary.
+  pOut->polygons.push_back(xn::Polygon()); //Reserve space for the boundary.
   for (size_t i = 0; i < sceneObjects.objectList.size(); i++)
   {
     SceneObject *pObj = &sceneObjects.objectList[i];
     pObj->valid = true;
 
-    a2d::mat33 T_Model_World = pObj->transform.ToMatrix33();
+    xn::mat33 T_Model_World = pObj->transform.ToMatrix33();
     if (i == 0)
     {
-      a2d::Polygon boundary = pObj->geometry.polygons[0].GetTransformed(T_Model_World);
+      xn::Polygon boundary = pObj->geometry.polygons[0].GetTransformed(T_Model_World);
       boundary.SetWinding(Dg::Orientation::CCW);
       pOut->polygons[0] = boundary;
     }
     else
     {
-      std::vector<a2d::Polygon> goodPolygons;
+      std::vector<xn::Polygon> goodPolygons;
       for (auto poly : pObj->geometry.polygons)
       {
-        a2d::Polygon transformed = poly.GetTransformed(T_Model_World);
+        xn::Polygon transformed = poly.GetTransformed(T_Model_World);
 
         for (size_t i = 0; i < pOut->polygons.size(); i++)
         {
@@ -118,7 +118,7 @@ bool Project::GetSanitisedGeometry(a2d::Geometry *pOut)
 
 bool Project::AddNewObject(std::string const &filePath, std::string const &name)
 {
-  a2d::Geometry g;
+  xn::PolygonGroup g;
   bool success = g.ReadFromOBJ(filePath);
 
   if (!success)

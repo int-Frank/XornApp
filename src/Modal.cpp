@@ -1,11 +1,11 @@
 
 #include <filesystem>
 
-#include "appModal.h"
+#include "Modal.h"
 #include "imgui.h"
-#include "appApp.h"
-#include "appDefaultData.h"
-#include "appCommon.h"
+#include "App.h"
+#include "DefaultData.h"
+#include "Common.h"
 
 Modal::Modal(std::string const &name)
   : m_name(name)

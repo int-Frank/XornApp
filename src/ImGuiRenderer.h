@@ -1,22 +1,22 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#include "a2dCommon.h"
-#include "a2dGeometry.h"
-#include "a2dLineProperties.h"
-#include "a2dRenderer.h"
+#include "xnCommon.h"
+#include "xnGeometry.h"
+#include "xnLineProperties.h"
+#include "xnRenderer.h"
 
-class ImGuiRenderer : public a2d::Renderer
+class ImGuiRenderer : public xn::Renderer
 {
 public:
 
   ImGuiRenderer();
   ~ImGuiRenderer();
 
-  void Set(a2d::vec2 const &p0, a2d::vec2 const &p1) override;
+  void Set(xn::vec2 const &p0, xn::vec2 const &p1) override;
   void BeginDraw() override;
-  void DrawLine(a2d::seg const &, a2d::LineProperties const &) override;
-  void DrawFilledTriangle(a2d::vec2 const &p0, a2d::vec2 const &p1, a2d::vec2 const &p2, a2d::Colour) override;
+  void DrawLine(xn::seg const &, xn::LineProperties const &) override;
+  void DrawFilledTriangle(xn::vec2 const &p0, xn::vec2 const &p1, xn::vec2 const &p2, xn::Colour) override;
   void EndDraw() override;
 
 private:

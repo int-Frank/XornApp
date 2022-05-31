@@ -1,4 +1,4 @@
-#include "appDefaultData.h"
+#include "DefaultData.h"
 
 DefaultData const DefaultData::data;
 
@@ -15,11 +15,11 @@ DefaultData::DefaultData()
   , invalidPolygon(0xFF0000FF, 2.f)
   , focusPolygon(0xFFFFFFFF, 4.f)
 {
-  a2d::Polygon poly;
-  poly.PushBack(a2d::vec2(50.f, 50.f));
-  poly.PushBack(a2d::vec2(-50.f, 50.f));
-  poly.PushBack(a2d::vec2(-50.f, -50.f));
-  poly.PushBack(a2d::vec2(50.f, -50.f));
+  xn::Polygon poly;
+  poly.PushBack(xn::vec2(50.f, 50.f));
+  poly.PushBack(xn::vec2(-50.f, 50.f));
+  poly.PushBack(xn::vec2(-50.f, -50.f));
+  poly.PushBack(xn::vec2(50.f, -50.f));
 
   defaultBoundary.polygons.push_back(poly);
 }

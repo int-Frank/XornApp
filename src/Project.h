@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-#include "appCommon.h"
+#include "Common.h"
 
 class SceneObject
 {
@@ -14,9 +14,9 @@ public:
   bool Read(std::istream& is);
   friend std::ostream& operator<<(std::ostream& os, SceneObject const&);
 
-  a2d::Geometry geometry;
+  xn::PolygonGroup geometry;
   std::string name;
-  a2d::Transform transform;
+  xn::Transform transform;
   bool valid;
 };
 
@@ -48,7 +48,7 @@ public:
   bool Write(std::string const &filePath) const;
 
   void RemoveCurrentFocus();
-  bool GetSanitisedGeometry(a2d::Geometry *pOut);
+  bool GetSanitisedGeometry(xn::PolygonGroup *pOut);
 
   void Clear();
   bool AddNewObject(std::string const &filePath, std::string const &name);

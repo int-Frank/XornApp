@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace a2d
+namespace xn
 {
   class Module;
   class Logger;
@@ -21,8 +21,8 @@ public:
   ~Plugin();
 
   uint32_t GetVersion() const;
-  a2d::Module *CreateModule(bool *pShow, a2d::Logger *) const;
-  void DestroyModule(a2d::Module **) const;
+  xn::Module *CreateModule(bool *pShow, xn::Logger *) const;
+  void DestroyModule(xn::Module **) const;
   std::string GetModuleName() const;
 
 private:

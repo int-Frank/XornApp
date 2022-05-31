@@ -1,9 +1,9 @@
 
 #include <fstream>
 
-#include "appProject.h"
-#include "appLogger.h"
-#include "a2dLineProperties.h"
+#include "Project.h"
+#include "Logger.h"
+#include "xnLineProperties.h"
 
 #define KILL(...) do { LOG_ERROR(__VA_ARGS__); return false;} while (false)
 
@@ -37,7 +37,7 @@ bool ReadString(std::istream& is, std::string& str)
   return true;
 }
 
-bool ReadVec2(std::istream& is, a2d::vec2& v)
+bool ReadVec2(std::istream& is, xn::vec2& v)
 {
   char c = 0;
 
@@ -125,7 +125,7 @@ bool DiscardNextObject(std::istream& is)
   return true;
 }
 
-bool TransformRead(a2d::Transform *pObj, std::istream& is)
+bool TransformRead(xn::Transform *pObj, std::istream& is)
 {
   ASSERT_NEXT('{');
 
@@ -161,13 +161,13 @@ bool TransformRead(a2d::Transform *pObj, std::istream& is)
   return true;
 }
 
-bool ColourRead(a2d::Colour *pObj, std::istream &is)
+bool ColourRead(xn::Colour *pObj, std::istream &is)
 {
   READ_NUMBER(pObj->rgba32);
   return true;
 }
 
-bool LinePropertiesRead(a2d::LineProperties *pObj, std::istream& is)
+bool LinePropertiesRead(xn::LineProperties *pObj, std::istream& is)
 {
   ASSERT_NEXT('{');
 
@@ -199,7 +199,7 @@ bool LinePropertiesRead(a2d::LineProperties *pObj, std::istream& is)
   return true;
 }
 
-bool ReadPointArray(a2d::DgPolygon *pPoly, std::istream &is)
+bool ReadPointArray(xn::DgPolygon *pPoly, std::istream &is)
 {
   ASSERT_NEXT('[');
 
@@ -207,7 +207,7 @@ bool ReadPointArray(a2d::DgPolygon *pPoly, std::istream &is)
   {
     BREAK_ON(']');
 
-    a2d::vec2 point;
+    xn::vec2 point;
 
     READ_NUMBER(point.x());
     ASSERT_NEXT(',');
@@ -221,7 +221,7 @@ bool ReadPointArray(a2d::DgPolygon *pPoly, std::istream &is)
   return true;
 }
 
-bool PolygonRead(a2d::Polygon *pObj, std::istream &is)
+bool PolygonRead(xn::Polygon *pObj, std::istream &is)
 {
   ASSERT_NEXT('{');
 
@@ -250,7 +250,7 @@ bool PolygonRead(a2d::Polygon *pObj, std::istream &is)
   return true;
 }
 
-bool ReadPolygonArray(std::vector<a2d::Polygon> *pPolygons, std::istream &is)
+bool ReadPolygonArray(std::vector<xn::Polygon> *pPolygons, std::istream &is)
 {
   ASSERT_NEXT('[');
 
@@ -258,7 +258,7 @@ bool ReadPolygonArray(std::vector<a2d::Polygon> *pPolygons, std::istream &is)
   {
     BREAK_ON(']');
 
-    a2d::Polygon poly;
+    xn::Polygon poly;
     CHECK(PolygonRead(&poly, is));
     pPolygons->push_back(poly);
 
@@ -268,7 +268,7 @@ bool ReadPolygonArray(std::vector<a2d::Polygon> *pPolygons, std::istream &is)
   return true;
 }
 
-bool GeometryRead(a2d::Geometry *pObj, std::istream &is)
+bool GeometryRead(xn::PolygonGroup *pObj, std::istream &is)
 {
   ASSERT_NEXT('{');
 
@@ -296,7 +296,7 @@ bool GeometryRead(a2d::Geometry *pObj, std::istream &is)
   return true;
 }
 
-bool ReadGeometry(std::istream &is, a2d::Geometry *pGeom, std::string &name)
+bool ReadGeometry(std::istream &is, xn::PolygonGroup *pGeom, std::string &name)
 {
   ASSERT_NEXT('{');
 
@@ -328,7 +328,7 @@ bool ReadGeometry(std::istream &is, a2d::Geometry *pGeom, std::string &name)
     return true;
 }
 
-bool GeometryCollectionRead(a2d::GeometryCollection *pObj, std::istream &is)
+bool GeometryCollectionRead(xn::GeometryCollection *pObj, std::istream &is)
 {
   ASSERT_NEXT('[');
 
@@ -337,7 +337,7 @@ bool GeometryCollectionRead(a2d::GeometryCollection *pObj, std::istream &is)
     BREAK_ON(']');
 
     std::string name;
-    a2d::Geometry geom;
+    xn::PolygonGroup geom;
     CHECK(ReadGeometry(is, &geom, name));
     pObj->PushBack(name, geom);
 
@@ -441,7 +441,7 @@ std::string WrapStr(std::string const &str)
   return std::string("\"") + str + std::string("\"");
 }
 
-std::ostream& operator<<(std::ostream& os, a2d::Transform const &obj)
+std::ostream& operator<<(std::ostream& os, xn::Transform const &obj)
 {
   os << '{';
 
@@ -453,13 +453,13 @@ std::ostream& operator<<(std::ostream& os, a2d::Transform const &obj)
   return os;
 }
 
-std::ostream &operator<<(std::ostream &os, a2d::Colour const &obj)
+std::ostream &operator<<(std::ostream &os, xn::Colour const &obj)
 {
   os << obj.rgba32;
   return os;
 }
 
-std::ostream& operator<<(std::ostream& os, a2d::LineProperties const &obj)
+std::ostream& operator<<(std::ostream& os, xn::LineProperties const &obj)
 {
   os << '{';
 
@@ -470,7 +470,7 @@ std::ostream& operator<<(std::ostream& os, a2d::LineProperties const &obj)
   return os;
 }
 
-std::ostream &operator<<(std::ostream &os, a2d::Polygon const &obj)
+std::ostream &operator<<(std::ostream &os, xn::Polygon const &obj)
 {
   os << "{\"points\":[";
 
@@ -487,7 +487,7 @@ std::ostream &operator<<(std::ostream &os, a2d::Polygon const &obj)
   return os;
 }
 
-std::ostream &operator<<(std::ostream &os, a2d::Geometry const &obj)
+std::ostream &operator<<(std::ostream &os, xn::PolygonGroup const &obj)
 {
   os << "{\"polygons\":[";
 
@@ -504,9 +504,9 @@ std::ostream &operator<<(std::ostream &os, a2d::Geometry const &obj)
   return os;
 }
 
-std::ostream &operator<<(std::ostream &os, a2d::GeometryCollection const &obj)
+std::ostream &operator<<(std::ostream &os, xn::GeometryCollection const &obj)
 {
-  std::map<std::string, a2d::Geometry> const *pList = obj.GetList();
+  std::map<std::string, xn::PolygonGroup> const *pList = obj.GetList();
 
   size_t i = 0;
   for (auto const &kv : *pList)

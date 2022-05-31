@@ -1,4 +1,4 @@
-#include "appImGuiUIContext.h"
+#include "ImGuiUIContext.h"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -52,7 +52,7 @@ void ImGuiUIContext::EndWindow()
 Dg::Vector2<float> ImGuiUIContext::GetCursorPos()
 {
   ImVec2 pos = ImGui::GetCursorPos();
-  return a2d::vec2(pos.x, pos.y);
+  return xn::vec2(pos.x, pos.y);
 }
 
 void ImGuiUIContext::OpenPopup(const char *pName, uint32_t flags)

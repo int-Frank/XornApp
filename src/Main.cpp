@@ -1,13 +1,13 @@
 
-#include "appApp.h"
-#include "appLogger.h"
-#include "appConsoleLogger.h"
+#include "App.h"
+#include "Logger.h"
+#include "ConsoleLogger.h"
 
 int main(int, char**)
 {
   try
   {
-    a2d::Logger *pLogger = new ConsoleLogger();
+    xn::Logger *pLogger = new ConsoleLogger();
     if (!pLogger->Init())
       throw std::exception("Failed to initialise the Logger!");
     SetLogger(pLogger);

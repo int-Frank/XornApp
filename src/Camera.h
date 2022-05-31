@@ -1,12 +1,12 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include "a2dGeometry.h"
+#include "xnGeometry.h"
 
 struct Camera
 {
-  a2d::Transform T_Camera_World;
-  a2d::mat33 T_World_View;
+  xn::Transform T_Camera_World;
+  xn::mat33 T_World_View;
 };
 
 #endif

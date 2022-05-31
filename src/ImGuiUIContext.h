@@ -1,12 +1,12 @@
 #ifndef IMGUICONTEXT_H
 #define IMGUICONTEXT_H
 
-#include "a2dUIContext.h"
-#include "a2dGeometry.h"
+#include "xnUIContext.h"
+#include "xnGeometry.h"
 
 struct GLFWwindow;
 
-class ImGuiUIContext : public a2d::UIContext
+class ImGuiUIContext : public xn::UIContext
 {
 public:
 

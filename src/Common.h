@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 
-#include "a2dGeometry.h"
+#include "xnGeometry.h"
 #include "imgui.h"
 
 //--------------------------------------------------------------------------------
@@ -18,7 +18,7 @@ std::vector<std::string> GetDirectoriesFromFolder(std::string const &path);
 std::vector<std::string> GetModelListFromAssets();
 std::vector<std::string> GetProjectList();
 
-ImVec2 ToImGui(a2d::vec2 const& v);
+ImVec2 ToImGui(xn::vec2 const& v);
 
 //--------------------------------------------------------------------------------
 // Classes
