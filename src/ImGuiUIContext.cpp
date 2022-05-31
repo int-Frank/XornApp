@@ -1,0 +1,114 @@
+#include "appImGuiUIContext.h"
+
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
+ImGuiUIContext::ImGuiUIContext(GLFWwindow *pWindow, bool installCallbacks, char const *pVersion)
+{
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
+  ImGuiIO &io = ImGui::GetIO(); (void)io;
+  ImGui::StyleColorsDark();
+
+  ImGui_ImplGlfw_InitForOpenGL(pWindow, installCallbacks);
+  ImGui_ImplOpenGL3_Init(pVersion);
+}
+
+ImGuiUIContext::~ImGuiUIContext()
+{
+  ImGui_ImplOpenGL3_Shutdown();
+  ImGui_ImplGlfw_Shutdown();
+  ImGui::DestroyContext();
+}
+
+void ImGuiUIContext::NewFrame()
+{
+  ImGui_ImplOpenGL3_NewFrame();
+  ImGui_ImplGlfw_NewFrame();
+  ImGui::NewFrame();
+}
+
+void ImGuiUIContext::Compose()
+{
+  ImGui::Render();
+}
+
+void ImGuiUIContext::Draw()
+{
+  ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+bool ImGuiUIContext::BeginWindow(const char *pName, bool *pOpen, uint32_t flags)
+{
+  return ImGui::Begin(pName, pOpen, flags);
+}
+
+void ImGuiUIContext::EndWindow()
+{
+  ImGui::End();
+}
+
+Dg::Vector2<float> ImGuiUIContext::GetCursorPos()
+{
+  ImVec2 pos = ImGui::GetCursorPos();
+  return a2d::vec2(pos.x, pos.y);
+}
+
+void ImGuiUIContext::OpenPopup(const char *pName, uint32_t flags)
+{
+  ImGui::OpenPopup(pName, flags);
+}
+
+bool ImGuiUIContext::BeginPopup(const char *pName, uint32_t flags)
+{
+  return ImGui::BeginPopup(pName, flags);
+}
+
+void ImGuiUIContext::EndPopup()
+{
+  ImGui::EndPopup();
+}
+
+void ImGuiUIContext::PushTextWrapPos(float v)
+{
+  ImGui::PushTextWrapPos(v);
+}
+
+void ImGuiUIContext::PopTextWrapPos()
+{
+  ImGui::PopTextWrapPos();
+}
+
+void ImGuiUIContext::Separator()
+{
+  ImGui::Separator();
+}
+
+bool ImGuiUIContext::Button(const char *pLabel, Dg::Vector2<float> const &size)
+{
+  return ImGui::Button(pLabel, ImVec2(size.x(), size.y()));
+}
+
+void ImGuiUIContext::Text(const char *fmt, ...)
+{
+  va_list args;
+  va_start(args, fmt);
+  ImGui::TextV(fmt, args);
+  va_end(args);
+}
+
+bool ImGuiUIContext::SliderFloat(const char *pLabel, float *pV, float vMin, float vMax, const char *format, uint32_t flags)
+{
+  return ImGui::SliderFloat(pLabel, pV, vMin, vMax, format, ImGuiSliderFlags(flags));
+}
+
+bool ImGuiUIContext::SliderInt(const char *label, int *v, int v_min, int v_max, const char *format, uint32_t flags)
+{
+  return ImGui::SliderInt(label, v, v_min, v_max, format, flags);
+}
+
+bool ImGuiUIContext::Checkbox(char const *pLabel, bool *pVal)
+{
+  return ImGui::Checkbox(pLabel, pVal);
+}
