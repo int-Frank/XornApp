@@ -10,6 +10,7 @@
 #include "glfw3.h"
 #include "ImGuiUIContext.h"
 #include "xnModuleInitData.h"
+#include "xnXornMessages.h"
 
 // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
 // To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
@@ -89,39 +90,31 @@ void App::Run()
 
     HandleModals();
 
-    for (auto & data : m_registeredModules)
-    {
-      if (data.pModule == nullptr)
-        continue;
-
-      data.pModule->DoFrame(m_pUIContext);
-      if (!data.show)
-        data.pPlugin->DestroyModule(&data.pModule);
-    }
-
-    if (m_showDemoWindow)
-      ImGui::ShowDemoWindow(&m_showDemoWindow);
-
     if (m_geometryDirty)
     {
       m_sanitisedGeom.polygons.clear();
       if (!m_pCurrentProject->GetSanitisedGeometry(&m_sanitisedGeom))
       {
-        // Break..
+        LOG_ERROR("Failed to sanitise geometry!");
+        m_geometryDirty = false;
       }
-      else
-      {
-        for (auto &data : m_registeredModules)
-        {
-          if (data.pModule == nullptr)
-            continue;
-
-          data.pModule->SetGeometry(m_sanitisedGeom);
-        }
-      }
-
-      m_geometryDirty = false;
     }
+
+    for (auto &kv : m_registeredModules)
+    {
+      if (kv.second.pModule == nullptr)
+        continue;
+
+      kv.second.pModule->DoFrame(m_pUIContext);
+
+      if (m_geometryDirty)
+        kv.second.pModule->SetGeometry(m_sanitisedGeom);
+    }
+
+    m_geometryDirty = false;
+
+    if (m_showDemoWindow)
+      ImGui::ShowDemoWindow(&m_showDemoWindow);
 
     // Rendering
     m_pUIContext->Compose();
@@ -140,11 +133,11 @@ App::~App()
   delete m_pRenderer;
   delete m_pUIContext;
 
-  for (auto &data : m_registeredModules)
+  for (auto &kv : m_registeredModules)
   {
-    if (data.pModule != nullptr)
-      data.pPlugin->DestroyModule(&data.pModule);
-    delete data.pPlugin;
+    if (kv.second.pModule != nullptr)
+      kv.second.pPlugin->DestroyModule(&kv.second.pModule);
+    delete kv.second.pPlugin;
   }
 
   glfwDestroyWindow(m_pWindow);
@@ -205,10 +198,10 @@ void App::ShowMenuBar()
     }
     if (ImGui::BeginMenu("Modules"))
     {
-      for (auto &data : m_registeredModules)
+      for (auto &kv : m_registeredModules)
       {
-        if (ImGui::MenuItem(data.pPlugin->GetModuleName().c_str(), nullptr, data.show))
-          OpenModule(&data);
+        if (ImGui::MenuItem(kv.second.pPlugin->GetModuleName().c_str(), nullptr, kv.second.isActive))
+          OpenModule(kv.first, &kv.second);
       }
 
       ImGui::EndMenu();
@@ -329,12 +322,12 @@ void App::ShowOutputWindow()
     obj.geometry.Render(m_pRenderer, m_camera.T_World_View, opts, obj.transform);
   }
 
-  for (auto &data : m_registeredModules)
+  for (auto &kv : m_registeredModules)
   {
-    if (data.pModule == nullptr)
+    if (kv.second.pModule == nullptr)
       continue;
 
-    data.pModule->Render(m_pRenderer, m_camera.T_World_View);
+    kv.second.pModule->Render(m_pRenderer, m_camera.T_World_View);
   }
 
   m_pRenderer->EndDraw();
@@ -351,10 +344,9 @@ void App::LoadPlugins()
     try
     {
       ModuleData data = {};
-      data.ID = ID;
-      ID++;
       data.pPlugin = new Plugin(DefaultData::data.pluginsPath + name + "/" + name + ".dll");
-      m_registeredModules.push_back(data);
+      m_registeredModules[ID] = data;
+      ID++;
     }
     catch (std::exception e)
     {
@@ -363,19 +355,17 @@ void App::LoadPlugins()
   }
 }
 
-void App::OpenModule(ModuleData *pData)
+void App::OpenModule(uint32_t id, ModuleData *pData)
 {
   if (pData->pModule == nullptr)
   {
     xn::ModuleInitData data{};
-    data.ID = pData->ID;
-    data.pShow = &pData->show;
+    data.ID = id;
     data.pLogger = GetLogger();
     data.pMemMngr = &m_memMngr;
     data.pMsgBus = &m_msgBus;
     data.name = pData->pPlugin->GetModuleName();
 
-    pData->show = true;
     pData->pModule = pData->pPlugin->CreateModule(&data);
     pData->pModule->SetGeometry(m_sanitisedGeom);
   }
@@ -389,6 +379,25 @@ void App::HandleMessages()
     // Deal with Message
     std::string str = pMsg->ToString();
     LOG_DEBUG("Msg: %s", str.c_str());
+
+    switch (pMsg->GetType())
+    {
+    case xn::MessageType::WindowClosed:
+    {
+      xn::Message_WindowClosed *pMsgt = (xn::Message_WindowClosed*)pMsg;
+      try
+      {
+        ModuleData & data = m_registeredModules.at(pMsgt->windowID);
+        data.isActive = false;
+        data.pPlugin->DestroyModule(&data.pModule);
+      }
+      catch (std::exception e)
+      {
+        LOG_ERROR("Exception thrown when trying to close a module window: '%s'", e.what());
+      }
+      break;
+    }
+    }
 
     // Destroy message
     delete pMsg;

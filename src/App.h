@@ -1,7 +1,7 @@
 #ifndef APP_H
 #define APP_H
 
-#include <list>
+#include <map>
 #include <vector>
 #include <memory>
 
@@ -12,6 +12,7 @@
 #include "Plugin.h"
 #include "MemoryManager.h"
 #include "xnMessageBus.h"
+#include "DgMap_AVL.h"
 
 struct GLFWwindow;
 class Logger;
@@ -26,8 +27,7 @@ class App
 {
   struct ModuleData
   {
-    bool show;
-    uint32_t ID;
+    bool isActive;
     xn::Module *pModule;
     Plugin *pPlugin;
   };
@@ -55,14 +55,14 @@ private:
   void HandleModals();
 
   void LoadPlugins();
-  void OpenModule(ModuleData *);
+  void OpenModule(uint32_t id, ModuleData *);
   void HandleMessages();
 
 private:
 
   // Persistant data
   GLFWwindow *m_pWindow;
-  std::list<ModuleData> m_registeredModules; // TODO this should be a Dg::DoublyLinkedList, but the Dg::DoublyLinkedList needs to std::move instead of memcpy when moving objects around under the hood
+  std::map<uint32_t, ModuleData> m_registeredModules;
   xn::UIContext *m_pUIContext;
   xn::MessageBus m_msgBus;
   SafeMemoryManager m_memMngr;
