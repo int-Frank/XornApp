@@ -27,6 +27,7 @@ class App
   struct ModuleData
   {
     bool show;
+    uint32_t ID;
     xn::Module *pModule;
     Plugin *pPlugin;
   };

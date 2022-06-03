@@ -345,11 +345,14 @@ void App::ShowOutputWindow()
 void App::LoadPlugins()
 {
   auto pluginList = GetDirectoriesFromFolder(DefaultData::data.pluginsPath);
+  uint32_t ID = 1;
   for (auto const &name : pluginList)
   {
     try
     {
       ModuleData data = {};
+      data.ID = ID;
+      ID++;
       data.pPlugin = new Plugin(DefaultData::data.pluginsPath + name + "/" + name + ".dll");
       m_registeredModules.push_back(data);
     }
@@ -365,10 +368,12 @@ void App::OpenModule(ModuleData *pData)
   if (pData->pModule == nullptr)
   {
     xn::ModuleInitData data{};
+    data.ID = pData->ID;
     data.pShow = &pData->show;
     data.pLogger = GetLogger();
     data.pMemMngr = &m_memMngr;
     data.pMsgBus = &m_msgBus;
+    data.name = pData->pPlugin->GetModuleName();
 
     pData->show = true;
     pData->pModule = pData->pPlugin->CreateModule(&data);
@@ -382,6 +387,8 @@ void App::HandleMessages()
   while (pMsg != nullptr)
   {
     // Deal with Message
+    std::string str = pMsg->ToString();
+    LOG_DEBUG("Msg: %s", str.c_str());
 
     // Destroy message
     delete pMsg;

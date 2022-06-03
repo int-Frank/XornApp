@@ -41,7 +41,8 @@ void ImGuiUIContext::Draw()
 
 bool ImGuiUIContext::BeginWindow(const char *pName, bool *pOpen, uint32_t flags)
 {
-  return ImGui::Begin(pName, pOpen, flags);
+  ImGui::Begin(pName, pOpen, flags);
+  return ImGui::IsWindowFocused();
 }
 
 void ImGuiUIContext::EndWindow()
