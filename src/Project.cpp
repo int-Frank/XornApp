@@ -138,6 +138,14 @@ bool Project::AddNewObject(std::string const &filePath, std::string const &name)
 
 bool Project::CompleteLoad()
 {
+  for (uint32_t group = 0; group < sceneObjects.objectList.size(); group++)
+  {
+    auto *pGroup = &sceneObjects.objectList[group].geometry.polygons;
+    for (uint32_t index = 0; index < pGroup->size(); index++)
+    {
+      (*pGroup)[index].SetID(BuildPolygonID(group, index));
+    }
+  }
   return true;
 }
 

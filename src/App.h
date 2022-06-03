@@ -10,6 +10,8 @@
 #include "Camera.h"
 #include "Project.h"
 #include "Plugin.h"
+#include "MemoryManager.h"
+#include "xnMessageBus.h"
 
 struct GLFWwindow;
 class Logger;
@@ -53,6 +55,7 @@ private:
 
   void LoadPlugins();
   void OpenModule(ModuleData *);
+  void HandleMessages();
 
 private:
 
@@ -60,6 +63,8 @@ private:
   GLFWwindow *m_pWindow;
   std::list<ModuleData> m_registeredModules; // TODO this should be a Dg::DoublyLinkedList, but the Dg::DoublyLinkedList needs to std::move instead of memcpy when moving objects around under the hood
   xn::UIContext *m_pUIContext;
+  xn::MessageBus m_msgBus;
+  SafeMemoryManager m_memMngr;
 
   // Temp data
   Camera m_camera;

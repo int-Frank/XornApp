@@ -9,6 +9,7 @@
 #include "DefaultData.h"
 #include "glfw3.h"
 #include "ImGuiUIContext.h"
+#include "xnModuleInitData.h"
 
 // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
 // To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
@@ -82,6 +83,7 @@ void App::Run()
   {
     glfwPollEvents();
     m_pUIContext->NewFrame();
+    HandleMessages();
     ShowOutputWindow();
     ShowControlWindow();
 
@@ -362,9 +364,30 @@ void App::OpenModule(ModuleData *pData)
 {
   if (pData->pModule == nullptr)
   {
+    xn::ModuleInitData data{};
+    data.pShow = &pData->show;
+    data.pLogger = GetLogger();
+    data.pMemMngr = &m_memMngr;
+    data.pMsgBus = &m_msgBus;
+
     pData->show = true;
-    pData->pModule = pData->pPlugin->CreateModule(&pData->show, GetLogger());
+    pData->pModule = pData->pPlugin->CreateModule(&data);
     pData->pModule->SetGeometry(m_sanitisedGeom);
+  }
+}
+
+void App::HandleMessages()
+{
+  xn::Message *pMsg = m_msgBus.PopMessage();
+  while (pMsg != nullptr)
+  {
+    // Deal with Message
+
+    // Destroy message
+    delete pMsg;
+
+    // Get next message
+    pMsg = m_msgBus.PopMessage();
   }
 }
 

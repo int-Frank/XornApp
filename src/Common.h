@@ -20,6 +20,10 @@ std::vector<std::string> GetProjectList();
 
 ImVec2 ToImGui(xn::vec2 const& v);
 
+uint32_t BuildPolygonID(uint32_t group, uint32_t index);
+uint32_t GetGroupFromID(uint32_t id);
+uint32_t GetIndexFromID(uint32_t id);
+
 //--------------------------------------------------------------------------------
 // Classes
 //--------------------------------------------------------------------------------

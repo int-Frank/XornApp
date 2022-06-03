@@ -328,25 +328,6 @@ bool ReadGeometry(std::istream &is, xn::PolygonGroup *pGeom, std::string &name)
     return true;
 }
 
-bool GeometryCollectionRead(xn::GeometryCollection *pObj, std::istream &is)
-{
-  ASSERT_NEXT('[');
-
-  while (true)
-  {
-    BREAK_ON(']');
-
-    std::string name;
-    xn::PolygonGroup geom;
-    CHECK(ReadGeometry(is, &geom, name));
-    pObj->PushBack(name, geom);
-
-    DISCARD_NEXT_IF(',');
-  }
-
-  return true;
-}
-
 bool SceneObject::Read(std::istream& is)
 {
   ASSERT_NEXT('{');
@@ -501,27 +482,6 @@ std::ostream &operator<<(std::ostream &os, xn::PolygonGroup const &obj)
   }
 
   os << "]}";
-  return os;
-}
-
-std::ostream &operator<<(std::ostream &os, xn::GeometryCollection const &obj)
-{
-  std::map<std::string, xn::PolygonGroup> const *pList = obj.GetList();
-
-  size_t i = 0;
-  for (auto const &kv : *pList)
-  {
-    os << '{';
-
-    os << "\"name\":" << WrapStr(kv.first);
-    os << ",\"geometry\":" << kv.second;
-
-    os << '}';
-
-    if (i + 1 != pList->size())
-      os << ',';
-    i++;
-  }
   return os;
 }
 

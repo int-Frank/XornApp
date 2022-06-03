@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <string>
 
+#include "xnModuleInitData.h"
+
 namespace xn
 {
   class Module;
@@ -21,7 +23,7 @@ public:
   ~Plugin();
 
   uint32_t GetVersion() const;
-  xn::Module *CreateModule(bool *pShow, xn::Logger *) const;
+  xn::Module *CreateModule(xn::ModuleInitData *) const;
   void DestroyModule(xn::Module **) const;
   std::string GetModuleName() const;
 

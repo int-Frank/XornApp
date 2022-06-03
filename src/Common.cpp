@@ -57,3 +57,18 @@ std::vector<std::string> GetModelListFromAssets()
 {
   return GetFilesFromFolder(DefaultData::data.modelsPath, ".obj");
 }
+
+uint32_t BuildPolygonID(uint32_t group, uint32_t index)
+{
+  return ((group & 0xFFFF) << 16) | (index & 0xFFFF);
+}
+
+uint32_t GetGroupFromID(uint32_t id)
+{
+  return id >> 16;
+}
+
+uint32_t GetIndexFromID(uint32_t id)
+{
+  return id & 0xFFFF;
+}

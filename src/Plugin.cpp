@@ -84,9 +84,9 @@ uint32_t Plugin::GetVersion() const
   return m_pimpl->GetVersionFn();
 }
 
-xn::Module *Plugin::CreateModule(bool *pShow, xn::Logger *pLogger) const
+xn::Module *Plugin::CreateModule(xn::ModuleInitData *pData) const
 {
-  return m_pimpl->CreateModuleFn(pShow, pLogger);
+  return m_pimpl->CreateModuleFn(pData);
 }
 
 void Plugin::DestroyModule(xn::Module **ppModule) const
