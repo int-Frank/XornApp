@@ -12,6 +12,7 @@
 #include "Plugin.h"
 #include "MemoryManager.h"
 #include "xnMessageBus.h"
+#include "xnXornMessages.h"
 #include "DgMap_AVL.h"
 
 struct GLFWwindow;
@@ -57,6 +58,8 @@ private:
   void LoadPlugins();
   void OpenModule(uint32_t id, ModuleData *);
   void HandleMessages();
+
+  void HandleMessage(xn::Message_WindowClosed *pMsg);
 
 private:
 
