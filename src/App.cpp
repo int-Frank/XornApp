@@ -19,6 +19,8 @@
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
 
+#define DISPATCH(t) case xn::MessageType::t:{HandleMessage((xn::Message_ ## t*)pMsg); break;}
+
 static void glfw_error_callback(int error, const char *description)
 {
   fprintf(stderr, "Glfw Error %d: %s\n", error, description);
@@ -382,21 +384,9 @@ void App::HandleMessages()
 
     switch (pMsg->GetType())
     {
-    case xn::MessageType::WindowClosed:
-    {
-      xn::Message_WindowClosed *pMsgt = (xn::Message_WindowClosed*)pMsg;
-      try
-      {
-        ModuleData & data = m_registeredModules.at(pMsgt->windowID);
-        data.isActive = false;
-        data.pPlugin->DestroyModule(&data.pModule);
-      }
-      catch (std::exception e)
-      {
-        LOG_ERROR("Exception thrown when trying to close a module window: '%s'", e.what());
-      }
-      break;
-    }
+      DISPATCH(WindowClosed);
+    default:
+      LOG_DEBUG("Message not handled: '%s'", str.c_str());
     }
 
     // Destroy message
@@ -404,6 +394,20 @@ void App::HandleMessages()
 
     // Get next message
     pMsg = m_msgBus.PopMessage();
+  }
+}
+
+void App::HandleMessage(xn::Message_WindowClosed *pMsg)
+{
+  try
+  {
+    ModuleData &data = m_registeredModules.at(pMsg->windowID);
+    data.isActive = false;
+    data.pPlugin->DestroyModule(&data.pModule);
+  }
+  catch (std::exception e)
+  {
+    LOG_ERROR("Exception thrown when trying to close a module window: '%s'", e.what());
   }
 }
 
