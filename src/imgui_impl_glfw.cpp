@@ -50,10 +50,11 @@
 //  2017-08-25: Inputs: MousePos set to -FLT_MAX,-FLT_MAX when mouse is unavailable/missing (instead of -1,-1).
 //  2016-10-15: Misc: Added a void* user_data parameter to Clipboard function handlers.
 
-#include "Common.h"
-
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
+
+#include "xnMessageBus.h"
+#include "XornAppMessages.h"
 
 // Clang warnings with -Weverything
 #if defined(__clang__)
@@ -287,8 +288,14 @@ void ImGui_ImplGlfw_ScrollCallback(GLFWwindow* window, double xoffset, double yo
     ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
     if (bd->PrevUserCallbackScroll != NULL && window == bd->Window)
         bd->PrevUserCallbackScroll(window, xoffset, yoffset);
+    extern xn::MessageBus *g_pMsgBus;
 
-    g_globalData.scroll = (float)yoffset;
+    if (g_pMsgBus != nullptr)
+    {
+      Message_MouseScroll *pMsg = g_pMsgBus->NewMessage<Message_MouseScroll>();
+      pMsg->val = (float)yoffset;
+      g_pMsgBus->Post(pMsg);
+    }
 
     ImGuiIO& io = ImGui::GetIO();
     io.AddMouseWheelEvent((float)xoffset, (float)yoffset);

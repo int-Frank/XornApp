@@ -1,7 +1,6 @@
 #ifndef APP_H
 #define APP_H
 
-#include <map>
 #include <vector>
 #include <memory>
 
@@ -13,7 +12,9 @@
 #include "MemoryManager.h"
 #include "xnMessageBus.h"
 #include "xnXornMessages.h"
+#include "XornAppMessages.h"
 #include "DgMap_AVL.h"
+#include "Canvas.h"
 
 struct GLFWwindow;
 class Logger;
@@ -28,7 +29,6 @@ class App
 {
   struct ModuleData
   {
-    bool isActive;
     xn::Module *pModule;
     Plugin *pPlugin;
   };
@@ -51,7 +51,6 @@ public:
 private:
   
   void ShowMenuBar();
-  void ShowOutputWindow();
   void ShowControlWindow();
   void HandleModals();
 
@@ -59,24 +58,35 @@ private:
   void OpenModule(uint32_t id, ModuleData *);
   void HandleMessages();
 
+  void Render();
+
+  void DispatchToFocus(xn::Message *pMsg);
+  void DispatchToAllModules(xn::Message *pMsg);
+
   void HandleMessage(xn::Message_WindowClosed *pMsg);
+  void HandleMessage(xn::Message_WindowGainedFocus *pMsg);
+  void HandleMessage(xn::Message_WindowLostFocus *pMsg);
+  void HandleMessage(Message_MouseScroll *pMsg);
+  void HandleMessage(Message_ZoomCamera *pMsg);
+  void HandleMessage(Message_MoveCamera *pMsg);
 
 private:
 
   // Persistant data
   GLFWwindow *m_pWindow;
-  std::map<uint32_t, ModuleData> m_registeredModules;
+  Dg::Map_AVL<uint32_t, ModuleData> m_registeredModules;
   xn::UIContext *m_pUIContext;
   xn::MessageBus m_msgBus;
   SafeMemoryManager m_memMngr;
+  Canvas *m_pCanvas;
 
   // Temp data
+  uint32_t m_moduleFocusID;
   Camera m_camera;
   std::vector<std::shared_ptr<Modal>> m_modalStack;
   Project *m_pCurrentProject;
   std::string m_saveFile;
   xn::PolygonGroup m_sanitisedGeom;
-  xn::Renderer *m_pRenderer;
   bool m_geometryDirty;
   bool m_projectDirty;
   bool m_showDemoWindow;

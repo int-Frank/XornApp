@@ -6,8 +6,6 @@
 #include "DgMatrix33.h"
 #include "Common.h"
 
-GlobalData g_globalData = {};
-
 bool FileExists(std::string const &filePath)
 {
   std::ifstream f(filePath.c_str());

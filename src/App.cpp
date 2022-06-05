@@ -19,7 +19,13 @@
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
 
-#define DISPATCH(t) case xn::MessageType::t:{HandleMessage((xn::Message_ ## t*)pMsg); break;}
+#define INVALID_ID 0xFFFFFFFFul
+#define DISPATCH(t) case (uint32_t)MessageType::t:{HandleMessage((Message_ ## t*)pMsg); break;}
+#define xnDISPATCH(t) case (uint32_t)xn::MessageType::t:{HandleMessage((xn::Message_ ## t*)pMsg); break;}
+#define DISPATCH_TO_FOCUS_MODULE(t) case (uint32_t)xn::MessageType::t:{DispatchToFocus(pMsg); break;}
+#define DISPATCH_TO_ALL_MODULES(t) case (uint32_t)xn::MessageType::t:{DispatchToAllModules(pMsg); break;}
+
+xn::MessageBus *g_pMsgBus = nullptr;
 
 static void glfw_error_callback(int error, const char *description)
 {
@@ -42,17 +48,21 @@ App::App()
   : m_pWindow(nullptr)
   , m_registeredModules()
   , m_pUIContext(nullptr)
+  , m_msgBus()
+  , m_memMngr()
+  , m_pCanvas(nullptr)
+  , m_moduleFocusID(INVALID_ID)
+  , m_camera()
   , m_modalStack()
   , m_pCurrentProject(Project::CreateDefaultProject())
   , m_saveFile()
   , m_sanitisedGeom()
-  , m_pRenderer(nullptr)
   , m_geometryDirty(false)
   , m_projectDirty(false)
   , m_showDemoWindow(false)
   , m_shouldQuit(false)
 {
-  
+  g_pMsgBus = &m_msgBus;
 
   glfwSetErrorCallback(glfw_error_callback);
   if (!glfwInit())
@@ -73,7 +83,8 @@ App::App()
   glfwSwapInterval(1); // Enable vsync
 
   m_pUIContext = new ImGuiUIContext(m_pWindow, true, glsl_version);
-  m_pRenderer = new ImGuiRenderer();
+  m_pCanvas = new Canvas("Output", new ImGuiRenderer(), &m_msgBus);
+  m_pCanvas->SetSize(xn::vec2(DefaultData::data.windowWidth, DefaultData::data.windowHeight));
 
   MakeDirty();
   LoadPlugins();
@@ -81,13 +92,11 @@ App::App()
 
 void App::Run()
 {
-  ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
   while (!m_shouldQuit && !glfwWindowShouldClose(m_pWindow))
   {
     glfwPollEvents();
     m_pUIContext->NewFrame();
     HandleMessages();
-    ShowOutputWindow();
     ShowControlWindow();
 
     HandleModals();
@@ -118,21 +127,13 @@ void App::Run()
     if (m_showDemoWindow)
       ImGui::ShowDemoWindow(&m_showDemoWindow);
 
-    // Rendering
-    m_pUIContext->Compose();
-    int display_w, display_h;
-    glfwGetFramebufferSize(m_pWindow, &display_w, &display_h);
-    glViewport(0, 0, display_w, display_h);
-    glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
-    glClear(GL_COLOR_BUFFER_BIT);
-    m_pUIContext->Draw();
-    glfwSwapBuffers(m_pWindow);
+    Render();
   }
 }
 
 App::~App()
 {
-  delete m_pRenderer;
+  delete m_pCanvas;
   delete m_pUIContext;
 
   for (auto &kv : m_registeredModules)
@@ -202,7 +203,7 @@ void App::ShowMenuBar()
     {
       for (auto &kv : m_registeredModules)
       {
-        if (ImGui::MenuItem(kv.second.pPlugin->GetModuleName().c_str(), nullptr, kv.second.isActive))
+        if (ImGui::MenuItem(kv.second.pPlugin->GetModuleName().c_str(), nullptr, kv.second.pModule != nullptr))
           OpenModule(kv.first, &kv.second);
       }
 
@@ -265,78 +266,6 @@ void App::HandleModals()
     m_modalStack.erase(m_modalStack.begin() + back);
 }
 
-void App::ShowOutputWindow()
-{
-  ImGui::SetNextWindowPos(ImVec2(0.f, 0.f));
-  ImGui::SetNextWindowSize(ImVec2(DefaultData::data.windowWidth, DefaultData::data.windowHeight));
-  ImGui::Begin("Output", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBringToFrontOnFocus);
-
-  static bool opt_enable_context_menu = true;
-
-  // Using InvisibleButton() as a convenience 1) it will advance the layout cursor and 2) allows us to use IsItemHovered()/IsItemActive()
-  ImVec2 canvas_p0 = ImGui::GetCursorScreenPos();      // ImDrawList API uses screen coordinates!
-  ImVec2 canvas_sz = ImGui::GetContentRegionAvail();   // Resize canvas to what's available
-  if (canvas_sz.x < 50.0f) canvas_sz.x = 50.0f;
-  if (canvas_sz.y < 50.0f) canvas_sz.y = 50.0f;
-  ImVec2 canvas_p1 = ImVec2(canvas_p0.x + canvas_sz.x, canvas_p0.y + canvas_sz.y);
-
-  // Draw border and background color
-  ImGuiIO &io = ImGui::GetIO();
-  m_pRenderer->Set(xn::vec2(canvas_p0.x, canvas_p0.y), xn::vec2(canvas_p1.x, canvas_p1.y));
-  m_pRenderer->BeginDraw();
-
-  // This will catch our interactions
-  ImGui::InvisibleButton("canvas", canvas_sz, ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight);
-  const bool is_hovered = ImGui::IsItemHovered(); // Hovered
-  const bool is_active = ImGui::IsItemActive();   // Held
-  
-  // Pan (we use a zero mouse threshold when there's no context menu)
-  // You may decide to make that threshold dynamic based on whether the mouse is hovering something etc.
-  const float mouse_threshold_for_pan = opt_enable_context_menu ? -1.0f : 0.0f;
-  if (is_active && ImGui::IsMouseDragging(ImGuiMouseButton_Right, mouse_threshold_for_pan))
-  {
-    m_camera.T_Camera_World.position.x() -= io.MouseDelta.x * m_camera.T_Camera_World.scale.x();
-    m_camera.T_Camera_World.position.y() += io.MouseDelta.y * m_camera.T_Camera_World.scale.y();
-  }
-
-  if (is_hovered && g_globalData.scroll != 0.f)
-  {
-    g_globalData.scroll = g_globalData.scroll < 0.f ? 1.15f : 0.85f;
-    m_camera.T_Camera_World.scale.x() *= g_globalData.scroll;
-    m_camera.T_Camera_World.scale.y() *= g_globalData.scroll;
-  }
-
-  g_globalData.scroll = 0.f;
-
-  xn::mat33 T_Camera_View;
-  T_Camera_View.Translation(xn::vec2(canvas_sz.x / 2.f, canvas_sz.y / 2.f));
-  T_Camera_View[4] *= -1.f;
-  m_camera.T_World_View = m_camera.T_Camera_World.ToMatrix33().GetInverse() * T_Camera_View;
-
-  int index = -1;
-  for (auto const &obj : m_pCurrentProject->sceneObjects.objectList)
-  {
-    index++;
-    xn::LineProperties opts = obj.valid ? DefaultData::data.validPolygon : DefaultData::data.invalidPolygon;
-
-    if (index == m_pCurrentProject->currentFocus)
-      opts = MakeFocus(opts);
-    obj.geometry.Render(m_pRenderer, m_camera.T_World_View, opts, obj.transform);
-  }
-
-  for (auto &kv : m_registeredModules)
-  {
-    if (kv.second.pModule == nullptr)
-      continue;
-
-    kv.second.pModule->Render(m_pRenderer, m_camera.T_World_View);
-  }
-
-  m_pRenderer->EndDraw();
-
-  ImGui::End();
-}
-
 void App::LoadPlugins()
 {
   auto pluginList = GetDirectoriesFromFolder(DefaultData::data.pluginsPath);
@@ -378,23 +307,66 @@ void App::HandleMessages()
   xn::Message *pMsg = m_msgBus.PopMessage();
   while (pMsg != nullptr)
   {
-    // Deal with Message
-    std::string str = pMsg->ToString();
-    LOG_DEBUG("Msg: %s", str.c_str());
-
     switch (pMsg->GetType())
     {
-      DISPATCH(WindowClosed);
+      xnDISPATCH(WindowClosed);
+      xnDISPATCH(WindowGainedFocus);
+      xnDISPATCH(WindowLostFocus);
+      DISPATCH(MouseScroll);
+      DISPATCH(ZoomCamera);
+      DISPATCH(MoveCamera);
+      DISPATCH_TO_FOCUS_MODULE(MouseDown);
+      DISPATCH_TO_FOCUS_MODULE(MouseMove);
+      DISPATCH_TO_FOCUS_MODULE(MouseUp);
     default:
-      LOG_DEBUG("Message not handled: '%s'", str.c_str());
+      LOG_DEBUG("Message not handled: '%s'", pMsg->ToString().c_str());
     }
 
-    // Destroy message
     delete pMsg;
-
-    // Get next message
     pMsg = m_msgBus.PopMessage();
   }
+}
+
+void App::Render()
+{
+  // TODO Set window size
+  m_pCanvas->BeginFrame();
+
+  xn::Renderer *pRenderer = m_pCanvas->GetRenderer();
+  pRenderer->BeginDraw();
+
+  m_camera.T_World_View = m_camera.T_Camera_World.ToMatrix33().GetInverse() * m_pCanvas->Get_T_Camera_View();
+  int index = -1;
+  for (auto const &obj : m_pCurrentProject->sceneObjects.objectList)
+  {
+    index++;
+    xn::LineProperties opts = obj.valid ? DefaultData::data.validPolygon : DefaultData::data.invalidPolygon;
+
+    if (index == m_pCurrentProject->currentFocus)
+      opts = MakeFocus(opts);
+    obj.geometry.Render(pRenderer, m_camera.T_World_View, opts, obj.transform);
+  }
+
+  for (auto &kv : m_registeredModules)
+  {
+    if (kv.second.pModule == nullptr)
+      continue;
+
+    kv.second.pModule->Render(pRenderer, m_camera.T_World_View);
+  }
+  pRenderer->EndDraw();
+  m_pCanvas->EndFrame();
+
+  // Rendering
+  m_pUIContext->Compose();
+  int display_w, display_h;
+  glfwGetFramebufferSize(m_pWindow, &display_w, &display_h);
+  glViewport(0, 0, display_w, display_h);
+  ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+  glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+  glClear(GL_COLOR_BUFFER_BIT);
+  m_pUIContext->Draw();
+  glfwSwapBuffers(m_pWindow);
 }
 
 void App::HandleMessage(xn::Message_WindowClosed *pMsg)
@@ -402,12 +374,65 @@ void App::HandleMessage(xn::Message_WindowClosed *pMsg)
   try
   {
     ModuleData &data = m_registeredModules.at(pMsg->windowID);
-    data.isActive = false;
+
+    if (m_moduleFocusID == pMsg->windowID)
+      m_moduleFocusID = INVALID_ID;
+
     data.pPlugin->DestroyModule(&data.pModule);
   }
   catch (std::exception e)
   {
     LOG_ERROR("Exception thrown when trying to close a module window: '%s'", e.what());
+  }
+}
+
+void App::HandleMessage(xn::Message_WindowGainedFocus *pMsg)
+{
+  m_moduleFocusID = pMsg->windowID;
+}
+
+void App::HandleMessage(xn::Message_WindowLostFocus *pMsg)
+{
+  if (m_moduleFocusID == pMsg->windowID)
+    m_moduleFocusID = INVALID_ID;
+}
+
+void App::HandleMessage(Message_MouseScroll *pMsg)
+{
+  m_pCanvas->Handle(pMsg);
+}
+
+void App::HandleMessage(Message_ZoomCamera *pMsg)
+{
+  m_camera.T_Camera_World.scale *= pMsg->val;
+}
+
+void App::HandleMessage(Message_MoveCamera *pMsg)
+{
+  m_camera.T_Camera_World.position.x() -= pMsg->v.x() * m_camera.T_Camera_World.scale.x();
+  m_camera.T_Camera_World.position.y() += pMsg->v.y() * m_camera.T_Camera_World.scale.y();
+}
+
+void App::DispatchToFocus(xn::Message *pMsg)
+{
+  auto it = m_registeredModules.find(m_moduleFocusID);
+  if (it != m_registeredModules.end())
+  {
+    xn::Module *pModule = it->second.pModule;
+    if (pModule != nullptr)
+      pModule->Handle(pMsg);
+  }
+}
+
+void App::DispatchToAllModules(xn::Message *pMsg)
+{
+  for (auto &kv : m_registeredModules)
+  {
+    if (pMsg->QueryFlag(xn::Message::Flag::Handled))
+      break;
+
+    if (kv.second.pModule != nullptr)
+      kv.second.pModule->Handle(pMsg);
   }
 }
 

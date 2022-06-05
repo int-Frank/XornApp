@@ -7,6 +7,8 @@
 #include "xnGeometry.h"
 #include "imgui.h"
 
+#include "xnMessageBus.h"
+
 //--------------------------------------------------------------------------------
 // Helper functions
 //--------------------------------------------------------------------------------
@@ -24,17 +26,7 @@ uint32_t BuildPolygonID(uint32_t group, uint32_t index);
 uint32_t GetGroupFromID(uint32_t id);
 uint32_t GetIndexFromID(uint32_t id);
 
-//--------------------------------------------------------------------------------
-// Classes
-//--------------------------------------------------------------------------------
-
-struct GlobalData
-{
-  float scroll;
-};
-
-extern GlobalData g_globalData;
-
-
+// TODO This should be a service that is requested from a service provider.
+extern xn::MessageBus *g_pMsgBus;
 
 #endif
