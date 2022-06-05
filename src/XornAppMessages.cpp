@@ -2,7 +2,6 @@
 
 #include "XornAppMessages.h"
 
-// TODO Can be taken from XornCore
 #define MESSAGE_DEFINITION(t) uint32_t Message_ ## t::GetStaticType() {return (uint32_t)MessageType::t;}\
 size_t Message_ ## t::Size() {return sizeof(Message_ ## t);}\
 uint32_t Message_ ## t::GetType() const {return GetStaticType();}\
