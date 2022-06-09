@@ -17,7 +17,7 @@ public:
   void Compose() override;
   void Draw() override;
 
-  bool BeginWindow(const char *name, bool *p_open = nullptr, uint32_t flags = 0) override;
+  bool BeginWindow(const char *name, bool *p_open = nullptr, xn::UIFlags const *pFlags = nullptr) override;
   void EndWindow() override;
 
   Dg::Vector2<float> GetCursorPos() override;
@@ -33,8 +33,8 @@ public:
   void Text(const char *fmt, ...) override;
   bool Checkbox(char const *pLabel, bool *pVal) override;
 
-  bool SliderFloat(const char *label, float *v, float v_min, float v_max, const char *format = "%.3f", uint32_t flags = 0) override;
-  bool SliderInt(const char *label, int *v, int v_min, int v_max, const char *format = "%d", uint32_t flags = 0) override;
+  bool SliderFloat(const char *label, float *v, float v_min, float v_max, const char *format = "%.3f", xn::UIFlags const *pFlags = nullptr) override;
+  bool SliderInt(const char *label, int *v, int v_min, int v_max, const char *format = "%d", xn::UIFlags const *pFlags = nullptr) override;
 
 };
 

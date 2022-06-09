@@ -4,6 +4,13 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
+static int ToImGuiFlags(xn::UIFlags const *pFlags)
+{
+  if (pFlags == nullptr)
+    return 0;
+  return 0;
+}
+
 ImGuiUIContext::ImGuiUIContext(GLFWwindow *pWindow, bool installCallbacks, char const *pVersion)
 {
   IMGUI_CHECKVERSION();
@@ -39,9 +46,21 @@ void ImGuiUIContext::Draw()
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-bool ImGuiUIContext::BeginWindow(const char *pName, bool *pOpen, uint32_t flags)
+bool ImGuiUIContext::BeginWindow(const char *pName, bool *pOpen, xn::UIFlags const *pFlags)
 {
-  ImGui::Begin(pName, pOpen, flags);
+  ImGui::Begin(pName, pOpen, ToImGuiFlags(pFlags));
+
+  ImColor btnClr(30.f / 255.f, 48.f / 255.f, 74.f / 255.f, 1.f);
+  if (pFlags != nullptr && pFlags->QueryFlag(xn::UIFlag::IsActive))
+    btnClr = ImColor(4.f / 255.f, 255.f / 255.f, 224.f / 255.f, 1.f);
+
+  float width = ImGui::GetWindowWidth();
+  ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)btnClr);
+  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)btnClr);
+  ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)btnClr);
+  ImGui::Button(("##btn" + std::string(pName)).c_str(), ImVec2(width, 5.f));
+  ImGui::PopStyleColor(3);
+
   return ImGui::IsWindowFocused();
 }
 
@@ -99,14 +118,14 @@ void ImGuiUIContext::Text(const char *fmt, ...)
   va_end(args);
 }
 
-bool ImGuiUIContext::SliderFloat(const char *pLabel, float *pV, float vMin, float vMax, const char *format, uint32_t flags)
+bool ImGuiUIContext::SliderFloat(const char *pLabel, float *pV, float vMin, float vMax, const char *format, xn::UIFlags const *pFlags)
 {
-  return ImGui::SliderFloat(pLabel, pV, vMin, vMax, format, ImGuiSliderFlags(flags));
+  return ImGui::SliderFloat(pLabel, pV, vMin, vMax, format, ImGuiSliderFlags(ToImGuiFlags(pFlags)));
 }
 
-bool ImGuiUIContext::SliderInt(const char *label, int *v, int v_min, int v_max, const char *format, uint32_t flags)
+bool ImGuiUIContext::SliderInt(const char *label, int *v, int v_min, int v_max, const char *format, xn::UIFlags const *pFlags)
 {
-  return ImGui::SliderInt(label, v, v_min, v_max, format, flags);
+  return ImGui::SliderInt(label, v, v_min, v_max, format, ToImGuiFlags(pFlags));
 }
 
 bool ImGuiUIContext::Checkbox(char const *pLabel, bool *pVal)

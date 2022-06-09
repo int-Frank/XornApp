@@ -57,15 +57,16 @@ private:
   void LoadPlugins();
   void OpenModule(uint32_t id, ModuleData *);
   void HandleMessages();
+  void LogMessage(xn::Message const *);
 
   void Render();
 
   void DispatchToFocus(xn::Message *pMsg);
   void DispatchToAllModules(xn::Message *pMsg);
 
-  void HandleMessage(xn::Message_WindowClosed *pMsg);
-  void HandleMessage(xn::Message_WindowGainedFocus *pMsg);
-  void HandleMessage(xn::Message_WindowLostFocus *pMsg);
+  void HandleMessage(xn::Message_ModuleClosed *pMsg);
+  void HandleMessage(xn::Message_ModuleGainedFocus *pMsg);
+  void HandleMessage(xn::Message_ModuleLostFocus *pMsg);
   void HandleMessage(Message_MouseScroll *pMsg);
   void HandleMessage(Message_ZoomCamera *pMsg);
   void HandleMessage(Message_MoveCamera *pMsg);
@@ -81,7 +82,7 @@ private:
   Canvas *m_pCanvas;
 
   // Temp data
-  uint32_t m_moduleFocusID;
+  uint32_t m_activeModuleID;
   Camera m_camera;
   std::vector<std::shared_ptr<Modal>> m_modalStack;
   Project *m_pCurrentProject;

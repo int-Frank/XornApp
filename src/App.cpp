@@ -51,7 +51,7 @@ App::App()
   , m_msgBus()
   , m_memMngr()
   , m_pCanvas(nullptr)
-  , m_moduleFocusID(INVALID_ID)
+  , m_activeModuleID(INVALID_ID)
   , m_camera()
   , m_modalStack()
   , m_pCurrentProject(Project::CreateDefaultProject())
@@ -116,7 +116,7 @@ void App::Run()
       if (kv.second.pModule == nullptr)
         continue;
 
-      kv.second.pModule->DoFrame(m_pUIContext);
+      kv.second.pModule->DoFrame(m_pUIContext, kv.first == m_activeModuleID);
 
       if (m_geometryDirty)
         kv.second.pModule->SetGeometry(m_sanitisedGeom);
@@ -302,16 +302,27 @@ void App::OpenModule(uint32_t id, ModuleData *pData)
   }
 }
 
+void App::LogMessage(xn::Message const *pMsg)
+{
+  if (pMsg->GetType() != (uint32_t)xn::MessageType::MouseMove)
+  {
+    std::string str = pMsg->ToString();
+    LOG_DEBUG("MSG: %s", str.c_str());
+  }
+}
+
 void App::HandleMessages()
 {
   xn::Message *pMsg = m_msgBus.PopMessage();
   while (pMsg != nullptr)
   {
+    LogMessage(pMsg);
+
     switch (pMsg->GetType())
     {
-      xnDISPATCH(WindowClosed);
-      xnDISPATCH(WindowGainedFocus);
-      xnDISPATCH(WindowLostFocus);
+      xnDISPATCH(ModuleClosed);
+      xnDISPATCH(ModuleGainedFocus);
+      xnDISPATCH(ModuleLostFocus);
       DISPATCH(MouseScroll);
       DISPATCH(ZoomCamera);
       DISPATCH(MoveCamera);
@@ -369,14 +380,14 @@ void App::Render()
   glfwSwapBuffers(m_pWindow);
 }
 
-void App::HandleMessage(xn::Message_WindowClosed *pMsg)
+void App::HandleMessage(xn::Message_ModuleClosed *pMsg)
 {
   try
   {
     ModuleData &data = m_registeredModules.at(pMsg->windowID);
 
-    if (m_moduleFocusID == pMsg->windowID)
-      m_moduleFocusID = INVALID_ID;
+    if (m_activeModuleID == pMsg->windowID)
+      m_activeModuleID = INVALID_ID;
 
     data.pPlugin->DestroyModule(&data.pModule);
   }
@@ -386,15 +397,14 @@ void App::HandleMessage(xn::Message_WindowClosed *pMsg)
   }
 }
 
-void App::HandleMessage(xn::Message_WindowGainedFocus *pMsg)
+void App::HandleMessage(xn::Message_ModuleGainedFocus *pMsg)
 {
-  m_moduleFocusID = pMsg->windowID;
+  m_activeModuleID = pMsg->windowID;
 }
 
-void App::HandleMessage(xn::Message_WindowLostFocus *pMsg)
+void App::HandleMessage(xn::Message_ModuleLostFocus *pMsg)
 {
-  if (m_moduleFocusID == pMsg->windowID)
-    m_moduleFocusID = INVALID_ID;
+
 }
 
 void App::HandleMessage(Message_MouseScroll *pMsg)
@@ -415,7 +425,7 @@ void App::HandleMessage(Message_MoveCamera *pMsg)
 
 void App::DispatchToFocus(xn::Message *pMsg)
 {
-  auto it = m_registeredModules.find(m_moduleFocusID);
+  auto it = m_registeredModules.find(m_activeModuleID);
   if (it != m_registeredModules.end())
   {
     xn::Module *pModule = it->second.pModule;
