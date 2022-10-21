@@ -50,16 +50,16 @@ bool ImGuiUIContext::BeginWindow(const char *pName, bool *pOpen, xn::UIFlags con
 {
   ImGui::Begin(pName, pOpen, ToImGuiFlags(pFlags));
 
-  ImColor btnClr(30.f / 255.f, 48.f / 255.f, 74.f / 255.f, 1.f);
-  if (pFlags != nullptr && pFlags->QueryFlag(xn::UIFlag::IsActive))
-    btnClr = ImColor(4.f / 255.f, 255.f / 255.f, 224.f / 255.f, 1.f);
-
-  float width = ImGui::GetWindowWidth();
-  ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)btnClr);
-  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)btnClr);
-  ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)btnClr);
-  ImGui::Button(("##btn" + std::string(pName)).c_str(), ImVec2(width, 5.f));
-  ImGui::PopStyleColor(3);
+  //ImColor btnClr(30.f / 255.f, 48.f / 255.f, 74.f / 255.f, 1.f);
+  //if (pFlags != nullptr && pFlags->QueryFlag(xn::UIFlag::IsActive))
+  //  btnClr = ImColor(4.f / 255.f, 255.f / 255.f, 224.f / 255.f, 1.f);
+  //
+  //float width = ImGui::GetWindowWidth();
+  //ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)btnClr);
+  //ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)btnClr);
+  //ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)btnClr);
+  //ImGui::Button(("##btn" + std::string(pName)).c_str(), ImVec2(width, 5.f));
+  //ImGui::PopStyleColor(3);
 
   return ImGui::IsWindowFocused();
 }

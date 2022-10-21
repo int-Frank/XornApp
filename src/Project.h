@@ -4,34 +4,52 @@
 #include <iostream>
 
 #include "Common.h"
+#include "DgMap_AVL.h"
+#include "xnGeometry.h"
+#include "xnFlagArray.h"
 
-class SceneObject
+typedef uint32_t PolygonID;
+#define INVALID_POLYGON_ID 0xFFFFFFFFul
+
+enum class ScenePolygonLoopFlag
 {
-public:
-
-  SceneObject();
-
-  bool Read(std::istream& is);
-  friend std::ostream& operator<<(std::ostream& os, SceneObject const&);
-
-  xn::PolygonGroup geometry;
-  std::string name;
-  xn::Transform transform;
-  bool valid;
+  Invalid
 };
 
-class SceneObjectCollection
+class ScenePolygonLoop
 {
 public:
 
-  bool Read(std::istream& is);
-  friend std::ostream& operator<<(std::ostream& os, SceneObjectCollection const&);
+  ScenePolygonLoop();
+
+  xn::FlagArray<ScenePolygonLoopFlag> flags;
+  xn::PolygonLoop loop;
+  xn::Transform T_Model_World;
+};
+
+class LoopCollection
+{
+  typedef Dg::Map_AVL<PolygonID, ScenePolygonLoop>::const_iterator_rand const_iterator;
+public:
+
+  LoopCollection();
+
+  friend std::ostream &operator<<(std::ostream &os, LoopCollection const &obj);
+
+  PolygonID Add(ScenePolygonLoop const &);
+  void Remove(PolygonID);
+  ScenePolygonLoop *Get(PolygonID);
+
+  const_iterator Begin() { return m_loopMap.cbegin_rand(); }
+  const_iterator End() { return m_loopMap.cend_rand(); }
 
   void Clear();
-  std::vector<char> ToImGuiNameString() const;
 
-  std::vector<SceneObject> objectList;
+  xn::PolygonWithHoles BuildScenePolygon() const;
+
 private:
+  PolygonID m_nextID;
+  Dg::Map_AVL<PolygonID, ScenePolygonLoop> m_loopMap;
 };
 
 class Project
@@ -39,7 +57,6 @@ class Project
 public:
 
   Project();
-  static Project *CreateDefaultProject();
 
   bool Read(std::istream& is);
   friend std::ostream& operator<<(std::ostream& os, Project const&);
@@ -47,19 +64,9 @@ public:
   bool Read(std::string const &filePath);
   bool Write(std::string const &filePath) const;
 
-  void RemoveCurrentFocus();
-  bool GetSanitisedGeometry(xn::PolygonGroup *pOut);
-
   void Clear();
-  bool AddNewObject(std::string const &filePath, std::string const &name);
 
-  bool CompleteLoad();
-
-  SceneObjectCollection sceneObjects; // Current active scene objects
-  int currentFocus;                   // Index of the scene item currently in focus. -1 == no focus
-
-private:
-
+  LoopCollection loops;
 };
 
 #endif

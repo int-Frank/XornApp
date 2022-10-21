@@ -1,1 +1,29 @@
-{"active_objects":[{"geometry":{"polygons":[{"points":[50,50,-50,50,-50,-50,50,-50]}]},"name":"Boundary","transform":{"scale":[9.97,6.57],"position":[0,0],"rotation":0}},{"geometry":{"polygons":[{"points":[-200,200,-100,200,-100,-200,-200,-200]},{"points":[100,200,200,200,200,-200,100,-200]}]},"name":"simple corridor","transform":{"scale":[1,1],"position":[0,0],"rotation":0.596728}}],"current_focus":1}
+{
+  "polygon": [
+    {
+      "points": [
+        [ 50, 50 ],
+        [ -50, 50 ],
+        [ -50, -50 ],
+        [ 50, -50 ]
+      ],
+      "transform": {
+        "scale": [ 1, 1 ],
+        "position": [ 0, 0 ],
+        "rotation": 0
+      }
+    },
+    {
+      "points": [
+        [ 0, 10 ],
+        [ 15, -8 ],
+        [ -15, -8 ]
+      ],
+      "transform": {
+        "scale": [ 1, 1 ],
+        "position": [ 0, 0 ],
+        "rotation": 0
+      }
+    }
+  ]
+}

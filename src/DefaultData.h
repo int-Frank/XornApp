@@ -3,7 +3,7 @@
 
 #include <string>
 #include "Common.h"
-#include "xnLineProperties.h"
+#include "xnDraw.h"
 
 struct DefaultData
 {
@@ -14,16 +14,15 @@ struct DefaultData
   float windowHeight;
 
   std::string projectsPath;
-  std::string modelsPath;
   std::string pluginsPath;
 
-  xn::PolygonGroup defaultBoundary;
-  std::string defaultBoundaryName;
+  xn::PolygonLoop defaultBoundary;
+  std::string defaultProjectName;
 
   ImVec2 buttonSize;
-  xn::LineProperties validPolygon;
-  xn::LineProperties invalidPolygon;
-  xn::LineProperties focusPolygon;
+  xn::Draw::Stroke validPolygon;
+  xn::Draw::Stroke invalidPolygon;
+  xn::Draw::Stroke selectedItem;
 };
 
 #endif

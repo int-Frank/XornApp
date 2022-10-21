@@ -153,52 +153,6 @@ void Modal_Open::_Show(App *pApp)
     Close();
 }
 
-Modal_AddModel::Modal_AddModel()
-  : Modal("Add model##Modal_AddModel")
-{
-
-}
-
-void Modal_AddModel::_Show(App *pApp)
-{
-  std::vector<std::string> filesFromAssets = GetModelListFromAssets();
-
-  std::vector<char const *> pointers;
-  for (std::string const &str : filesFromAssets)
-    pointers.push_back(str.c_str());
-
-  static int s_index = 0;
-  static const size_t bufSize = 128;
-  static char buf[bufSize] = {};
-  ImGui::ListBox("Model files##Modal_AddModel", &s_index, pointers.data(), (int)pointers.size());
-
-  static bool s_useCustomName = false;
-  if (!s_useCustomName)
-    strcpy_s(buf, std::filesystem::path(pointers[s_index]).stem().string().c_str());
-
-  if (ImGui::InputText("Name", buf, bufSize))
-    s_useCustomName = true;
-
-  if (ImGui::Button("Open##Modal_AddModel", DefaultData::data.buttonSize))
-  {
-    if (pointers.size() > 0)
-    {
-      pApp->AddModelFromFile(std::string(DefaultData::data.modelsPath) + filesFromAssets[s_index], std::string(buf));
-      Close();
-    }
-
-    s_useCustomName = false;
-    s_index = 0;
-  }
-
-  ImGui::SameLine();
-  if (ImGui::Button("Cancel##Modal_AddModel", DefaultData::data.buttonSize))
-  {
-    Close();
-    s_useCustomName = false;
-  }
-}
-
 Modal_NewProject::Modal_NewProject()
   : Modal("New project##Modal_Open")
 {
@@ -207,22 +161,12 @@ Modal_NewProject::Modal_NewProject()
 
 void Modal_NewProject::_Show(App *pApp)
 {
-  std::vector<std::string> files = GetModelListFromAssets();
-
-  std::vector<char const *> pointers;
-  for (std::string const &str : files)
-    pointers.push_back(str.c_str());
-
-  static int s_index = 0;
-  ImGui::ListBox("Choose a boundary", &s_index, pointers.data(), (int)pointers.size());
+  ImGui::Text("Maybe an option to choose boundary shape...");
 
   if (ImGui::Button("Create##Modal_NewProject", DefaultData::data.buttonSize))
   {
-    if (files.size() > 0)
-    {
-      pApp->NewProject(std::string(DefaultData::data.modelsPath) + files[s_index]);
-      Close();
-    }
+    pApp->NewProject();
+    Close();
   }
 
   ImGui::SameLine();

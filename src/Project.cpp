@@ -7,162 +7,142 @@
 #include "DefaultData.h"
 #include "DgQueryPolygonPolygon.h"
 
-SceneObject::SceneObject()
-  : geometry()
-  , name()
-  , transform()
-  , valid(true)
+//--------------------------------------------------------------------------------
+// ScenePolygonLoop
+//--------------------------------------------------------------------------------
+
+ScenePolygonLoop::ScenePolygonLoop()
 {
 
 }
 
-void SceneObjectCollection::Clear()
+//--------------------------------------------------------------------------------
+// LoopCollection
+//--------------------------------------------------------------------------------
+
+LoopCollection::LoopCollection()
+  : m_nextID(0)
 {
-  objectList.clear();
+
 }
 
-std::vector<char> SceneObjectCollection::ToImGuiNameString() const
+PolygonID LoopCollection::Add(ScenePolygonLoop const &loop)
 {
-  std::vector<char> result;
-  for (auto const& obj : objectList)
+  m_loopMap.insert(Dg::Pair<PolygonID, ScenePolygonLoop>(m_nextID, loop));
+  PolygonID id = m_nextID;
+  m_nextID++;
+  return id;
+}
+
+void LoopCollection::Remove(PolygonID id)
+{
+  m_loopMap.erase(id);
+}
+
+ScenePolygonLoop *LoopCollection::Get(PolygonID id)
+{
+  auto it = m_loopMap.find(id);
+  if (it == m_loopMap.end())
+    return nullptr;
+  return &(it->second);
+}
+
+void LoopCollection::Clear()
+{
+  m_loopMap.clear();
+  m_nextID = 0;
+}
+
+static bool IsValidHole(xn::PolygonWithHoles const &polygon, Dg::DoublyLinkedList<xn::PolygonLoop>::iterator it_hole)
+{
+  if (polygon.loops.empty())
+    return true;
+
+  auto it = polygon.loops.cbegin();
+
+  Dg::TI2PolygonPolygon<float> query;
+  Dg::TI2PolygonPolygon<float>::Result result = query(*it, *it_hole);
+
+  if (result.code != Dg::QueryCode::B_in_A)
+    return false;
+
+  it++;
+  for (; it != polygon.loops.cend(); it++)
   {
-    for (char c : obj.name)
-      result.push_back(c);
-    result.push_back(0);
+    if (it == it_hole)
+      continue;
+
+    result = query(*it, *it_hole);
+
+    if (result.code != Dg::QueryCode::CompletelyOutside)
+      return false;
   }
-  result.push_back(0);
+  return true;
+}
+
+static bool LoopCompare(xn::PolygonLoop const &a, xn::PolygonLoop const &b)
+{
+  return a.Area() > b.Area();
+}
+
+// Transformed to world space, sorted, windings set
+static xn::PolygonWithHoles BuildPolygon(Dg::Map_AVL<PolygonID, ScenePolygonLoop> const &loops)
+{
+  xn::PolygonWithHoles result;
+
+  if (loops.empty())
+    return result;
+
+  for (auto it = loops.cbegin_rand(); it != loops.cend_rand(); it++)
+    result.loops.push_back(it->second.loop.GetTransformed(it->second.T_Model_World.ToMatrix33()));
+
+  result.loops.sort(LoopCompare);
+
+  result.loops.front().SetWinding(Dg::Orientation::CCW);
+
+  for (auto it = ++result.loops.begin(); it != result.loops.end(); it++)
+    it->SetWinding(Dg::Orientation::CW);
+
   return result;
 }
 
+
+#include "Logger.h"
+xn::PolygonWithHoles LoopCollection::BuildScenePolygon() const
+{
+  xn::PolygonWithHoles result;
+
+  if (m_loopMap.empty())
+    return result;
+
+  result = BuildPolygon(m_loopMap);
+
+  auto it = ++result.loops.begin();
+  
+  for (; it != result.loops.end();)
+  {
+    if (!IsValidHole(result, it))
+    {
+      it = result.loops.erase(it);
+      continue;
+    }
+    it++;
+  }
+
+  return result;
+}
+
+
+//--------------------------------------------------------------------------------
+// Project
+//--------------------------------------------------------------------------------
+
 Project::Project()
-  : sceneObjects()
-  , currentFocus(-1)
 {
 
 }
 
 void Project::Clear()
 {
-  sceneObjects.Clear();
-  currentFocus = -1;
-}
-
-void Project::RemoveCurrentFocus()
-{
-  sceneObjects.objectList.erase(sceneObjects.objectList.begin() + currentFocus);
-
-  currentFocus--;
-  if (currentFocus == -1 && sceneObjects.objectList.size() != 0)
-    currentFocus = 0;
-}
-
-// TODO This should be a Dg::Polygon2WithHoles (when it's done).
-bool Project::GetSanitisedGeometry(xn::PolygonGroup *pOut)
-{
-  pOut->polygons.clear();
-
-  if (sceneObjects.objectList.size() == 0)
-  {
-    LOG_ERROR("No geometry when sanitizing project geometry");
-    return false;
-  }
-
-  pOut->polygons.push_back(xn::Polygon()); //Reserve space for the boundary.
-  for (size_t i = 0; i < sceneObjects.objectList.size(); i++)
-  {
-    SceneObject *pObj = &sceneObjects.objectList[i];
-    pObj->valid = true;
-
-    xn::mat33 T_Model_World = pObj->transform.ToMatrix33();
-    if (i == 0)
-    {
-      xn::Polygon boundary = pObj->geometry.polygons[0].GetTransformed(T_Model_World);
-      boundary.SetWinding(Dg::Orientation::CCW);
-      pOut->polygons[0] = boundary;
-    }
-    else
-    {
-      std::vector<xn::Polygon> goodPolygons;
-      for (auto poly : pObj->geometry.polygons)
-      {
-        xn::Polygon transformed = poly.GetTransformed(T_Model_World);
-
-        for (size_t i = 0; i < pOut->polygons.size(); i++)
-        {
-          Dg::TI2PolygonPolygon<float> query;
-          Dg::TI2PolygonPolygon<float>::Result result = query(pOut->polygons[i], transformed);
-
-          if (((i == 0) && (result.code != Dg::QueryCode::B_in_A)) || ((i != 0) && (result.code != Dg::QueryCode::CompletelyOutside)))
-          {
-            pObj->valid = false;
-            break;
-          }
-        }
-
-        if (!pObj->valid)
-          break;
-
-        transformed.SetWinding(Dg::Orientation::CW);
-        goodPolygons.push_back(transformed);
-      }
-      if (pObj->valid)
-      {
-        for (auto const &poly : goodPolygons)
-          pOut->polygons.push_back(poly);
-      }
-    }
-  }
-
-  return true;
-}
-
-bool Project::AddNewObject(std::string const &filePath, std::string const &name)
-{
-  xn::PolygonGroup g;
-  bool success = g.ReadFromOBJ(filePath);
-
-  if (!success)
-  {
-    LOG_ERROR("Failed to open model: %s", filePath.c_str());
-    return false;
-  }
-
-  SceneObject obj;
-  obj.geometry = g;
-  obj.name = name;
-
-  sceneObjects.objectList.push_back(obj);
-  currentFocus = (int)sceneObjects.objectList.size() - 1;
-  return true;
-}
-
-bool Project::CompleteLoad()
-{
-  for (uint32_t group = 0; group < sceneObjects.objectList.size(); group++)
-  {
-    auto *pGroup = &sceneObjects.objectList[group].geometry.polygons;
-    for (uint32_t index = 0; index < pGroup->size(); index++)
-    {
-      (*pGroup)[index].SetID(BuildPolygonID(group, index));
-    }
-  }
-  return true;
-}
-
-Project *Project::CreateDefaultProject()
-{
-  Project *pProject = new Project;
-
-  SceneObject obj;
-  obj.geometry = DefaultData::data.defaultBoundary;
-  obj.name = DefaultData::data.defaultBoundaryName;
-  obj.valid = true;
-
-  pProject->sceneObjects.objectList.push_back(obj);
-  pProject->currentFocus = 0;
-
-  if (!pProject->CompleteLoad())
-    LOG_ERROR("Internal error while creating default project.");
-
-  return pProject;
+  loops.Clear();
 }

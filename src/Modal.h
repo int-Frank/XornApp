@@ -70,16 +70,6 @@ private:
   void _Show(App *pApp) override;
 };
 
-class Modal_AddModel : public Modal
-{
-public:
-
-  Modal_AddModel();
-
-private:
-  void _Show(App *pApp) override;
-};
-
 class Modal_NewProject : public Modal
 {
 public:

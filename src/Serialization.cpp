@@ -3,7 +3,6 @@
 
 #include "Project.h"
 #include "Logger.h"
-#include "xnLineProperties.h"
 
 #define KILL(...) do { LOG_ERROR(__VA_ARGS__); return false;} while (false)
 
@@ -35,17 +34,6 @@ bool ReadString(std::istream& is, std::string& str)
     str.push_back(c);
   }
   return true;
-}
-
-bool ReadVec2(std::istream& is, xn::vec2& v)
-{
-  char c = 0;
-
-  ASSERT_NEXT('[');
-
-  is >> v[0] >> c >> v[1] >> c;
-
-  return (is.good() && c == ']');
 }
 
 template<typename T>
@@ -125,7 +113,41 @@ bool DiscardNextObject(std::istream& is)
   return true;
 }
 
-bool TransformRead(xn::Transform *pObj, std::istream& is)
+//-------------------------------------------------------------------
+// vec2 IO
+//-------------------------------------------------------------------
+
+bool ReadVec2(std::istream &is, xn::vec2 &v)
+{
+  float x, y;
+
+  ASSERT_NEXT('[');
+  READ_NUMBER(x);
+  ASSERT_NEXT(',');
+  READ_NUMBER(y);
+  ASSERT_NEXT(']');
+
+  v.x() = x;
+  v.y() = y;
+
+  return true;
+}
+
+std::ostream &operator<<(std::ostream &os, xn::vec2 const &obj)
+{
+  os << "[" << obj.x() << ',' << obj.y() << ']';
+  return os;
+}
+
+//-------------------------------------------------------------------
+// Transform IO
+//-------------------------------------------------------------------
+
+#define ID_TRANSFORM_SCALE "scale"
+#define ID_TRANSFORM_POSITION "position"
+#define ID_TRANSFORM_ROTATION "rotation"
+
+bool ReadTransform(std::istream &is, xn::Transform &obj)
 {
   ASSERT_NEXT('{');
 
@@ -137,17 +159,17 @@ bool TransformRead(xn::Transform *pObj, std::istream& is)
     CHECK(ReadString(is, str));
     ASSERT_NEXT(':');
 
-    if (str == "scale")
+    if (str == ID_TRANSFORM_SCALE)
     {
-      CHECK(ReadVec2(is, pObj->scale));
+      CHECK(ReadVec2(is, obj.scale));
     }
-    else if (str == "position")
+    else if (str == ID_TRANSFORM_POSITION)
     {
-      CHECK(ReadVec2(is, pObj->position));
+      CHECK(ReadVec2(is, obj.translation));
     }
-    else if (str == "rotation")
+    else if (str == ID_TRANSFORM_ROTATION)
     {
-      READ_NUMBER(pObj->rotation);
+      READ_NUMBER(obj.rotation);
     }
     else
     {
@@ -156,50 +178,28 @@ bool TransformRead(xn::Transform *pObj, std::istream& is)
     }
 
     DISCARD_NEXT_IF(',');
-  };
-
-  return true;
-}
-
-bool ColourRead(xn::Colour *pObj, std::istream &is)
-{
-  READ_NUMBER(pObj->rgba32);
-  return true;
-}
-
-bool LinePropertiesRead(xn::LineProperties *pObj, std::istream& is)
-{
-  ASSERT_NEXT('{');
-
-  while (true)
-  {
-    BREAK_ON('}');
-
-    std::string str;
-    CHECK(ReadString(is, str));
-    ASSERT_NEXT(':');
-
-    if (str == "colour")
-    {
-      CHECK(ColourRead(&pObj->clr, is));
-    }
-    else if (str == "thickness")
-    {
-      READ_NUMBER(pObj->thickness);
-    }
-    else
-    {
-      LOG_WARNING("Unknown tag found when reading Line Render Option: '%s'", str.c_str());
-      DiscardNextObject(is);
-    }
-
-    DISCARD_NEXT_IF(',');
   }
 
   return true;
 }
 
-bool ReadPointArray(xn::DgPolygon *pPoly, std::istream &is)
+std::ostream &operator<<(std::ostream &os, xn::Transform const &obj)
+{
+  os << '{';
+
+  os << "\"" ID_TRANSFORM_SCALE "\":" << obj.scale;
+  os << ",\"" ID_TRANSFORM_POSITION "\":" << obj.translation;
+  os << ",\"" ID_TRANSFORM_ROTATION "\":" << obj.rotation;
+
+  os << '}';
+  return os;
+}
+
+//-------------------------------------------------------------------
+// PolygonLoop IO
+//-------------------------------------------------------------------
+
+bool ReadLoop(std::istream &is, xn::PolygonLoop &loop)
 {
   ASSERT_NEXT('[');
 
@@ -208,12 +208,8 @@ bool ReadPointArray(xn::DgPolygon *pPoly, std::istream &is)
     BREAK_ON(']');
 
     xn::vec2 point;
-
-    READ_NUMBER(point.x());
-    ASSERT_NEXT(',');
-    READ_NUMBER(point.y());
-
-    pPoly->PushBack(point);
+    CHECK(ReadVec2(is, point));
+    loop.PushBack(point);
 
     DISCARD_NEXT_IF(',');
   }
@@ -221,7 +217,31 @@ bool ReadPointArray(xn::DgPolygon *pPoly, std::istream &is)
   return true;
 }
 
-bool PolygonRead(xn::Polygon *pObj, std::istream &is)
+std::ostream &operator<<(std::ostream &os, xn::PolygonLoop const &obj)
+{
+  os << "[";
+
+  size_t i = 0;
+  for (auto it = obj.cPointsBegin(); it != obj.cPointsEnd(); it++)
+  {
+    os << *it;
+    if (i + 1 != obj.Size())
+      os << ',';
+    i++;
+  }
+
+  os << "]";
+  return os;
+}
+
+//-------------------------------------------------------------------
+// ScenePolygonLoop IO
+//-------------------------------------------------------------------
+
+#define ID_SCENEPOLYGONLOOP_POINTS "points"
+#define ID_SCENEPOLYGONLOOP_TRANSFORM "transform"
+
+bool ReadScenePolygonLoop(std::istream &is, ScenePolygonLoop &obj)
 {
   ASSERT_NEXT('{');
 
@@ -233,128 +253,17 @@ bool PolygonRead(xn::Polygon *pObj, std::istream &is)
     CHECK(ReadString(is, str));
     ASSERT_NEXT(':');
 
-    if (str == "points")
+    if (str == ID_SCENEPOLYGONLOOP_POINTS)
     {
-      pObj->Clear();
-      CHECK(ReadPointArray(pObj, is));
+      CHECK(ReadLoop(is, obj.loop));
+    }
+    else if (str == ID_SCENEPOLYGONLOOP_TRANSFORM)
+    {
+      CHECK(ReadTransform(is, obj.T_Model_World));
     }
     else
     {
-      LOG_WARNING("Unknown tag found when reading Line Render Option: '%s'", str.c_str());
-      DiscardNextObject(is);
-    }
-
-    DISCARD_NEXT_IF(',');
-  }
-
-  return true;
-}
-
-bool ReadPolygonArray(std::vector<xn::Polygon> *pPolygons, std::istream &is)
-{
-  ASSERT_NEXT('[');
-
-  while (true)
-  {
-    BREAK_ON(']');
-
-    xn::Polygon poly;
-    CHECK(PolygonRead(&poly, is));
-    pPolygons->push_back(poly);
-
-    DISCARD_NEXT_IF(',');
-  }
-
-  return true;
-}
-
-bool GeometryRead(xn::PolygonGroup *pObj, std::istream &is)
-{
-  ASSERT_NEXT('{');
-
-  while (true)
-  {
-    BREAK_ON('}');
-
-    std::string str;
-    CHECK(ReadString(is, str));
-    ASSERT_NEXT(':');
-
-    if (str == "polygons")
-    {
-      CHECK(ReadPolygonArray(&pObj->polygons, is));
-    }
-    else
-    {
-      LOG_WARNING("Unknown tag found when reading Line Render Option: '%s'", str.c_str());
-      DiscardNextObject(is);
-    }
-
-    DISCARD_NEXT_IF(',');
-  }
-
-  return true;
-}
-
-bool ReadGeometry(std::istream &is, xn::PolygonGroup *pGeom, std::string &name)
-{
-  ASSERT_NEXT('{');
-
-  while (true)
-  {
-    BREAK_ON('}');
-
-    std::string str;
-    CHECK(ReadString(is, str));
-    ASSERT_NEXT(':');
-
-    if (str == "name")
-    {
-      CHECK(ReadString(is, name));
-    }
-    else if (str == "geometry")
-    {
-      CHECK(GeometryRead(pGeom, is));
-    }
-    else
-    {
-      LOG_WARNING("Unknown tag found in geometry: '%s'", str.c_str());
-      CHECK(DiscardNextObject(is));
-    }
-
-    DISCARD_NEXT_IF(',');
-  }
-
-    return true;
-}
-
-bool SceneObject::Read(std::istream& is)
-{
-  ASSERT_NEXT('{');
-
-  while (true)
-  {
-    BREAK_ON('}');
-
-    std::string str;
-    CHECK(ReadString(is, str));
-    ASSERT_NEXT(':');
-
-    if (str == "geometry")
-    {
-      CHECK(GeometryRead(&geometry, is));
-    }
-    else if (str == "name")
-    {
-      CHECK(ReadString(is, name));
-    }
-    else if (str == "transform")
-    {
-      CHECK(TransformRead(&transform, is));
-    }
-    else
-    {
-      LOG_WARNING("Unknown tag found in active object: '%s'", str.c_str());
+      LOG_WARNING("Unknown tag found in scene polygon loop: '%s'", str.c_str());
       CHECK(DiscardNextObject(is));
     }
 
@@ -364,25 +273,63 @@ bool SceneObject::Read(std::istream& is)
   return true;
 }
 
-bool SceneObjectCollection::Read(std::istream& is)
+std::ostream &operator<<(std::ostream &os, ScenePolygonLoop const &obj)
 {
+  os << '{';
+
+  os << "\"" ID_SCENEPOLYGONLOOP_POINTS "\":" << obj.loop;
+  os << ",\"" ID_SCENEPOLYGONLOOP_TRANSFORM "\":" << obj.T_Model_World;
+
+  os << '}';
+  return os;
+}
+
+//-------------------------------------------------------------------
+// LoopCollection IO
+//-------------------------------------------------------------------
+
+bool ReadLoops(std::istream &is, LoopCollection &loops)
+{
+  char c;
+  std::string str;
+
   ASSERT_NEXT('[');
 
   while (true)
   {
     BREAK_ON(']');
 
-    SceneObject data = {};
-    CHECK(data.Read(is));
-    objectList.push_back(data);
+    ScenePolygonLoop loop;
+    CHECK(ReadScenePolygonLoop(is, loop));
+    loops.Add(loop);
 
     DISCARD_NEXT_IF(',');
-  }
+  };
 
   return true;
 }
 
-bool Project::Read(std::istream& is)
+std::ostream& operator<<(std::ostream& os, LoopCollection const &obj)
+{
+  size_t i = 0;
+  os << '[';
+  for (auto it = obj.m_loopMap.cbegin_rand(); it != obj.m_loopMap.cend_rand(); it++, i++)
+  {
+    os << it->second;
+    if (i + 1 != obj.m_loopMap.size())
+      os << ',';
+  }
+  os << ']';
+  return os;
+}
+
+//-------------------------------------------------------------------
+// Project IO
+//-------------------------------------------------------------------
+
+#define ID_PROJECT_POLYGONS "polygon"
+
+bool Project::Read(std::istream &is)
 {
   char c;
   std::string str;
@@ -396,17 +343,13 @@ bool Project::Read(std::istream& is)
 
     ASSERT_NEXT(':');
 
-    if (str == "active_objects")
+    if (str == ID_PROJECT_POLYGONS)
     {
-      CHECK(sceneObjects.Read(is));
-    }
-    else if (str == "current_focus")
-    {
-      READ_NUMBER(currentFocus);
+      CHECK(ReadLoops(is, loops));
     }
     else
     {
-      LOG_WARNING("Unknown tag found in root: '%s'", str.c_str());
+      LOG_WARNING("Unknown tag found in project: '%s'", str.c_str());
       CHECK(DiscardNextObject(is));
     }
 
@@ -414,112 +357,20 @@ bool Project::Read(std::istream& is)
     PEEK(c);
   } while (c != '}');
 
-  return CompleteLoad();
+  return true;
 }
 
-std::string WrapStr(std::string const &str)
-{
-  return std::string("\"") + str + std::string("\"");
-}
-
-std::ostream& operator<<(std::ostream& os, xn::Transform const &obj)
+std::ostream &operator<<(std::ostream &os, Project const &project)
 {
   os << '{';
 
-  os << "\"scale\":[" << obj.scale[0] << ',' << obj.scale[1] << ']';
-  os << ",\"position\":[" << obj.position[0] << ',' << obj.position[1] << ']';
-  os << ",\"rotation\":" << obj.rotation;
+  os << "\"" ID_PROJECT_POLYGONS "\":" << project.loops;
 
   os << '}';
   return os;
 }
 
-std::ostream &operator<<(std::ostream &os, xn::Colour const &obj)
-{
-  os << obj.rgba32;
-  return os;
-}
-
-std::ostream& operator<<(std::ostream& os, xn::LineProperties const &obj)
-{
-  os << '{';
-
-  os << "\"colour\":" << obj.clr;
-  os << ",\"thickness\":" << obj.thickness;
-
-  os << '}';
-  return os;
-}
-
-std::ostream &operator<<(std::ostream &os, xn::Polygon const &obj)
-{
-  os << "{\"points\":[";
-
-  size_t i = 0;
-  for (auto it = obj.cPointsBegin(); it != obj.cPointsEnd(); it++)
-  {
-    os << it->x() << ',' << it->y();
-    if (i + 1 != obj.Size())
-      os << ',';
-    i++;
-  }
-
-  os << "]}";
-  return os;
-}
-
-std::ostream &operator<<(std::ostream &os, xn::PolygonGroup const &obj)
-{
-  os << "{\"polygons\":[";
-
-  size_t i = 0;
-  for (auto const &polygon : obj.polygons)
-  {
-    os << polygon;
-    if (i + 1 != obj.polygons.size())
-      os << ',';
-    i++;
-  }
-
-  os << "]}";
-  return os;
-}
-
-std::ostream& operator<<(std::ostream& os, SceneObject const &obj)
-{
-  os << '{';
-
-  os << "\"geometry\":" << obj.geometry;
-  os << ",\"name\":" << WrapStr(obj.name);
-  os << ",\"transform\":" << obj.transform;
-
-  os << '}';
-  return os;
-}
-
-std::ostream& operator<<(std::ostream& os, SceneObjectCollection const &objs)
-{
-  for (size_t i = 0; i < objs.objectList.size(); i++)
-  {
-    os << objs.objectList[i];
-    if (i + 1 != objs.objectList.size())
-      os << ',';
-  }
-  return os;
-}
-
-std::ostream& operator<<(std::ostream& os, Project const &project)
-{
-  os << '{';
-
-  os << "\"active_objects\":[" << project.sceneObjects << "],";
-  os << "\"current_focus\":" << project.currentFocus;
-
-  os << '}';
-  return os;
-}
-
-bool Project::Read(std::string const& filePath)
+bool Project::Read(std::string const &filePath)
 {
   std::ifstream ifs(filePath);
 
@@ -532,7 +383,7 @@ bool Project::Read(std::string const& filePath)
   return success;
 }
 
-bool Project::Write(std::string const& filePath) const
+bool Project::Write(std::string const &filePath) const
 {
   std::ofstream ofs(filePath);
 

@@ -3,6 +3,8 @@
 #include "ImGuiRenderer.h"
 #include "Common.h"
 
+#define TO_IMG_CLR(clr) IM_COL32(clr.rgba.r, clr.rgba.g, clr.rgba.b, clr.rgba.a)
+
 class ImGuiRenderer::PIMPL
 {
 public:
@@ -45,16 +47,24 @@ void ImGuiRenderer::BeginDraw()
   m_pimpl->pDrawList->PushClipRect(ToImGui(m_pimpl->p0), ToImGui(m_pimpl->p1), true);
 }
 
-void ImGuiRenderer::DrawLine(xn::seg const &s, xn::LineProperties const &opts)
+void ImGuiRenderer::DrawLine(xn::seg const &s, xn::Draw::Stroke opts)
 {
-  m_pimpl->pDrawList->AddLine(ToImGui(s.GetP0()), ToImGui(s.GetP1()),
-    IM_COL32(opts.clr.rgba8[0], opts.clr.rgba8[1], opts.clr.rgba8[2], opts.clr.rgba8[3]), opts.thickness);
+  m_pimpl->pDrawList->AddLine(ToImGui(s.GetP0()), ToImGui(s.GetP1()), TO_IMG_CLR(opts.clr), opts.thickness);
 }
 
-void ImGuiRenderer::DrawFilledTriangle(xn::vec2 const &p0, xn::vec2 const &p1, xn::vec2 const &p2, xn::Colour clr)
+void ImGuiRenderer::DrawNGon(Dg::Vector2<float> const &centre, float radius, uint32_t sides, xn::Draw::Stroke opts)
 {
-  m_pimpl->pDrawList->AddTriangleFilled(ToImGui(p0), ToImGui(p1), ToImGui(p2),
-    IM_COL32(clr.rgba8[0], clr.rgba8[1], clr.rgba8[2], clr.rgba8[3]));
+  m_pimpl->pDrawList->AddNgon(ToImGui(centre), radius, TO_IMG_CLR(opts.clr), (int)sides, opts.thickness);
+}
+
+void ImGuiRenderer::DrawFilledNGon(Dg::Vector2<float> const &centre, uint32_t sides, float radius, xn::Draw::Fill opts)
+{
+  m_pimpl->pDrawList->AddNgonFilled(ToImGui(centre), radius, TO_IMG_CLR(opts.clr), (int)sides);
+}
+
+void ImGuiRenderer::DrawFilledTriangle(xn::vec2 const &p0, xn::vec2 const &p1, xn::vec2 const &p2, xn::Draw::Fill opts)
+{
+  m_pimpl->pDrawList->AddTriangleFilled(ToImGui(p0), ToImGui(p1), ToImGui(p2), TO_IMG_CLR(opts.clr));
 }
 
 void ImGuiRenderer::EndDraw()

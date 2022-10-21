@@ -6,18 +6,16 @@
 
 #include "Common.h"
 #include "Modal.h"
-#include "Camera.h"
 #include "Project.h"
 #include "Plugin.h"
-#include "MemoryManager.h"
-#include "xnMessageBus.h"
-#include "xnXornMessages.h"
 #include "XornAppMessages.h"
 #include "DgMap_AVL.h"
 #include "Canvas.h"
+#include "ActionList.h"
 
 struct GLFWwindow;
 class Logger;
+class MessageBus;
 
 namespace xn
 {
@@ -29,7 +27,7 @@ class App
 {
   struct ModuleData
   {
-    xn::Module *pModule;
+    xn::Module *pInstance;
     Plugin *pPlugin;
   };
 
@@ -41,9 +39,8 @@ public:
   void Run();
   void SaveProject();
   void OpenProject(std::string const &filePath);
-  void NewProject(std::string const &boundary);
+  void NewProject();
   void SetSaveFile(std::string const &newFilePath);
-  void AddModelFromFile(std::string const &fileName, std::string const &name);
   
   void MakeDirty();
   void PushModal(Modal *);
@@ -53,43 +50,37 @@ private:
   void ShowMenuBar();
   void ShowControlWindow();
   void HandleModals();
+  void HandleModules();
 
   void LoadPlugins();
   void OpenModule(uint32_t id, ModuleData *);
+  void LogMessage(Message const *);
+
   void HandleMessages();
-  void LogMessage(xn::Message const *);
+  void HandleMessage(Message_ZoomCamera *);
+  void HandleMessage(Message_MoveCamera *);
+  void HandleMessage(Message_MouseScroll *);
 
   void Render();
 
-  void DispatchToFocus(xn::Message *pMsg);
-  void DispatchToAllModules(xn::Message *pMsg);
-
-  void HandleMessage(xn::Message_ModuleClosed *pMsg);
-  void HandleMessage(xn::Message_ModuleGainedFocus *pMsg);
-  void HandleMessage(xn::Message_ModuleLostFocus *pMsg);
-  void HandleMessage(Message_MouseScroll *pMsg);
-  void HandleMessage(Message_ZoomCamera *pMsg);
-  void HandleMessage(Message_MoveCamera *pMsg);
-
 private:
 
-  // Persistant data
   GLFWwindow *m_pWindow;
-  Dg::Map_AVL<uint32_t, ModuleData> m_registeredModules;
   xn::UIContext *m_pUIContext;
-  xn::MessageBus m_msgBus;
-  SafeMemoryManager m_memMngr;
+  MessageBus *m_pMsgBus;
   Canvas *m_pCanvas;
+  Project *m_pProject;
 
-  // Temp data
-  uint32_t m_activeModuleID;
-  Camera m_camera;
+  Dg::Map_AVL<uint32_t, ModuleData> m_registeredModules;
+  ActionList m_actions;
+  xn::Transform m_T_Camera_World;
+  xn::PolygonWithHoles m_scenePolygon;
   std::vector<std::shared_ptr<Modal>> m_modalStack;
-  Project *m_pCurrentProject;
+  uint32_t m_activeModuleID;
   std::string m_saveFile;
-  xn::PolygonGroup m_sanitisedGeom;
-  bool m_geometryDirty;
-  bool m_projectDirty;
+
+  bool m_geometryDirty;  // To determine if we need to recalculate geometry for the modules
+  bool m_projectDirty;   // To determine if we should prompt to save project
   bool m_showDemoWindow;
   bool m_shouldQuit;
 };

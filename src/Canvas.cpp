@@ -1,7 +1,7 @@
 
 #include "xnRenderer.h"
-#include "xnMessageBus.h"
 #include "XornAppMessages.h"
+#include "MessageBus.h"
 
 #include "imgui.h"
 #include "Canvas.h"
@@ -9,7 +9,7 @@
 
 float const Canvas::s_minCanvasSize = 50.f;
 
-Canvas::Canvas(std::string const &name, xn::Renderer *pRenderer, xn::MessageBus *pMsgBus)
+Canvas::Canvas(std::string const &name, MessageBus *pMsgBus, xn::Renderer *pRenderer)
   : m_name(name)
   , m_pMsgBus(pMsgBus)
   , m_pRenderer(pRenderer)
@@ -43,7 +43,7 @@ xn::mat33 Canvas::Get_T_Camera_View() const
   return T_Camera_View;
 }
 
-xn::Renderer *Canvas::GetRenderer() const
+xn::Renderer *Canvas::GetRenderer()
 {
   return m_pRenderer;
 }
@@ -92,7 +92,7 @@ void Canvas::EndFrame()
   ImGui::End();
 }
 
-void Canvas::Handle(xn::Message *pMsg)
+void Canvas::Handle(Message *pMsg)
 {
   if (pMsg->GetType() == (uint32_t)MessageType::MouseScroll)
     m_scroll = ((Message_MouseScroll *)(pMsg))->val;

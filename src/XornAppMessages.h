@@ -2,12 +2,10 @@
 #define XORNAPPMESSAGES_H
 
 #include "DgVector.h"
-#include "xnMessage.h"
+#include "Message.h"
 
 enum class MessageType
 {
-  XORNAPP_START = (uint32_t)xn::MessageType::XORN_END,
-
   MouseScroll,
   ZoomCamera,
   MoveCamera,

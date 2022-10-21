@@ -9,8 +9,8 @@
 #include "DefaultData.h"
 #include "glfw3.h"
 #include "ImGuiUIContext.h"
+#include "MessageBus.h"
 #include "xnModuleInitData.h"
-#include "xnXornMessages.h"
 
 // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
 // To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
@@ -19,51 +19,36 @@
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
 
+// Yuck global, but need this so ImGui can push messages.
+MessageBus *g_pMsgBus = nullptr;
+
+#define MAIN_WINDOW_NAME "Control"
+
 #define INVALID_ID 0xFFFFFFFFul
 #define DISPATCH(t) case (uint32_t)MessageType::t:{HandleMessage((Message_ ## t*)pMsg); break;}
-#define xnDISPATCH(t) case (uint32_t)xn::MessageType::t:{HandleMessage((xn::Message_ ## t*)pMsg); break;}
-#define DISPATCH_TO_FOCUS_MODULE(t) case (uint32_t)xn::MessageType::t:{DispatchToFocus(pMsg); break;}
-#define DISPATCH_TO_ALL_MODULES(t) case (uint32_t)xn::MessageType::t:{DispatchToAllModules(pMsg); break;}
-
-xn::MessageBus *g_pMsgBus = nullptr;
 
 static void glfw_error_callback(int error, const char *description)
 {
   fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
-static xn::LineProperties MakeFocus(xn::LineProperties const &opt)
-{
-  xn::LineProperties result;
-  result.thickness = opt.thickness + 2.f;
-
-  float mult = .6f;
-  for (int i = 0; i < 4; i++)
-    result.clr.rgba8[i] = opt.clr.rgba8[i] + uint8_t(float(255 - opt.clr.rgba8[i]) * mult);
-
-  return result;
-}
-
 App::App()
   : m_pWindow(nullptr)
   , m_registeredModules()
   , m_pUIContext(nullptr)
-  , m_msgBus()
-  , m_memMngr()
+  , m_pMsgBus(nullptr)
   , m_pCanvas(nullptr)
+  , m_actions()
   , m_activeModuleID(INVALID_ID)
-  , m_camera()
+  , m_T_Camera_World()
   , m_modalStack()
-  , m_pCurrentProject(Project::CreateDefaultProject())
+  , m_pProject(nullptr)
   , m_saveFile()
-  , m_sanitisedGeom()
-  , m_geometryDirty(false)
+  , m_geometryDirty(true)
   , m_projectDirty(false)
   , m_showDemoWindow(false)
   , m_shouldQuit(false)
 {
-  g_pMsgBus = &m_msgBus;
-
   glfwSetErrorCallback(glfw_error_callback);
   if (!glfwInit())
     throw std::exception("Failed to initialise GLFW");
@@ -82,11 +67,13 @@ App::App()
   glfwMakeContextCurrent(m_pWindow);
   glfwSwapInterval(1); // Enable vsync
 
+  m_pMsgBus = new MessageBus();
+  g_pMsgBus = m_pMsgBus;
   m_pUIContext = new ImGuiUIContext(m_pWindow, true, glsl_version);
-  m_pCanvas = new Canvas("Output", new ImGuiRenderer(), &m_msgBus);
+  m_pCanvas = new Canvas("Output", m_pMsgBus, new ImGuiRenderer());
   m_pCanvas->SetSize(xn::vec2(DefaultData::data.windowWidth, DefaultData::data.windowHeight));
 
-  MakeDirty();
+  NewProject();
   LoadPlugins();
 }
 
@@ -100,30 +87,8 @@ void App::Run()
     ShowControlWindow();
 
     HandleModals();
-
-    if (m_geometryDirty)
-    {
-      m_sanitisedGeom.polygons.clear();
-      if (!m_pCurrentProject->GetSanitisedGeometry(&m_sanitisedGeom))
-      {
-        LOG_ERROR("Failed to sanitise geometry!");
-        m_geometryDirty = false;
-      }
-    }
-
-    for (auto &kv : m_registeredModules)
-    {
-      if (kv.second.pModule == nullptr)
-        continue;
-
-      kv.second.pModule->DoFrame(m_pUIContext, kv.first == m_activeModuleID);
-
-      if (m_geometryDirty)
-        kv.second.pModule->SetGeometry(m_sanitisedGeom);
-    }
-
-    m_geometryDirty = false;
-
+    HandleModules();
+    
     if (m_showDemoWindow)
       ImGui::ShowDemoWindow(&m_showDemoWindow);
 
@@ -135,21 +100,19 @@ App::~App()
 {
   delete m_pCanvas;
   delete m_pUIContext;
+  delete m_pProject;
+  delete m_pMsgBus;
+  g_pMsgBus = nullptr;
 
   for (auto &kv : m_registeredModules)
   {
-    if (kv.second.pModule != nullptr)
-      kv.second.pPlugin->DestroyModule(&kv.second.pModule);
+    if (kv.second.pInstance != nullptr)
+      kv.second.pPlugin->DestroyModule(&kv.second.pInstance);
     delete kv.second.pPlugin;
   }
 
   glfwDestroyWindow(m_pWindow);
   glfwTerminate();
-}
-
-void App::MakeDirty()
-{
-  m_projectDirty = m_geometryDirty = true;
 }
 
 void App::ShowMenuBar()
@@ -195,15 +158,13 @@ void App::ShowMenuBar()
     if (ImGui::BeginMenu("Options"))
     {
       ImGui::MenuItem("Show demo window", NULL, &m_showDemoWindow);
-      if (ImGui::MenuItem("Add model..."))
-        PushModal(new Modal_AddModel());
       ImGui::EndMenu();
     }
     if (ImGui::BeginMenu("Modules"))
     {
       for (auto &kv : m_registeredModules)
       {
-        if (ImGui::MenuItem(kv.second.pPlugin->GetModuleName().c_str(), nullptr, kv.second.pModule != nullptr))
+        if (ImGui::MenuItem(kv.second.pPlugin->GetModuleName().c_str(), nullptr, kv.second.pInstance != nullptr))
           OpenModule(kv.first, &kv.second);
       }
 
@@ -215,43 +176,11 @@ void App::ShowMenuBar()
 
 void App::ShowControlWindow()
 {
-  ImGui::Begin("Control", nullptr, ImGuiWindowFlags_MenuBar);
+  ImGui::Begin(MAIN_WINDOW_NAME, nullptr, ImGuiWindowFlags_MenuBar);
 
   ShowMenuBar();
 
   ImGui::Text("%s", std::filesystem::path(m_saveFile).stem().string().c_str());
-
-  ImGui::Separator();
-  if (m_pCurrentProject->sceneObjects.objectList.size() != 0)
-  {
-    ImGui::Combo("Selected geometry", &m_pCurrentProject->currentFocus, (char *)&m_pCurrentProject->sceneObjects.ToImGuiNameString()[0]);
-
-    SceneObject *pObj = &m_pCurrentProject->sceneObjects.objectList[m_pCurrentProject->currentFocus];
-
-    if (ImGui::DragFloat2("Scale", &pObj->transform.scale.x(), 0.01f, 0.001f, 100.f))
-      MakeDirty();
-
-    if (ImGui::DragFloat2("Position", &pObj->transform.position.x()))
-      MakeDirty();
-
-    float rotation = pObj->transform.rotation / Dg::Constants<float>::PI * 180.f;
-    if (ImGui::SliderFloat("Rotation", &rotation, 0.f, 360.f, "%0.2f deg"))
-      MakeDirty();
-    pObj->transform.rotation = rotation * Dg::Constants<float>::PI / 180.f;
-
-    if (ImGui::Button("Remove model"))
-    {
-      if (m_pCurrentProject->currentFocus == 0)
-      {
-        PushModal(new Modal_Alert("Cannot remove the boundary!"));
-      }
-      else
-      {
-        MakeDirty();
-        m_pCurrentProject->RemoveCurrentFocus();
-      }
-    }
-  }
 
   ImGui::End();
 }
@@ -264,6 +193,27 @@ void App::HandleModals()
   size_t back = m_modalStack.size() - 1;
   if (!m_modalStack[back]->Show(this))
     m_modalStack.erase(m_modalStack.begin() + back);
+}
+
+void App::HandleModules()
+{
+  if (m_geometryDirty)
+    m_scenePolygon = m_pProject->loops.BuildScenePolygon();
+
+  for (auto &kv : m_registeredModules)
+  {
+    if (kv.second.pInstance == nullptr)
+      continue;
+
+    if (m_geometryDirty)
+      kv.second.pInstance->SetGeometry(m_scenePolygon);
+
+    kv.second.pInstance->DoFrame(m_pUIContext);
+
+    if (!kv.second.pInstance->IsOpen())
+      kv.second.pPlugin->DestroyModule(&kv.second.pInstance);
+  }
+  m_geometryDirty = false;
 }
 
 void App::LoadPlugins()
@@ -288,53 +238,42 @@ void App::LoadPlugins()
 
 void App::OpenModule(uint32_t id, ModuleData *pData)
 {
-  if (pData->pModule == nullptr)
+  if (pData->pInstance == nullptr)
   {
     xn::ModuleInitData data{};
     data.ID = id;
     data.pLogger = GetLogger();
-    data.pMemMngr = &m_memMngr;
-    data.pMsgBus = &m_msgBus;
     data.name = pData->pPlugin->GetModuleName();
 
-    pData->pModule = pData->pPlugin->CreateModule(&data);
-    pData->pModule->SetGeometry(m_sanitisedGeom);
+    pData->pInstance = pData->pPlugin->CreateModule(&data);
+    pData->pInstance->SetGeometry(m_scenePolygon);
   }
 }
 
-void App::LogMessage(xn::Message const *pMsg)
+void App::LogMessage(Message const *pMsg)
 {
-  if (pMsg->GetType() != (uint32_t)xn::MessageType::MouseMove)
-  {
-    std::string str = pMsg->ToString();
-    LOG_DEBUG("MSG: %s", str.c_str());
-  }
+  std::string str = pMsg->ToString();
+  LOG_DEBUG("MSG: %s", str.c_str());
 }
 
 void App::HandleMessages()
 {
-  xn::Message *pMsg = m_msgBus.PopMessage();
+  Message *pMsg = m_pMsgBus->PopMessage();
   while (pMsg != nullptr)
   {
     LogMessage(pMsg);
 
     switch (pMsg->GetType())
     {
-      xnDISPATCH(ModuleClosed);
-      xnDISPATCH(ModuleGainedFocus);
-      xnDISPATCH(ModuleLostFocus);
       DISPATCH(MouseScroll);
       DISPATCH(ZoomCamera);
       DISPATCH(MoveCamera);
-      DISPATCH_TO_FOCUS_MODULE(MouseDown);
-      DISPATCH_TO_FOCUS_MODULE(MouseMove);
-      DISPATCH_TO_FOCUS_MODULE(MouseUp);
     default:
       LOG_DEBUG("Message not handled: '%s'", pMsg->ToString().c_str());
     }
 
     delete pMsg;
-    pMsg = m_msgBus.PopMessage();
+    pMsg = m_pMsgBus->PopMessage();
   }
 }
 
@@ -342,28 +281,26 @@ void App::Render()
 {
   // TODO Set window size
   m_pCanvas->BeginFrame();
-
   xn::Renderer *pRenderer = m_pCanvas->GetRenderer();
   pRenderer->BeginDraw();
 
-  m_camera.T_World_View = m_camera.T_Camera_World.ToMatrix33().GetInverse() * m_pCanvas->Get_T_Camera_View();
-  int index = -1;
-  for (auto const &obj : m_pCurrentProject->sceneObjects.objectList)
-  {
-    index++;
-    xn::LineProperties opts = obj.valid ? DefaultData::data.validPolygon : DefaultData::data.invalidPolygon;
+  xn::mat33 T_World_View = m_T_Camera_World.ToMatrix33().GetInverse() * m_pCanvas->Get_T_Camera_View();
 
-    if (index == m_pCurrentProject->currentFocus)
-      opts = MakeFocus(opts);
-    obj.geometry.Render(pRenderer, m_camera.T_World_View, opts, obj.transform);
+  for (auto it = m_pProject->loops.Begin(); it != m_pProject->loops.End(); it++)
+  {
+    auto opts = it->second.flags.QueryFlag(ScenePolygonLoopFlag::Invalid) ? DefaultData::data.invalidPolygon : DefaultData::data.validPolygon;
+    auto T_Model_World = it->second.T_Model_World.ToMatrix33();
+    auto T_Model_View = T_Model_World * T_World_View;
+    auto loop = it->second.loop.GetTransformed(T_Model_View);
+    loop.Render(pRenderer, opts);
   }
 
   for (auto &kv : m_registeredModules)
   {
-    if (kv.second.pModule == nullptr)
+    if (kv.second.pInstance == nullptr)
       continue;
 
-    kv.second.pModule->Render(pRenderer, m_camera.T_World_View);
+    kv.second.pInstance->Render(pRenderer, T_World_View);
   }
   pRenderer->EndDraw();
   m_pCanvas->EndFrame();
@@ -380,31 +317,15 @@ void App::Render()
   glfwSwapBuffers(m_pWindow);
 }
 
-void App::HandleMessage(xn::Message_ModuleClosed *pMsg)
+void App::HandleMessage(Message_ZoomCamera *pMsg)
 {
-  try
-  {
-    ModuleData &data = m_registeredModules.at(pMsg->windowID);
-
-    if (m_activeModuleID == pMsg->windowID)
-      m_activeModuleID = INVALID_ID;
-
-    data.pPlugin->DestroyModule(&data.pModule);
-  }
-  catch (std::exception e)
-  {
-    LOG_ERROR("Exception thrown when trying to close a module window: '%s'", e.what());
-  }
+  m_T_Camera_World.scale *= pMsg->val;
 }
 
-void App::HandleMessage(xn::Message_ModuleGainedFocus *pMsg)
+void App::HandleMessage(Message_MoveCamera *pMsg)
 {
-  m_activeModuleID = pMsg->windowID;
-}
-
-void App::HandleMessage(xn::Message_ModuleLostFocus *pMsg)
-{
-
+  m_T_Camera_World.translation.x() -= pMsg->v.x() * m_T_Camera_World.scale.x();
+  m_T_Camera_World.translation.y() += pMsg->v.y() * m_T_Camera_World.scale.y();
 }
 
 void App::HandleMessage(Message_MouseScroll *pMsg)
@@ -412,48 +333,13 @@ void App::HandleMessage(Message_MouseScroll *pMsg)
   m_pCanvas->Handle(pMsg);
 }
 
-void App::HandleMessage(Message_ZoomCamera *pMsg)
-{
-  m_camera.T_Camera_World.scale *= pMsg->val;
-}
-
-void App::HandleMessage(Message_MoveCamera *pMsg)
-{
-  m_camera.T_Camera_World.position.x() -= pMsg->v.x() * m_camera.T_Camera_World.scale.x();
-  m_camera.T_Camera_World.position.y() += pMsg->v.y() * m_camera.T_Camera_World.scale.y();
-}
-
-void App::DispatchToFocus(xn::Message *pMsg)
-{
-  auto it = m_registeredModules.find(m_activeModuleID);
-  if (it != m_registeredModules.end())
-  {
-    xn::Module *pModule = it->second.pModule;
-    if (pModule != nullptr)
-      pModule->Handle(pMsg);
-  }
-}
-
-void App::DispatchToAllModules(xn::Message *pMsg)
-{
-  for (auto &kv : m_registeredModules)
-  {
-    if (pMsg->QueryFlag(xn::Message::Flag::Handled))
-      break;
-
-    if (kv.second.pModule != nullptr)
-      kv.second.pModule->Handle(pMsg);
-  }
-}
-
 void App::SaveProject()
 {
   if ((m_saveFile.size() < 5) || (m_saveFile.substr(m_saveFile.size() - 5, 5) != ".json"))
     m_saveFile += std::string(".json");
 
-  if (!m_pCurrentProject->Write(m_saveFile))
+  if (!m_pProject->Write(m_saveFile))
   {
-    m_projectDirty = false;
     LOG_ERROR("Failed to save project file '%s'", m_saveFile.c_str());
   }
   else
@@ -473,33 +359,23 @@ void App::OpenProject(std::string const &filePath)
     return;
   }
 
-  Project *pTempProject = m_pCurrentProject;
-  m_pCurrentProject = pNewProject;
-  delete pTempProject;
+  delete m_pProject;
+  m_pProject = pNewProject;
   m_saveFile = filePath;
   m_geometryDirty = true;
   m_projectDirty = false;
 }
 
-void App::NewProject(std::string const &boundaryFile)
+void App::NewProject()
 {
-  xn::PolygonGroup geom;
-  if (!geom.ReadFromOBJ(boundaryFile))
-  {
-    LOG_ERROR("Failed to read boundary file '%s' while creating new project. New project aborted", boundaryFile.c_str());
-    return;
-  }
+  delete m_pProject;
+  m_pProject = new Project();
 
-  delete m_pCurrentProject;
-  m_pCurrentProject = new Project();
+  ScenePolygonLoop loop;
+  loop.loop = DefaultData::data.defaultBoundary;
 
-  SceneObject obj;
-  obj.geometry = geom;
-  obj.name = DefaultData::data.defaultBoundaryName;
+  m_pProject->loops.Add(loop);
 
-  m_pCurrentProject->sceneObjects.objectList.push_back(obj);
-  m_pCurrentProject->currentFocus = 0;
-  m_pCurrentProject->CompleteLoad();
   m_geometryDirty = true;
   m_projectDirty = true;
   m_saveFile.clear();
@@ -508,12 +384,6 @@ void App::NewProject(std::string const &boundaryFile)
 void App::SetSaveFile(std::string const &newFilePath)
 {
   m_saveFile = newFilePath;
-}
-
-void App::AddModelFromFile(std::string const &filePath, std::string const &name)
-{
-  if (m_pCurrentProject->AddNewObject(filePath, name))
-    MakeDirty();
 }
 
 void App::PushModal(Modal *pModal)

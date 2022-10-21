@@ -53,7 +53,7 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 
-#include "xnMessageBus.h"
+#include "MessageBus.h"
 #include "XornAppMessages.h"
 
 // Clang warnings with -Weverything
@@ -288,7 +288,7 @@ void ImGui_ImplGlfw_ScrollCallback(GLFWwindow* window, double xoffset, double yo
     ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
     if (bd->PrevUserCallbackScroll != NULL && window == bd->Window)
         bd->PrevUserCallbackScroll(window, xoffset, yoffset);
-    extern xn::MessageBus *g_pMsgBus;
+    extern MessageBus *g_pMsgBus;
 
     if (g_pMsgBus != nullptr)
     {

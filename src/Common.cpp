@@ -1,6 +1,7 @@
 
 #include <fstream>
 #include <filesystem>
+#include <sstream>
 
 #include "DefaultData.h"
 #include "DgMatrix33.h"
@@ -51,11 +52,6 @@ std::vector<std::string> GetProjectList()
   return GetFilesFromFolder(DefaultData::data.projectsPath, ".json");
 }
 
-std::vector<std::string> GetModelListFromAssets()
-{
-  return GetFilesFromFolder(DefaultData::data.modelsPath, ".obj");
-}
-
 uint32_t BuildPolygonID(uint32_t group, uint32_t index)
 {
   return ((group & 0xFFFF) << 16) | (index & 0xFFFF);
@@ -69,4 +65,60 @@ uint32_t GetGroupFromID(uint32_t id)
 uint32_t GetIndexFromID(uint32_t id)
 {
   return id & 0xFFFF;
+}
+
+static bool ReadPointsFromOBJ(std::string const &file, std::vector<xn::vec2> &out)
+{
+  std::ifstream ifs(file);
+  if (!ifs.good())
+    return false;
+
+  std::string line;
+  while (std::getline(ifs, line))
+  {
+    std::istringstream iss(line);
+    std::string tag;
+    iss >> tag;
+
+    if (tag == "v")
+    {
+      xn::vec2 v;
+      if (!(iss >> v.x() >> v.y()))
+        return false;
+
+      out.push_back(v);
+    }
+  }
+
+  return true;
+}
+
+bool ReadPolygonFromOBJ(std::string const &file, xn::PolygonWithHoles *pOut)
+{
+  std::vector<xn::vec2> points;
+  if (!ReadPointsFromOBJ(file, points))
+    return false;
+
+  std::ifstream ifs(file);
+  if (!ifs.good())
+    return false;
+
+  std::string line;
+  while (std::getline(ifs, line))
+  {
+    std::istringstream iss(line);
+    std::string tag;
+    iss >> tag;
+
+    if (tag == "l")
+    {
+      xn::PolygonLoop polygon;
+      int index;
+      while (iss >> index)
+        polygon.PushBack(points[index - 1]);
+      pOut->Push(polygon);
+    }
+  }
+
+  return true;
 }
