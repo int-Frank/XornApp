@@ -10,8 +10,10 @@ Message_ ## t * Message_ ## t::Create() {return new Message_ ## t();}
 #define MESSAGE_DEFAULT_STRING(t) std::string Message_ ## t::ToString() const { return std::string(#t); }
 
 MESSAGE_DEFINITION(MouseScroll)
+MESSAGE_DEFINITION(MouseButtonDown)
+MESSAGE_DEFINITION(MouseButtonUp)
+MESSAGE_DEFINITION(MouseMove)
 MESSAGE_DEFINITION(ZoomCamera)
-MESSAGE_DEFINITION(MoveCamera)
 
 std::string Message_MouseScroll::ToString() const
 {
@@ -20,16 +22,30 @@ std::string Message_MouseScroll::ToString() const
   return ss.str();
 }
 
+std::string Message_MouseButtonDown::ToString() const
+{
+  std::stringstream ss;
+  ss << "MouseButtonDown: " << (int)button << "; [" << position.x() << ", " << position.y() << "]";
+  return ss.str();
+}
+
+std::string Message_MouseButtonUp::ToString() const
+{
+  std::stringstream ss;
+  ss << "MouseButtonUp: " << (int)button << "; [" << position.x() << ", " << position.y() << "]";
+  return ss.str();
+}
+
+std::string Message_MouseMove::ToString() const
+{
+  std::stringstream ss;
+  ss << "MouseMove: [" << position.x() << ", " << position.y() << "]";
+  return ss.str();
+}
+
 std::string Message_ZoomCamera::ToString() const
 {
   std::stringstream ss;
   ss << "ZoomCamera: " << val;
-  return ss.str();
-}
-
-std::string Message_MoveCamera::ToString() const
-{
-  std::stringstream ss;
-  ss << "MoveCamera: [" << v.x() << ", " << v.y() << "]";
   return ss.str();
 }

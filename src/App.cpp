@@ -44,6 +44,8 @@ App::App()
   , m_modalStack()
   , m_pProject(nullptr)
   , m_saveFile()
+  , m_isMouseDragging(false)
+  , m_mousePosition(0.f, 0.f)
   , m_geometryDirty(true)
   , m_projectDirty(false)
   , m_showDemoWindow(false)
@@ -82,6 +84,11 @@ void App::Run()
   while (!m_shouldQuit && !glfwWindowShouldClose(m_pWindow))
   {
     glfwPollEvents();
+
+    int w, h;
+    glfwGetWindowSize(m_pWindow, &w, &h);
+    m_pCanvas->SetSize(xn::vec2((float)w, (float(h))));
+
     m_pUIContext->NewFrame();
     HandleMessages();
     ShowControlWindow();
@@ -261,13 +268,15 @@ void App::HandleMessages()
   Message *pMsg = m_pMsgBus->PopMessage();
   while (pMsg != nullptr)
   {
-    LogMessage(pMsg);
+    //LogMessage(pMsg);
 
     switch (pMsg->GetType())
     {
       DISPATCH(MouseScroll);
       DISPATCH(ZoomCamera);
-      DISPATCH(MoveCamera);
+      DISPATCH(MouseButtonDown);
+      DISPATCH(MouseButtonUp);
+      DISPATCH(MouseMove);
     default:
       LOG_DEBUG("Message not handled: '%s'", pMsg->ToString().c_str());
     }
@@ -322,10 +331,39 @@ void App::HandleMessage(Message_ZoomCamera *pMsg)
   m_T_Camera_World.scale *= pMsg->val;
 }
 
-void App::HandleMessage(Message_MoveCamera *pMsg)
+void App::HandleMessage(Message_MouseButtonUp *pMsg)
 {
-  m_T_Camera_World.translation.x() -= pMsg->v.x() * m_T_Camera_World.scale.x();
-  m_T_Camera_World.translation.y() += pMsg->v.y() * m_T_Camera_World.scale.y();
+  if (pMsg->button == xn::MouseInput::LeftButton)
+  {
+    m_isMouseDragging = false;
+  }
+}
+
+void App::HandleMessage(Message_MouseButtonDown *pMsg)
+{
+  if (pMsg->button == xn::MouseInput::LeftButton)
+  {
+    m_mousePosition = pMsg->position;
+    m_isMouseDragging = true;
+  }
+}
+
+void App::HandleMessage(Message_MouseMove *pMsg)
+{
+  // Mouse pointer in world space.
+  xn::Renderer *pRenderer = m_pCanvas->GetRenderer();
+  xn::mat33 T_World_View = m_T_Camera_World.ToMatrix33().GetInverse() * m_pCanvas->Get_T_Camera_View();
+  auto v = xn::vec3(pMsg->position.x(), pMsg->position.y(), 1.f)* T_World_View.GetInverse();
+
+  LOG_DEBUG("[%f, %f]", v.x(), v.y());
+
+  if (m_isMouseDragging)
+  {
+    xn::vec2 delta = pMsg->position - m_mousePosition;
+    m_mousePosition = pMsg->position;
+    m_T_Camera_World.translation.x() -= delta.x() * m_T_Camera_World.scale.x();
+    m_T_Camera_World.translation.y() += delta.y() * m_T_Camera_World.scale.y();
+  }
 }
 
 void App::HandleMessage(Message_MouseScroll *pMsg)

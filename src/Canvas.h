@@ -32,14 +32,8 @@ public:
 
 private:
 
-  static float const s_minCanvasSize;
-
-  std::string m_name;
-  MessageBus *m_pMsgBus;
-  xn::Renderer *m_pRenderer;
-  xn::vec2 m_size;
-  xn::vec2 m_position;
-  float m_scroll;
+  class PIMPL;
+  PIMPL *m_pimpl;
 };
 
 #endif

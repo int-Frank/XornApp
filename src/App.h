@@ -42,7 +42,6 @@ public:
   void NewProject();
   void SetSaveFile(std::string const &newFilePath);
   
-  void MakeDirty();
   void PushModal(Modal *);
 
 private:
@@ -58,7 +57,9 @@ private:
 
   void HandleMessages();
   void HandleMessage(Message_ZoomCamera *);
-  void HandleMessage(Message_MoveCamera *);
+  void HandleMessage(Message_MouseButtonDown *);
+  void HandleMessage(Message_MouseButtonUp *);
+  void HandleMessage(Message_MouseMove *);
   void HandleMessage(Message_MouseScroll *);
 
   void Render();
@@ -78,6 +79,9 @@ private:
   std::vector<std::shared_ptr<Modal>> m_modalStack;
   uint32_t m_activeModuleID;
   std::string m_saveFile;
+
+  bool m_isMouseDragging;
+  xn::vec2 m_mousePosition;
 
   bool m_geometryDirty;  // To determine if we need to recalculate geometry for the modules
   bool m_projectDirty;   // To determine if we should prompt to save project
