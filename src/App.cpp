@@ -46,6 +46,7 @@ App::App()
   , m_saveFile()
   , m_isMouseDragging(false)
   , m_mousePosition(0.f, 0.f)
+  , m_hasFocus(true)
   , m_geometryDirty(true)
   , m_projectDirty(false)
   , m_showDemoWindow(false)
@@ -188,6 +189,31 @@ void App::ShowControlWindow()
   ShowMenuBar();
 
   ImGui::Text("%s", std::filesystem::path(m_saveFile).stem().string().c_str());
+  ImGui::Separator();
+  ImGui::Text("Mouse input gets sent to...");
+  if (ImGui::Checkbox(MAIN_WINDOW_NAME, &m_hasFocus))
+  {
+    m_hasFocus = true;
+    for (auto it = m_registeredModules.begin(); it != m_registeredModules.end(); it++)
+        it->second.hasFocus = false;
+  }
+
+  for (auto it = m_registeredModules.begin(); it != m_registeredModules.end(); it++)
+  {
+    if (it->second.pInstance == nullptr)
+      continue;
+
+    if (ImGui::Checkbox(it->second.pPlugin->GetModuleName().c_str(), &it->second.hasFocus))
+    {
+      m_hasFocus = false;
+      it->second.hasFocus = true;
+      for (auto it2 = m_registeredModules.begin(); it2 != m_registeredModules.end(); it2++)
+      {
+        if (it->first != it2->first)
+          it2->second.hasFocus = false;
+      }
+    }
+  }
 
   ImGui::End();
 }
@@ -326,6 +352,24 @@ void App::Render()
   glfwSwapBuffers(m_pWindow);
 }
 
+xn::vec2 App::ViewToWorld(xn::vec2 const &p)
+{
+  xn::Renderer *pRenderer = m_pCanvas->GetRenderer();
+  xn::mat33 T_World_View = m_T_Camera_World.ToMatrix33().GetInverse() * m_pCanvas->Get_T_Camera_View();
+  xn::vec3 p1 = xn::vec3(p.x(), p.y(), 1.f) * T_World_View.GetInverse();
+  return xn::vec2(p1.x(), p1.y());
+}
+
+xn::Module *App::GetCurrentFocus()
+{
+  for (auto it = m_registeredModules.begin(); it != m_registeredModules.end(); it++)
+  {
+    if (it->second.hasFocus)
+      return it->second.pInstance;
+  }
+  return nullptr;
+}
+
 void App::HandleMessage(Message_ZoomCamera *pMsg)
 {
   m_T_Camera_World.scale *= pMsg->val;
@@ -333,42 +377,63 @@ void App::HandleMessage(Message_ZoomCamera *pMsg)
 
 void App::HandleMessage(Message_MouseButtonUp *pMsg)
 {
-  if (pMsg->button == xn::MouseInput::LeftButton)
+  if (m_hasFocus)
   {
-    m_isMouseDragging = false;
+    if (pMsg->button == xn::MouseInput::LeftButton)
+    {
+      m_isMouseDragging = false;
+    }
+  }
+  else
+  {
+    GetCurrentFocus()->MouseUp(pMsg->button);
   }
 }
 
 void App::HandleMessage(Message_MouseButtonDown *pMsg)
 {
-  if (pMsg->button == xn::MouseInput::LeftButton)
+  if (m_hasFocus)
   {
-    m_mousePosition = pMsg->position;
-    m_isMouseDragging = true;
+    if (pMsg->button == xn::MouseInput::LeftButton)
+    {
+      m_mousePosition = pMsg->position;
+      m_isMouseDragging = true;
+    }
+  }
+  else
+  {
+    GetCurrentFocus()->MouseDown(pMsg->button, ViewToWorld(pMsg->position));
   }
 }
 
 void App::HandleMessage(Message_MouseMove *pMsg)
 {
-  // Mouse pointer in world space.
-  xn::Renderer *pRenderer = m_pCanvas->GetRenderer();
-  xn::mat33 T_World_View = m_T_Camera_World.ToMatrix33().GetInverse() * m_pCanvas->Get_T_Camera_View();
-  auto v = xn::vec3(pMsg->position.x(), pMsg->position.y(), 1.f)* T_World_View.GetInverse();
-
-  LOG_DEBUG("[%f, %f]", v.x(), v.y());
-
-  if (m_isMouseDragging)
+  if (m_hasFocus)
   {
-    xn::vec2 delta = pMsg->position - m_mousePosition;
-    m_mousePosition = pMsg->position;
-    m_T_Camera_World.translation.x() -= delta.x() * m_T_Camera_World.scale.x();
-    m_T_Camera_World.translation.y() += delta.y() * m_T_Camera_World.scale.y();
+    if (m_isMouseDragging)
+    {
+      xn::vec2 delta = pMsg->position - m_mousePosition;
+      m_mousePosition = pMsg->position;
+      m_T_Camera_World.translation.x() -= delta.x() * m_T_Camera_World.scale.x();
+      m_T_Camera_World.translation.y() += delta.y() * m_T_Camera_World.scale.y();
+    }
+  }
+  else
+  {
+    GetCurrentFocus()->MouseMove(ViewToWorld(pMsg->position));
   }
 }
 
 void App::HandleMessage(Message_MouseScroll *pMsg)
 {
-  m_pCanvas->Handle(pMsg);
+  if (m_hasFocus)
+  {
+    m_pCanvas->Handle(pMsg);
+  }
+  else
+  {
+    GetCurrentFocus()->MouseScroll(pMsg->val);
+  }
 }
 
 void App::SaveProject()

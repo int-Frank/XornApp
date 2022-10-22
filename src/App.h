@@ -29,6 +29,7 @@ class App
   {
     xn::Module *pInstance;
     Plugin *pPlugin;
+    bool hasFocus;
   };
 
 public:
@@ -62,6 +63,9 @@ private:
   void HandleMessage(Message_MouseMove *);
   void HandleMessage(Message_MouseScroll *);
 
+  xn::vec2 ViewToWorld(xn::vec2 const &);
+  xn::Module *GetCurrentFocus();
+
   void Render();
 
 private:
@@ -83,6 +87,7 @@ private:
   bool m_isMouseDragging;
   xn::vec2 m_mousePosition;
 
+  bool m_hasFocus;
   bool m_geometryDirty;  // To determine if we need to recalculate geometry for the modules
   bool m_projectDirty;   // To determine if we should prompt to save project
   bool m_showDemoWindow;
