@@ -426,14 +426,7 @@ void App::HandleMessage(Message_MouseMove *pMsg)
 
 void App::HandleMessage(Message_MouseScroll *pMsg)
 {
-  if (m_hasFocus)
-  {
     m_pCanvas->Handle(pMsg);
-  }
-  else
-  {
-    GetCurrentFocus()->MouseScroll(pMsg->val);
-  }
 }
 
 void App::SaveProject()

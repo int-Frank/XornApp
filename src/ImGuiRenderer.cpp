@@ -62,6 +62,24 @@ void ImGuiRenderer::DrawFilledNGon(Dg::Vector2<float> const &centre, uint32_t si
   m_pimpl->pDrawList->AddNgonFilled(ToImGui(centre), radius, TO_IMG_CLR(opts.clr), (int)sides);
 }
 
+void ImGuiRenderer::DrawPolygon(Dg::Polygon2<float> const &polygon, xn::Draw::Stroke stroke)
+{
+  for (auto it = polygon.cEdgesBegin(); it != polygon.cEdgesEnd(); it++)
+  {
+    auto seg = it.ToSegment();
+    m_pimpl->pDrawList->AddLine(ToImGui(seg.GetP0()), ToImGui(seg.GetP1()), TO_IMG_CLR(stroke.clr), stroke.thickness);
+  }
+}
+
+void ImGuiRenderer::DrawFilledPolygon(Dg::Polygon2<float> const &polygon, xn::Draw::Fill fill)
+{
+  for (auto it = polygon.cEdgesBegin(); it != polygon.cEdgesEnd(); it++)
+  {
+    auto seg = it.ToSegment();
+    m_pimpl->pDrawList->AddLine(ToImGui(seg.GetP0()), ToImGui(seg.GetP1()), TO_IMG_CLR(fill.clr), 2.f);
+  }
+}
+
 void ImGuiRenderer::DrawFilledTriangle(xn::vec2 const &p0, xn::vec2 const &p1, xn::vec2 const &p2, xn::Draw::Fill opts)
 {
   m_pimpl->pDrawList->AddTriangleFilled(ToImGui(p0), ToImGui(p1), ToImGui(p2), TO_IMG_CLR(opts.clr));

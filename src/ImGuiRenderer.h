@@ -18,6 +18,8 @@ public:
   void DrawLine(xn::seg const &, xn::Draw::Stroke) override;
   void DrawNGon(Dg::Vector2<float> const &centre, float radius, uint32_t sides, xn::Draw::Stroke) override;
   void DrawFilledNGon(Dg::Vector2<float> const &centre, uint32_t sides, float radius, xn::Draw::Fill) override;
+  void DrawPolygon(Dg::Polygon2<float> const &, xn::Draw::Stroke) override;
+  void DrawFilledPolygon(Dg::Polygon2<float> const &, xn::Draw::Fill) override;
   void DrawFilledTriangle(xn::vec2 const &p0, xn::vec2 const &p1, xn::vec2 const &p2, xn::Draw::Fill) override;
   void EndDraw() override;
 
