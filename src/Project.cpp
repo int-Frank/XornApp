@@ -74,7 +74,7 @@ static bool IsValidHole(xn::PolygonWithHoles const &polygon, Dg::DoublyLinkedLis
 
     result = query(*it, *it_hole);
 
-    if (result.code != Dg::QueryCode::CompletelyOutside)
+    if (result.code != Dg::QueryCode::NotIntersecting)
       return false;
   }
   return true;
