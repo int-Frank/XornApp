@@ -1,6 +1,7 @@
 
 #include <filesystem>
 #include <sstream>
+#include <fstream>
 
 #include "Project.h"
 #include "Logger.h"
@@ -145,4 +146,64 @@ Project::Project()
 void Project::Clear()
 {
   loops.Clear();
+}
+
+bool Project::ReadFromOBJFile(std::string const &filePath)
+{
+  Clear();
+
+  // First pass, read in verts;
+  std::vector<xn::vec2> verts;
+  {
+    std::ifstream ifs(filePath);
+
+    if (!ifs.good())
+      return false;
+
+    std::string line;
+    while (std::getline(ifs, line))
+    {
+      std::istringstream iss(line);
+      char c;
+      if (!(iss >> c))
+        continue;
+
+      if (c == 'v')
+      {
+        float x, y;
+        if (!(iss >> x >> y))
+          continue;
+        verts.push_back(xn::vec2(x, y));
+      }
+    }
+  }
+
+  // Second pass, read in polygons
+  {
+    std::ifstream ifs(filePath);
+
+    if (!ifs.good())
+      return false;
+
+    std::string line;
+    while (std::getline(ifs, line))
+    {
+      std::istringstream iss(line);
+      char c;
+      if (!(iss >> c))
+        continue;
+
+      if (c == 'l')
+      {
+        ScenePolygonLoop loop;
+        int index;
+        while (iss >> index)
+          loop.loop.PushBack(verts[index - 1]);
+
+        loops.Add(loop);
+      }
+    }
+  }
+
+  return true;
 }

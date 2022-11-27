@@ -153,6 +153,37 @@ void Modal_Open::_Show(App *pApp)
     Close();
 }
 
+Modal_Import::Modal_Import()
+  : Modal("Import##Modal_Import")
+{
+
+}
+
+void Modal_Import::_Show(App *pApp)
+{
+  std::vector<std::string> files = GetOBJList();
+
+  std::vector<char const *> pointers;
+  for (std::string const &str : files)
+    pointers.push_back(str.c_str());
+
+  static int s_index = 0;
+  ImGui::ListBox(".obj files", &s_index, pointers.data(), (int)pointers.size());
+
+  if (ImGui::Button("Open##Modal_Import", DefaultData::data.buttonSize))
+  {
+    if (files.size() > 0)
+    {
+      pApp->ImportProject(std::string(DefaultData::data.projectsPath) + files[s_index]);
+      Close();
+    }
+  }
+
+  ImGui::SameLine();
+  if (ImGui::Button("Cancel##Modal_Import", DefaultData::data.buttonSize))
+    Close();
+}
+
 Modal_NewProject::Modal_NewProject()
   : Modal("New project##Modal_Open")
 {

@@ -52,6 +52,11 @@ std::vector<std::string> GetProjectList()
   return GetFilesFromFolder(DefaultData::data.projectsPath, ".json");
 }
 
+std::vector<std::string> GetOBJList()
+{
+  return GetFilesFromFolder(DefaultData::data.projectsPath, ".obj");
+}
+
 uint32_t BuildPolygonID(uint32_t group, uint32_t index)
 {
   return ((group & 0xFFFF) << 16) | (index & 0xFFFF);

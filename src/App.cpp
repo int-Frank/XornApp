@@ -46,7 +46,6 @@ App::App()
   , m_saveFile()
   , m_isMouseDragging(false)
   , m_mousePosition(0.f, 0.f)
-  , m_hasFocus(true)
   , m_geometryDirty(true)
   , m_projectDirty(false)
   , m_showDemoWindow(false)
@@ -144,6 +143,14 @@ void App::ShowMenuBar()
       }
 
       ImGui::Separator();
+
+      if (ImGui::MenuItem("Import"))
+      {
+        PushModal(new Modal_Import());
+        if (m_projectDirty)
+          PushModal(new Modal_SavePrompt());
+      }
+
       if (ImGui::MenuItem("Export as .obj"))
         PushModal(new Modal_Export());
 
@@ -191,9 +198,10 @@ void App::ShowControlWindow()
   ImGui::Text("%s", std::filesystem::path(m_saveFile).stem().string().c_str());
   ImGui::Separator();
   ImGui::Text("Mouse input gets sent to...");
-  if (ImGui::Checkbox(MAIN_WINDOW_NAME, &m_hasFocus))
+
+  bool hasFocus = GetCurrentFocus() == nullptr;
+  if (ImGui::Checkbox(MAIN_WINDOW_NAME, &hasFocus))
   {
-    m_hasFocus = true;
     for (auto it = m_registeredModules.begin(); it != m_registeredModules.end(); it++)
         it->second.hasFocus = false;
   }
@@ -205,7 +213,6 @@ void App::ShowControlWindow()
 
     if (ImGui::Checkbox(it->second.pPlugin->GetModuleName().c_str(), &it->second.hasFocus))
     {
-      m_hasFocus = false;
       it->second.hasFocus = true;
       for (auto it2 = m_registeredModules.begin(); it2 != m_registeredModules.end(); it2++)
       {
@@ -377,22 +384,30 @@ void App::HandleMessage(Message_ZoomCamera *pMsg)
 
 void App::HandleMessage(Message_MouseButtonUp *pMsg)
 {
-  if (m_hasFocus)
+  xn::Module *pFocus = GetCurrentFocus();
+
+  if (pFocus)
+  {
+    pFocus->MouseUp(pMsg->button);
+  }
+  else
   {
     if (pMsg->button == xn::MouseInput::LeftButton)
     {
       m_isMouseDragging = false;
     }
   }
-  else
-  {
-    GetCurrentFocus()->MouseUp(pMsg->button);
-  }
 }
 
 void App::HandleMessage(Message_MouseButtonDown *pMsg)
 {
-  if (m_hasFocus)
+  xn::Module *pFocus = GetCurrentFocus();
+
+  if (pFocus)
+  {
+    pFocus->MouseDown(pMsg->button, ViewToWorld(pMsg->position));
+  }
+  else
   {
     if (pMsg->button == xn::MouseInput::LeftButton)
     {
@@ -400,15 +415,17 @@ void App::HandleMessage(Message_MouseButtonDown *pMsg)
       m_isMouseDragging = true;
     }
   }
-  else
-  {
-    GetCurrentFocus()->MouseDown(pMsg->button, ViewToWorld(pMsg->position));
-  }
 }
 
 void App::HandleMessage(Message_MouseMove *pMsg)
 {
-  if (m_hasFocus)
+  xn::Module *pFocus = GetCurrentFocus();
+
+  if (pFocus)
+  {
+    pFocus->MouseMove(ViewToWorld(pMsg->position));
+  }
+  else
   {
     if (m_isMouseDragging)
     {
@@ -417,10 +434,6 @@ void App::HandleMessage(Message_MouseMove *pMsg)
       m_T_Camera_World.translation.x() -= delta.x() * m_T_Camera_World.scale.x();
       m_T_Camera_World.translation.y() += delta.y() * m_T_Camera_World.scale.y();
     }
-  }
-  else
-  {
-    GetCurrentFocus()->MouseMove(ViewToWorld(pMsg->position));
   }
 }
 
@@ -458,6 +471,23 @@ void App::OpenProject(std::string const &filePath)
   delete m_pProject;
   m_pProject = pNewProject;
   m_saveFile = filePath;
+  m_geometryDirty = true;
+  m_projectDirty = false;
+}
+
+void App::ImportProject(std::string const &filePath)
+{
+  Project *pNewProject = new Project();
+  if (!pNewProject->ReadFromOBJFile(filePath))
+  {
+    LOG_ERROR("Failed to import obj file '%s'", filePath.c_str());
+    delete pNewProject;
+    return;
+  }
+
+  delete m_pProject;
+  m_pProject = pNewProject;
+  m_saveFile = filePath + ".json";
   m_geometryDirty = true;
   m_projectDirty = false;
 }

@@ -64,6 +64,8 @@ public:
   bool Read(std::string const &filePath);
   bool Write(std::string const &filePath) const;
 
+  bool ReadFromOBJFile(std::string const &filePath);
+
   void Clear();
 
   LoopCollection loops;

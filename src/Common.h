@@ -16,6 +16,7 @@ std::vector<std::string> GetFilesFromFolder(std::string const &path, std::string
 std::vector<std::string> GetDirectoriesFromFolder(std::string const &path);
 
 std::vector<std::string> GetProjectList();
+std::vector<std::string> GetOBJList();
 
 ImVec2 ToImGui(xn::vec2 const& v);
 

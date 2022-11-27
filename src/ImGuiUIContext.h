@@ -35,7 +35,7 @@ public:
 
   bool SliderFloat(const char *label, float *v, float v_min, float v_max, const char *format = "%.3f", xn::UIFlags const *pFlags = nullptr) override;
   bool SliderInt(const char *label, int *v, int v_min, int v_max, const char *format = "%d", xn::UIFlags const *pFlags = nullptr) override;
-
+  bool InputFloat(const char *label, float *v, float step, float step_fast, const char *format = "%.3f", xn::UIFlags const *pFlags = nullptr) override;
 };
 
 #endif

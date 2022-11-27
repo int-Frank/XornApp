@@ -40,6 +40,7 @@ public:
   void Run();
   void SaveProject();
   void OpenProject(std::string const &filePath);
+  void ImportProject(std::string const &filePath);
   void NewProject();
   void SetSaveFile(std::string const &newFilePath);
   
@@ -87,7 +88,6 @@ private:
   bool m_isMouseDragging;
   xn::vec2 m_mousePosition;
 
-  bool m_hasFocus;
   bool m_geometryDirty;  // To determine if we need to recalculate geometry for the modules
   bool m_projectDirty;   // To determine if we should prompt to save project
   bool m_showDemoWindow;

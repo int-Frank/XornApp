@@ -128,6 +128,11 @@ bool ImGuiUIContext::SliderInt(const char *label, int *v, int v_min, int v_max, 
   return ImGui::SliderInt(label, v, v_min, v_max, format, ToImGuiFlags(pFlags));
 }
 
+bool ImGuiUIContext::InputFloat(const char *label, float *v, float step, float step_fast, const char *format, xn::UIFlags const *pFlags)
+{
+  return ImGui::InputFloat(label, v, step, step_fast, format, ToImGuiFlags(pFlags));
+}
+
 bool ImGuiUIContext::Checkbox(char const *pLabel, bool *pVal)
 {
   return ImGui::Checkbox(pLabel, pVal);
