@@ -107,8 +107,6 @@ static xn::PolygonWithHoles BuildPolygon(Dg::Map_AVL<PolygonID, ScenePolygonLoop
   return result;
 }
 
-
-#include "Logger.h"
 xn::PolygonWithHoles LoopCollection::BuildScenePolygon() const
 {
   xn::PolygonWithHoles result;
