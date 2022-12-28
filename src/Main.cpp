@@ -2,6 +2,7 @@
 #include "App.h"
 #include "Logger.h"
 #include "ConsoleLogger.h"
+#include "MyException.h"
 
 int main(int, char**)
 {
@@ -15,6 +16,10 @@ int main(int, char**)
     App *pApp = new App();
     pApp->Run();
     delete pApp;
+  }
+  catch (MyException e)
+  {
+    LOG_ERROR("App failed with exception: %s", e.what());
   }
   catch (std::exception e)
   {
