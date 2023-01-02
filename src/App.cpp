@@ -2,15 +2,17 @@
 #include <filesystem>
 #include <stdio.h>
 
+#include "glfw3.h"
+
 #include "xnModule.h"
+#include "xnModuleInitData.h"
+
 #include "App.h"
 #include "Logger.h"
-#include "ImGuiRenderer.h"
+#include "IRenderer.h"
 #include "DefaultData.h"
-#include "glfw3.h"
 #include "ImGuiUIContext.h"
 #include "MessageBus.h"
-#include "xnModuleInitData.h"
 
 // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
 // To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
@@ -38,6 +40,7 @@ App::App()
   , m_pUIContext(nullptr)
   , m_pMsgBus(nullptr)
   , m_pCanvas(nullptr)
+  , m_pScene(nullptr)
   , m_actions()
   , m_activeModuleID(INVALID_ID)
   , m_T_Camera_World()
@@ -72,8 +75,9 @@ App::App()
   m_pMsgBus = new MessageBus();
   g_pMsgBus = m_pMsgBus;
   m_pUIContext = new ImGuiUIContext(m_pWindow, true, glsl_version);
-  m_pCanvas = new Canvas("Output", m_pMsgBus, new ImGuiRenderer());
+  m_pCanvas = new Canvas("Output", m_pMsgBus, CreateRenderer());
   m_pCanvas->SetSize(xn::vec2(DefaultData::data.windowWidth, DefaultData::data.windowHeight));
+  m_pScene = new Scene();
 
   NewProject();
   LoadPlugins();
@@ -108,6 +112,7 @@ App::~App()
   delete m_pCanvas;
   delete m_pUIContext;
   delete m_pProject;
+  delete m_pScene;
   delete m_pMsgBus;
   g_pMsgBus = nullptr;
 
@@ -116,6 +121,7 @@ App::~App()
     if (kv.second.pInstance != nullptr)
       kv.second.pPlugin->DestroyModule(&kv.second.pInstance);
     delete kv.second.pPlugin;
+    delete kv.second.pScene;
   }
 
   glfwDestroyWindow(m_pWindow);
@@ -248,10 +254,14 @@ void App::HandleModules()
     if (m_geometryDirty)
       kv.second.pInstance->SetGeometry(m_scenePolygon);
 
-    kv.second.pInstance->DoFrame(m_pUIContext);
+    kv.second.pInstance->DoFrame(m_pUIContext, kv.second.pScene);
 
     if (!kv.second.pInstance->IsOpen())
+    {
       kv.second.pPlugin->DestroyModule(&kv.second.pInstance);
+      delete kv.second.pScene;
+      kv.second.pScene = nullptr;
+    }
   }
   m_geometryDirty = false;
 }
@@ -286,6 +296,7 @@ void App::OpenModule(uint32_t id, ModuleData *pData)
     data.name = pData->pPlugin->GetModuleName();
 
     pData->pInstance = pData->pPlugin->CreateModule(&data);
+    pData->pScene = new Scene();
     pData->pInstance->SetGeometry(m_scenePolygon);
   }
 }
@@ -323,27 +334,32 @@ void App::Render()
 {
   // TODO Set window size
   m_pCanvas->BeginFrame();
-  xn::Renderer *pRenderer = m_pCanvas->GetRenderer();
+  IRenderer *pRenderer = m_pCanvas->GetRenderer();
   pRenderer->BeginDraw();
 
-  xn::mat33 T_World_View = m_T_Camera_World.ToMatrix33().GetInverse() * m_pCanvas->Get_T_Camera_View();
+  //xn::mat33 T_World_View = m_T_Camera_World.ToMatrix33().GetInverse() * m_pCanvas->Get_T_Camera_View();
 
   for (auto it = m_pProject->loops.Begin(); it != m_pProject->loops.End(); it++)
   {
-    auto opts = it->second.flags.QueryFlag(ScenePolygonLoopFlag::Invalid) ? DefaultData::data.invalidPolygon : DefaultData::data.validPolygon;
-    auto T_Model_World = it->second.T_Model_World.ToMatrix33();
-    auto T_Model_View = T_Model_World * T_World_View;
-    auto loop = it->second.loop.GetTransformed(T_Model_View);
-    loop.Render(pRenderer, opts);
+    m_pScene->AddPolygon(it->second.loop, 
+      DefaultData::data.polygonThickness, 
+      DefaultData::data.polygonThickness, 0, 0,
+      it->second.T_Model_World.ToMatrix33());
   }
 
+  m_pScene->Draw(pRenderer);
+  m_pScene->Clear();
+
+  // TODO sort module scenes to draw correctly.
   for (auto &kv : m_registeredModules)
   {
     if (kv.second.pInstance == nullptr)
       continue;
 
-    kv.second.pInstance->Render(pRenderer, T_World_View);
+    kv.second.pScene->Draw(pRenderer);
+    kv.second.pScene->Clear();
   }
+
   pRenderer->EndDraw();
   m_pCanvas->EndFrame();
 
@@ -361,7 +377,6 @@ void App::Render()
 
 xn::vec2 App::ViewToWorld(xn::vec2 const &p)
 {
-  xn::Renderer *pRenderer = m_pCanvas->GetRenderer();
   xn::mat33 T_World_View = m_T_Camera_World.ToMatrix33().GetInverse() * m_pCanvas->Get_T_Camera_View();
   xn::vec3 p1 = xn::vec3(p.x(), p.y(), 1.f) * T_World_View.GetInverse();
   return xn::vec2(p1.x(), p1.y());

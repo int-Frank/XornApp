@@ -10,16 +10,21 @@ project "XornApp"
   {
     "src/**.h",
     "src/**.cpp",
+    "src/render/**.cpp",
+    "src/render/**.h",
+    "src/render/**.glsl",
 	"3rdParty/ImGui/**.h",
-	"3rdParty/ImGui/**.cpp"
+	"3rdParty/ImGui/**.cpp",
+	"3rdParty/glad/src/glad.c"
   }
     
   includedirs
   {
     "src",
+    "src/render",
     "%{wks.location}/XornCore/src",
     "%{wks.location}/DgLib/src",
-	"3rdParty/glad/include/glad",
+	"3rdParty/glad/include",
 	"3rdParty/GLFW/include",
 	"3rdParty/ImGui"
   }

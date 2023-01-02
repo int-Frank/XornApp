@@ -11,6 +11,7 @@
 #include "XornAppMessages.h"
 #include "DgMap_AVL.h"
 #include "Canvas.h"
+#include "Scene.h"
 #include "ActionList.h"
 
 struct GLFWwindow;
@@ -27,8 +28,9 @@ class App
 {
   struct ModuleData
   {
-    xn::Module *pInstance;
     Plugin *pPlugin;
+    xn::Module *pInstance;
+    Scene *pScene;
     bool hasFocus;
   };
 
@@ -75,6 +77,7 @@ private:
   xn::UIContext *m_pUIContext;
   MessageBus *m_pMsgBus;
   Canvas *m_pCanvas;
+  Scene *m_pScene;
   Project *m_pProject;
 
   Dg::Map_AVL<uint32_t, ModuleData> m_registeredModules;

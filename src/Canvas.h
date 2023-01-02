@@ -4,27 +4,24 @@
 #include <string>
 
 #include "xnGeometry.h"
+#include "xnIScene.h"
 
 class MessageBus;
 class Message;
-
-namespace xn
-{
-  class Renderer;
-}
+class IRenderer;
 
 class Canvas
 {
 public:
 
-  Canvas(std::string const &name, MessageBus *, xn::Renderer *pRenderer);
+  Canvas(std::string const &name, MessageBus *, IRenderer *);
   ~Canvas();
 
   void SetPosition(xn::vec2 const &);
   void SetSize(xn::vec2 const &);
 
+  IRenderer * GetRenderer();
   xn::mat33 Get_T_Camera_View() const;
-  xn::Renderer *GetRenderer();
   void BeginFrame();
   void EndFrame();
 

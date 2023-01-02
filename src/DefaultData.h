@@ -3,7 +3,7 @@
 
 #include <string>
 #include "Common.h"
-#include "xnDraw.h"
+#include "xnColour.h"
 
 struct DefaultData
 {
@@ -20,9 +20,8 @@ struct DefaultData
   std::string defaultProjectName;
 
   ImVec2 buttonSize;
-  xn::Draw::Stroke validPolygon;
-  xn::Draw::Stroke invalidPolygon;
-  xn::Draw::Stroke selectedItem;
+  xn::Colour polygonColour;
+  float polygonThickness;
 };
 
 #endif

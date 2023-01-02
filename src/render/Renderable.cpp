@@ -2,7 +2,7 @@
 #include <vector>
 
 #include "Renderable.h"
-#include "../MyException.h"
+#include "MyException.h"
 
 struct GL_State
 {
@@ -69,7 +69,7 @@ static void DestroyGLState(GL_State **ppState)
   *ppState = nullptr;
 }
 
-GLuint Renderable::GetShaderProgram(std::string const &a_vs, std::string const &a_fs)
+GLuint ObjectRenderer::GetShaderProgram(std::string const &a_vs, std::string const &a_fs)
 {
   //Create shader ID
   GLuint vsID = glCreateShader(GL_VERTEX_SHADER);
@@ -140,15 +140,7 @@ GLuint Renderable::GetShaderProgram(std::string const &a_vs, std::string const &
   return shaderProgram;
 }
 
-void Renderable::Draw()
-{
-  GL_State *pState = GetGLState();
-  _Draw();
-  SetGLState(pState);
-  DestroyGLState(&pState);
-}
-
-void Renderable::SetMatrix_World_View(xn::mat33 const &mat)
+void ObjectRenderer::SetMatrix_World_View(xn::mat33 const &mat)
 {
   GLint prog;
   glGetIntegerv(GL_CURRENT_PROGRAM, &prog);

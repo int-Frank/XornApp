@@ -1,9 +1,9 @@
 
-#include "xnRenderer.h"
 #include "xnCommon.h"
 #include "XornAppMessages.h"
 #include "MessageBus.h"
 
+#include "IRenderer.h"
 #include "imgui.h"
 #include "Canvas.h"
 #include "Common.h"
@@ -15,7 +15,7 @@ class Canvas::PIMPL
 {
 public:
 
-  PIMPL(std::string const &name, MessageBus *pMsgBus, xn::Renderer *pRenderer)
+  PIMPL(std::string const &name, MessageBus *pMsgBus, IRenderer *pRenderer)
     : name(name)
     , pMsgBus(pMsgBus)
     , pRenderer(pRenderer)
@@ -35,7 +35,7 @@ public:
 
   std::string name;
   MessageBus *pMsgBus;
-  xn::Renderer *pRenderer;
+  IRenderer *pRenderer;
   xn::vec2 size;
   xn::vec2 position;
   float scroll;
@@ -45,7 +45,7 @@ public:
 
 float const Canvas::PIMPL::s_minCanvasSize = 50.f;
 
-Canvas::Canvas(std::string const &name, MessageBus *pMsgBus, xn::Renderer *pRenderer)
+Canvas::Canvas(std::string const &name, MessageBus *pMsgBus, IRenderer *pRenderer)
   : m_pimpl(new PIMPL(name, pMsgBus, pRenderer))
 {
 
@@ -69,14 +69,9 @@ void Canvas::SetSize(xn::vec2 const &v)
 xn::mat33 Canvas::Get_T_Camera_View() const
 {
   xn::mat33 T_Camera_View;
-  T_Camera_View.Translation(m_pimpl->size / 2.0f);
-  T_Camera_View[4] *= -1.f;
+  //T_Camera_View.Translation(m_pimpl->size / 2.0f);
+  //T_Camera_View[4] *= -1.f;
   return T_Camera_View;
-}
-
-xn::Renderer *Canvas::GetRenderer()
-{
-  return m_pimpl->pRenderer;
 }
 
 void Canvas::BeginFrame()
@@ -94,7 +89,8 @@ void Canvas::BeginFrame()
 
   // Draw border and background color
   ImGuiIO &io = ImGui::GetIO();
-  m_pimpl->pRenderer->Set(xn::vec2(canvas_p0.x, canvas_p0.y), xn::vec2(canvas_p1.x, canvas_p1.y));
+  vec2 vSize = xn::vec2(canvas_p1.x, canvas_p1.y) - xn::vec2(canvas_p0.x, canvas_p0.y);
+  m_pimpl->pRenderer->SetSize(uint32_t(vSize.x()), uint32_t(vSize.y()));
 
   // This will catch our interactions
   ImGui::InvisibleButton(std::string(std::string("canvas##") + m_pimpl->name).c_str(), canvas_sz, ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight);
@@ -187,7 +183,19 @@ void Canvas::BeginFrame()
 
 void Canvas::EndFrame()
 {
+  ImGui::GetWindowDrawList()->AddImage(
+    (void *)m_pimpl->pRenderer->GetTexture(),
+    ImVec2(ImGui::GetCursorScreenPos()),
+    ImVec2(ImGui::GetCursorScreenPos().x + m_pimpl->pRenderer->GetWidth(),
+      ImGui::GetCursorScreenPos().y + +m_pimpl->pRenderer->GetHeight()),
+    ImVec2(0, 1), ImVec2(1, 0));
+
   ImGui::End();
+}
+
+IRenderer *Canvas::GetRenderer()
+{
+  return m_pimpl->pRenderer;
 }
 
 void Canvas::Handle(Message *pMsg)

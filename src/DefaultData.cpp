@@ -10,9 +10,8 @@ DefaultData::DefaultData()
   , defaultBoundary()
   , defaultProjectName("My project")
   , buttonSize(80.f, 24.f)
-  , validPolygon(0xFF00FFFF, 2.f)
-  , invalidPolygon(0xFF0000FF, 2.f)
-  , selectedItem(0xFFFFFFFF, 4.f)
+  , polygonColour(0xFF00FFFF)
+  , polygonThickness(2.f)
 {
   defaultBoundary.PushBack(xn::vec2(50.f, 50.f));
   defaultBoundary.PushBack(xn::vec2(-50.f, 50.f));
