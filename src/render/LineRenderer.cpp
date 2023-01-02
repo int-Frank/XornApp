@@ -69,11 +69,6 @@ void LineRenderer::Draw(std::vector<xn::seg> const &segments, xn::Colour clr, fl
   for each (auto & seg in segments)
   {
     perpVectors.push_back(Dg::Perpendicular(Dg::Normalize(seg.Vect())));
-    perpVectors.push_back(Dg::Perpendicular(Dg::Normalize(seg.Vect())));
-    perpVectors.push_back(Dg::Perpendicular(Dg::Normalize(seg.Vect())));
-    perpVectors.push_back(Dg::Perpendicular(Dg::Normalize(seg.Vect())));
-    perpVectors.push_back(Dg::Perpendicular(Dg::Normalize(seg.Vect())));
-    perpVectors.push_back(Dg::Perpendicular(Dg::Normalize(seg.Vect())));
 
     xn::vec2 e0 = seg.GetP0();
     xn::vec2 e1 = seg.GetP1();
@@ -113,14 +108,12 @@ void LineRenderer::Draw(std::vector<xn::seg> const &segments, xn::Colour clr, fl
 
   GLuint perpVecBuffer;
   glGenBuffers(1, &perpVecBuffer);
-  glBindBuffer(GL_ARRAY_BUFFER, perpVecBuffer);
-  glBufferData(GL_ARRAY_BUFFER,
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, perpVecBuffer);
+  glBufferData(GL_SHADER_STORAGE_BUFFER,
                perpVectors.size() * sizeof(xn::vec2),
                perpVectors.data(), 
                GL_STATIC_DRAW);
-
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(1);
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, perpVecBuffer);
 
   // Draw elements...
 

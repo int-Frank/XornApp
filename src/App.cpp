@@ -60,7 +60,7 @@ App::App()
     throw std::exception("Failed to initialise GLFW");
 
   const char *glsl_version = "#version 130";
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
   //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
@@ -75,6 +75,12 @@ App::App()
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     throw std::exception("Failed to initialise glad");
+
+  GLint major, minor;
+  glGetIntegerv(GL_MAJOR_VERSION, &major);
+  glGetIntegerv(GL_MINOR_VERSION, &minor);
+
+  LOG_INFO("OpenGL context: %i.%i", major, minor);
 
   m_pMsgBus = new MessageBus();
   g_pMsgBus = m_pMsgBus;

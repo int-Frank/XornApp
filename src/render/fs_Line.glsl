@@ -1,5 +1,5 @@
 R"(
-#version 330
+#version 430
 
 uniform vec4 u_color;
 out vec4 color;
