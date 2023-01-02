@@ -33,7 +33,15 @@ ILineRenderer *CreateLineRenderer()
 
 LineRenderer::LineRenderer()
 {
-  m_shaderProgram = GetShaderProgram("./shaders/fs_Line.glsl", "./shaders/vs_Line.glsl");
+  std::string vs_str = std::string(
+#include "vs_Line.glsl"
+  );
+
+  std::string fs_str = std::string(
+#include "fs_Line.glsl"
+  );
+
+  m_shaderProgram = GetShaderProgram(vs_str, fs_str);
 }
 
 LineRenderer::~LineRenderer()
@@ -43,20 +51,28 @@ LineRenderer::~LineRenderer()
 
 void LineRenderer::_SetMatrix_World_View(xn::mat33 const &mat)
 {
-  glUseProgram(m_shaderProgram);
-  GLuint mwv = glGetUniformLocation(m_shaderProgram, "u_T_World_View");
-  if (mwv == -1)
-    throw MyException("Failed to set world to view matrix for the line renderer.");
-  glUniformMatrix4fv(mwv, 1, GL_FALSE, mat.GetData());
+  //glUseProgram(m_shaderProgram);
+  //GLuint mwv = glGetUniformLocation(m_shaderProgram, "u_T_World_View");
+  //if (mwv == -1)
+  //  throw MyException("Failed to set world to view matrix for the line renderer.");
+  //glUniformMatrix4fv(mwv, 1, GL_FALSE, mat.GetData());
 }
 
 void LineRenderer::Draw(std::vector<xn::seg> const &segments, xn::Colour clr, float thickness, uint32_t flags, xn::mat33 const &T_Model_World)
 {
   std::vector<xn::vec3> points;
+  std::vector<xn::vec2> perpVectors;
 
   // Load data...
   for each (auto & seg in segments)
   {
+    perpVectors.push_back(Dg::Perpendicular(Dg::Normalize(seg.Vect())));
+    perpVectors.push_back(Dg::Perpendicular(Dg::Normalize(seg.Vect())));
+    perpVectors.push_back(Dg::Perpendicular(Dg::Normalize(seg.Vect())));
+    perpVectors.push_back(Dg::Perpendicular(Dg::Normalize(seg.Vect())));
+    perpVectors.push_back(Dg::Perpendicular(Dg::Normalize(seg.Vect())));
+    perpVectors.push_back(Dg::Perpendicular(Dg::Normalize(seg.Vect())));
+
     xn::vec2 e0 = seg.GetP0();
     xn::vec2 e1 = seg.GetP1();
 
@@ -67,7 +83,7 @@ void LineRenderer::Draw(std::vector<xn::seg> const &segments, xn::Colour clr, fl
 
     points.push_back(p0);
     points.push_back(p1);
-    points.push_back(p2);
+    points.push_back(p3);
 
     points.push_back(p0);
     points.push_back(p3);
@@ -75,27 +91,43 @@ void LineRenderer::Draw(std::vector<xn::seg> const &segments, xn::Colour clr, fl
   }
 
   GLuint vao;
-  GLuint vertexBuffer;
-  GLuint indexBuffer;
-
-  glGenBuffers(1, &vertexBuffer);
-  glGenBuffers(1, &indexBuffer);
-
   glGenVertexArrays(1, &vao);
   glBindVertexArray(vao);
+  
+  // Set up the position data
 
+  GLuint vertexBuffer;
+  glGenBuffers(1, &vertexBuffer);
   glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
   glBufferData(GL_ARRAY_BUFFER,
                points.size() * sizeof(xn::vec3),
-               points.data(), 
+               points.data(),
                GL_STATIC_DRAW);
 
-  int stride = sizeof(xn::vec3);
+  GLuint location = glGetAttribLocation(m_shaderProgram, "in_position");
+  if (location == -1)
+    throw MyException("Failed to set in_position for the line renderer.");
 
-  GLuint loc_position = glGetAttribLocation(m_shaderProgram, "in_position");
+  glVertexAttribPointer(location, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(location);
 
-  glVertexAttribPointer(loc_position, 3, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(loc_position);
+  // Set up the perp vector data
+
+  GLuint perpVecBuffer;
+  glGenBuffers(1, &perpVecBuffer);
+  glBindBuffer(GL_ARRAY_BUFFER, perpVecBuffer);
+  glBufferData(GL_ARRAY_BUFFER,
+               perpVectors.size() * sizeof(xn::vec2),
+               perpVectors.data(), 
+               GL_STATIC_DRAW);
+
+  location = glGetAttribLocation(m_shaderProgram, "in_perpVect");
+  if (location == -1)
+    throw MyException("Failed to set in_perpVect for the line renderer.");
+
+  glVertexAttribPointer(location, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(location);
+  //glVertexAttribDivisor(location, 6);
 
   // Draw elements...
 
@@ -114,10 +146,10 @@ void LineRenderer::Draw(std::vector<xn::seg> const &segments, xn::Colour clr, fl
 
   glUniform4fv(loc_color, 1, colour);
 
-  GLuint loc_matrix = glGetUniformLocation(m_shaderProgram, "u_T_Model_World");
-  if (loc_matrix == -1)
-    throw MyException("Failed to set model to world matrix for the line renderer.");
-  glUniformMatrix4fv(loc_matrix, 1, GL_FALSE, T_Model_World.GetData());
+  //GLuint loc_matrix = glGetUniformLocation(m_shaderProgram, "u_T_Model_World");
+  //if (loc_matrix == -1)
+  //  throw MyException("Failed to set model to world matrix for the line renderer.");
+  //glUniformMatrix4fv(loc_matrix, 1, GL_FALSE, T_Model_World.GetData());
 
   GLuint loc_thickness = glGetUniformLocation(m_shaderProgram, "u_thickness");
   if (loc_thickness == -1)
@@ -137,6 +169,6 @@ void LineRenderer::Draw(std::vector<xn::seg> const &segments, xn::Colour clr, fl
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
   glDeleteBuffers(1, &vertexBuffer);
-  glDeleteBuffers(1, &indexBuffer);
+  glDeleteBuffers(1, &perpVecBuffer);
   glDeleteVertexArrays(1, &vao);
 }

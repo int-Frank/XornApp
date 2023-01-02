@@ -183,11 +183,12 @@ void Canvas::BeginFrame()
 
 void Canvas::EndFrame()
 {
+  ImVec2 pos = ToImGui(m_pimpl->position);
   ImGui::GetWindowDrawList()->AddImage(
     (void *)m_pimpl->pRenderer->GetTexture(),
-    ImVec2(ImGui::GetCursorScreenPos()),
-    ImVec2(ImGui::GetCursorScreenPos().x + m_pimpl->pRenderer->GetWidth(),
-      ImGui::GetCursorScreenPos().y + +m_pimpl->pRenderer->GetHeight()),
+    pos,
+    ImVec2(pos.x + m_pimpl->pRenderer->GetWidth(),
+           pos.y + m_pimpl->pRenderer->GetHeight()),
     ImVec2(0, 1), ImVec2(1, 0));
 
   ImGui::End();

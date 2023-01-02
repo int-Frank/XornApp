@@ -11,7 +11,7 @@ DefaultData::DefaultData()
   , defaultProjectName("My project")
   , buttonSize(80.f, 24.f)
   , polygonColour(0xFF00FFFF)
-  , polygonThickness(2.f)
+  , polygonThickness(3.f)
 {
   defaultBoundary.PushBack(xn::vec2(50.f, 50.f));
   defaultBoundary.PushBack(xn::vec2(-50.f, 50.f));

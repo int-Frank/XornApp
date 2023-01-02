@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <stdio.h>
 
+#include "glad/glad.h"
 #include "glfw3.h"
 
 #include "xnModule.h"
@@ -71,6 +72,9 @@ App::App()
 
   glfwMakeContextCurrent(m_pWindow);
   glfwSwapInterval(1); // Enable vsync
+
+  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    throw std::exception("Failed to initialise glad");
 
   m_pMsgBus = new MessageBus();
   g_pMsgBus = m_pMsgBus;
@@ -343,7 +347,7 @@ void App::Render()
   {
     m_pScene->AddPolygon(it->second.loop, 
       DefaultData::data.polygonThickness, 
-      DefaultData::data.polygonThickness, 0, 0,
+      DefaultData::data.polygonColour, 0, 0,
       it->second.T_Model_World.ToMatrix33());
   }
 

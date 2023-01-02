@@ -10,8 +10,8 @@ uniform mat3 u_T_Model_World;
 
 void main(void)
 {
-	vec3 pos = u_T_Model_World * u_T_World_View * vec3(in_position.x, in_position.y, 1.0);
-	vec3 extension = u_thickness * in_position.z * vec3(in_perpVect.x, in_perpVect.y, 0.0);
+	vec3 pos = vec3(in_position.x, in_position.y, 1.0); //u_T_Model_World * u_T_World_View * vec3(in_position.x, in_position.y, 1.0);
+	vec3 extension = u_thickness / 20.0 * in_position.z * vec3(in_perpVect.x, in_perpVect.y, 0.0);
 	vec3 finalPos = pos + extension;
 	
 	gl_Position = vec4(finalPos.x, finalPos.y, 0.0, 1.0);
