@@ -63,6 +63,8 @@ void LineRenderer::Draw(std::vector<xn::seg> const &segments, xn::Colour clr, fl
   std::vector<xn::vec3> points;
   std::vector<xn::vec2> perpVectors;
 
+  // TODO Could probably be more efficient. Can we use instance rendering?
+  //      Maybe gl_VertexID and index into a uniform/sso buffer?
   // Load data...
   for each (auto & seg in segments)
   {
@@ -104,12 +106,8 @@ void LineRenderer::Draw(std::vector<xn::seg> const &segments, xn::Colour clr, fl
                points.data(),
                GL_STATIC_DRAW);
 
-  GLuint location = glGetAttribLocation(m_shaderProgram, "in_position");
-  if (location == -1)
-    throw MyException("Failed to set in_position for the line renderer.");
-
-  glVertexAttribPointer(location, 3, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(location);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(0);
 
   // Set up the perp vector data
 
@@ -121,13 +119,8 @@ void LineRenderer::Draw(std::vector<xn::seg> const &segments, xn::Colour clr, fl
                perpVectors.data(), 
                GL_STATIC_DRAW);
 
-  location = glGetAttribLocation(m_shaderProgram, "in_perpVect");
-  if (location == -1)
-    throw MyException("Failed to set in_perpVect for the line renderer.");
-
-  glVertexAttribPointer(location, 2, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(location);
-  //glVertexAttribDivisor(location, 6);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(1);
 
   // Draw elements...
 

@@ -1,8 +1,8 @@
 R"(
 #version 330 core
 
-in vec3 in_position;
-in vec2 in_perpVect;
+layout (location = 0) in vec3 in_position;
+layout (location = 1) in vec2 in_perpVect;
 
 uniform float u_thickness;
 uniform mat3 u_T_World_View;
