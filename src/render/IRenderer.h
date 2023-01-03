@@ -23,7 +23,7 @@ public:
   //virtual void DrawFilledPolygon(xn::DgPolygon const &, xn::Colour clr, uint32_t flags, xn::mat33 T_Model_World) = 0;
   virtual void EndDraw() = 0;
 
-  virtual void SetMatrix_World_Camera(xn::mat33 const &) = 0;
+  virtual void SetMatrix_World_View(xn::mat33 const &) = 0;
   virtual unsigned int GetTexture() const = 0;
   virtual unsigned int GetWidth() const = 0;
   virtual unsigned int GetHeight() const = 0;

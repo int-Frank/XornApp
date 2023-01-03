@@ -21,7 +21,7 @@ public:
 
 private:
 
-  void _SetMatrix_World_Camera(xn::mat33 const &) override;
+  void _SetMatrix_World_View(xn::mat33 const &) override;
   GLuint m_shaderProgram;
 };
 
@@ -48,12 +48,12 @@ LineRenderer::~LineRenderer()
   glDeleteProgram(m_shaderProgram);
 }
 
-void LineRenderer::_SetMatrix_World_Camera(xn::mat33 const &mat)
+void LineRenderer::_SetMatrix_World_View(xn::mat33 const &mat)
 {
   glUseProgram(m_shaderProgram);
-  GLuint loc = glGetUniformLocation(m_shaderProgram, "u_T_World_Camera");
+  GLuint loc = glGetUniformLocation(m_shaderProgram, "u_T_World_View");
   if (loc == -1)
-    throw MyException("Failed to set world to camera matrix for the line renderer.");
+    throw MyException("Failed to set world to view matrix for the line renderer.");
   glUniformMatrix3fv(loc, 1, GL_FALSE, mat.GetData());
 }
 

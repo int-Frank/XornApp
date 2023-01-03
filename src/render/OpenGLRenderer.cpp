@@ -30,7 +30,7 @@ public:
   //void DrawFilledPolygon(xn::DgPolygon const &, xn::Colour clr, uint32_t flags, xn::mat33 T_Model_World) override;
   void EndDraw() override;
 
-  void SetMatrix_World_Camera(xn::mat33 const &) override;
+  void SetMatrix_World_View(xn::mat33 const &) override;
   unsigned int GetTexture() const override { return m_texture; };
   unsigned int GetWidth() const override { return m_width; }
   unsigned int GetHeight() const override { return m_height; }
@@ -138,9 +138,9 @@ void OpenGLRenderer::DrawLineGroup(std::vector<xn::seg> const &segments, float t
   m_pLineRenderer->Draw(segments, clr, thickness, flags, T_Model_World);
 }
 
-void OpenGLRenderer::SetMatrix_World_Camera(xn::mat33 const &mat)
+void OpenGLRenderer::SetMatrix_World_View(xn::mat33 const &mat)
 {
-  m_pLineRenderer->SetMatrix_World_Camera(mat);
+  m_pLineRenderer->SetMatrix_World_View(mat);
 }
 
 IRenderer *CreateRenderer()

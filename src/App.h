@@ -11,7 +11,7 @@
 #include "XornAppMessages.h"
 #include "DgMap_AVL.h"
 #include "Canvas.h"
-#include "Camera.h"
+#include "CameraView.h"
 #include "Scene.h"
 #include "ActionList.h"
 
@@ -83,14 +83,16 @@ private:
 
   Dg::Map_AVL<uint32_t, ModuleData> m_registeredModules;
   ActionList m_actions;
-  Camera m_camera;
+  CameraView m_cameraView;
   xn::PolygonWithHoles m_scenePolygon;
   std::vector<std::shared_ptr<Modal>> m_modalStack;
   uint32_t m_activeModuleID;
   std::string m_saveFile;
 
+  // Mouse dragging
   bool m_isMouseDragging;
-  xn::vec2 m_mousePosition;
+  xn::vec2 m_mousePositionAnchor;
+  xn::vec2 m_cameraPositionAnchor;
 
   float m_lineThickness;
   float m_lineColour[4];

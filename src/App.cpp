@@ -35,6 +35,35 @@ static void glfw_error_callback(int error, const char *description)
   fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
+void DEBUG_CAMERA(xn::vec2 const &pos, xn::vec2 const &sz, float scale)
+{
+  LOG_DEBUG("position: [%f, %f], scale: %f, ar = %f", pos.x(), pos.y(), scale, sz.x() / sz.y());
+
+  CameraView cv;
+  cv.SetViewSize(sz);
+  cv.Scale(scale);
+  cv.Move(pos);
+
+  auto T_View_World = cv.GetMatrix_View_World();
+  auto T_World_View = T_View_World.GetInverse();
+
+  xn::vec3 tl(-1.f, 1.f, 1.f)
+    , tr(1.f, 1.f, 1.f)
+    , bl(-1.f, -1.f, 1.f)
+    , br(1.f, -1.f, 1.f);
+
+  tl = tl * T_View_World;
+  tr = tr * T_View_World;
+  bl = bl * T_View_World;
+  br = br * T_View_World;
+  LOG_WARNING("tl: [%f, %f]", tl.x(), tl.y());
+  LOG_WARNING("tr: [%f, %f]", tr.x(), tr.y());
+  LOG_WARNING("bl: [%f, %f]", bl.x(), bl.y());
+  LOG_WARNING("br: [%f, %f]", br.x(), br.y());
+
+  LOG_INFO("");
+}
+
 App::App()
   : m_pWindow(nullptr)
   , m_registeredModules()
@@ -44,12 +73,13 @@ App::App()
   , m_pScene(nullptr)
   , m_actions()
   , m_activeModuleID(INVALID_ID)
-  , m_camera()
+  , m_cameraView()
   , m_modalStack()
   , m_pProject(nullptr)
   , m_saveFile()
   , m_isMouseDragging(false)
-  , m_mousePosition(0.f, 0.f)
+  , m_mousePositionAnchor(0.f, 0.f)
+  , m_cameraPositionAnchor(0.f, 0.f)
   , m_lineThickness(DefaultData::data.polygonThickness)
   , m_lineColour{1.f, 0.f, 0.f, 1.f}
   , m_geometryDirty(true)
@@ -93,6 +123,54 @@ App::App()
 
   NewProject();
   LoadPlugins();
+
+  // DEBUG!!!
+  {
+    xn::vec2 pos, sz;
+    float scale;
+
+    pos = xn::vec2(0.f, 0.f);
+    sz = xn::vec2(2.f, 2.f);
+    scale = 1.f;
+    DEBUG_CAMERA(pos, sz, scale);
+
+    pos = xn::vec2(0.f, 0.f);
+    sz = xn::vec2(2.f, 2.f);
+    scale = 2.f;
+    DEBUG_CAMERA(pos, sz, scale);
+
+    pos = xn::vec2(0.f, 0.f);
+    sz = xn::vec2(2.f, 2.f);
+    scale = 0.5f;
+    DEBUG_CAMERA(pos, sz, scale);
+
+    pos = xn::vec2(1.f, 1.f);
+    sz = xn::vec2(2.f, 2.f);
+    scale = 1.f;
+    DEBUG_CAMERA(pos, sz, scale);
+
+    pos = xn::vec2(0.f, 0.f);
+    sz = xn::vec2(2.f, 1.f);
+    scale = 1.f;
+    DEBUG_CAMERA(pos, sz, scale);
+
+    pos = xn::vec2(0.f, 0.f);
+    sz = xn::vec2(1.f, 2.f);
+    scale = 1.f;
+    DEBUG_CAMERA(pos, sz, scale);
+
+    pos = xn::vec2(0.f, 0.f);
+    sz = xn::vec2(2.f, 1.f);
+    scale = 2.f;
+    DEBUG_CAMERA(pos, sz, scale);
+
+    pos = xn::vec2(1.f, 1.f);
+    sz = xn::vec2(2.f, 1.f);
+    scale = 2.f;
+    DEBUG_CAMERA(pos, sz, scale);
+
+    char t = 0;
+  }
 }
 
 void App::Run()
@@ -355,9 +433,9 @@ void App::Render()
   pRenderer->BeginDraw();
   
   xn::vec2 renderSize = m_pCanvas->GetRenderSize();
-  m_camera.SetWindowSize(renderSize);
+  m_cameraView.SetViewSize(renderSize);
 
-  pRenderer->SetMatrix_World_Camera(m_camera.GetMatrix_Camera_World().GetInverse());
+  pRenderer->SetMatrix_World_View(m_cameraView.GetMatrix_View_World().GetInverse());
 
   xn::Colour lineColour;
   lineColour.rgba.r = (uint8_t)(m_lineColour[0] * 255.f);
@@ -421,7 +499,7 @@ xn::Module *App::GetCurrentFocus()
 
 void App::HandleMessage(Message_ZoomCamera *pMsg)
 {
-  //m_T_Camera_World.scale *= pMsg->val;
+  m_cameraView.Scale(pMsg->val);
 }
 
 void App::HandleMessage(Message_MouseButtonUp *pMsg)
@@ -453,7 +531,8 @@ void App::HandleMessage(Message_MouseButtonDown *pMsg)
   {
     if (pMsg->button == xn::MouseInput::LeftButton)
     {
-      m_mousePosition = pMsg->position;
+      m_mousePositionAnchor = pMsg->position;
+      m_cameraPositionAnchor = m_cameraView.GetPosition();
       m_isMouseDragging = true;
     }
   }
@@ -471,10 +550,13 @@ void App::HandleMessage(Message_MouseMove *pMsg)
   {
     if (m_isMouseDragging)
     {
-      xn::vec2 delta = pMsg->position - m_mousePosition;
-      m_mousePosition = pMsg->position;
-      //m_T_Camera_World.translation.x() -= delta.x() * m_T_Camera_World.scale.x() / 100.f;
-      //m_T_Camera_World.translation.y() += delta.y() * m_T_Camera_World.scale.y() / 100.f;;
+      xn::vec2 vViewSpace = pMsg->position - m_mousePositionAnchor;
+      xn::mat33 T_View_World = m_cameraView.GetMatrix_View_World();
+      xn::vec3 vWorldSpace3(vViewSpace.x(), vViewSpace.y(), 0.f);
+      vWorldSpace3 = vWorldSpace3 * T_View_World;
+      xn::vec2 vWorldSpace = xn::vec2(vWorldSpace3.x(), vWorldSpace3.y());
+
+      m_cameraView.SetPosition(m_cameraPositionAnchor - vWorldSpace);
     }
   }
 }
