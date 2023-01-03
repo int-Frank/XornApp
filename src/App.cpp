@@ -50,6 +50,8 @@ App::App()
   , m_saveFile()
   , m_isMouseDragging(false)
   , m_mousePosition(0.f, 0.f)
+  , m_lineThickness(DefaultData::data.polygonThickness)
+  , m_lineColour{1.f, 0.f, 0.f, 1.f}
   , m_geometryDirty(true)
   , m_projectDirty(false)
   , m_showDemoWindow(false)
@@ -213,6 +215,11 @@ void App::ShowControlWindow()
 
   ImGui::Text("%s", std::filesystem::path(m_saveFile).stem().string().c_str());
   ImGui::Separator();
+
+  ImGui::SliderFloat("Line thickness##" MAIN_WINDOW_NAME, &m_lineThickness, 1.f, 10.f);
+  ImGui::ColorEdit4("Line colour##" MAIN_WINDOW_NAME, m_lineColour, ImGuiColorEditFlags_NoDragDrop | ImGuiColorEditFlags_AlphaPreview);
+
+  ImGui::Separator();
   ImGui::Text("Mouse input gets sent to...");
 
   bool hasFocus = GetCurrentFocus() == nullptr;
@@ -347,16 +354,22 @@ void App::Render()
   IRenderer *pRenderer = m_pCanvas->GetRenderer();
   pRenderer->BeginDraw();
   
-  m_camera.SetWindowSize(m_pCanvas->GetRenderSize());
+  xn::vec2 renderSize = m_pCanvas->GetRenderSize();
+  m_camera.SetWindowSize(renderSize);
+
   pRenderer->SetMatrix_World_Camera(m_camera.GetMatrix_Camera_World().GetInverse());
 
-  //xn::mat33 T_World_View = m_T_Camera_World.ToMatrix33().GetInverse() * m_pCanvas->Get_T_Camera_View();
+  xn::Colour lineColour;
+  lineColour.rgba.r = (uint8_t)(m_lineColour[0] * 255.f);
+  lineColour.rgba.g = (uint8_t)(m_lineColour[1] * 255.f);
+  lineColour.rgba.b = (uint8_t)(m_lineColour[2] * 255.f);
+  lineColour.rgba.a = (uint8_t)(m_lineColour[3] * 255.f);
 
   for (auto it = m_pProject->loops.Begin(); it != m_pProject->loops.End(); it++)
   {
     m_pScene->AddPolygon(it->second.loop, 
-      DefaultData::data.polygonThickness, 
-      DefaultData::data.polygonColour, 0, 0,
+      m_lineThickness, 
+      lineColour, 0, 0,
       it->second.T_Model_World.ToMatrix33());
   }
 

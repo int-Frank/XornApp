@@ -97,6 +97,7 @@ void Scene::AddLine(xn::seg const &segment, float thickness, xn::Colour clr, uin
   EntitySegment *pSegs = new EntitySegment();
   pSegs->segments.push_back(segment);
   pSegs->T_Model_World = T_Model_World;
+  pSegs->thickness = thickness;
   pSegs->color = clr;
   pSegs->flags = flags;
   pSegs->layer = layer;
@@ -111,6 +112,7 @@ void Scene::AddPolygon(xn::DgPolygon const &polygon, float thickness, xn::Colour
     pSegs->segments.push_back(it.ToSegment());
 
   pSegs->T_Model_World = T_Model_World;
+  pSegs->thickness = thickness;
   pSegs->color = clr;
   pSegs->flags = flags;
   pSegs->layer = layer;

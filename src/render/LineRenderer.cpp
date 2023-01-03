@@ -17,6 +17,7 @@ public:
   ~LineRenderer();
 
   void Draw(std::vector<xn::seg> const &, xn::Colour, float thickness, uint32_t flags, xn::mat33 const &T_Model_World);
+  void SetRenderSize(xn::vec2 const &)override;
 
 private:
 
@@ -50,10 +51,24 @@ LineRenderer::~LineRenderer()
 void LineRenderer::_SetMatrix_World_Camera(xn::mat33 const &mat)
 {
   glUseProgram(m_shaderProgram);
-  GLuint mwv = glGetUniformLocation(m_shaderProgram, "u_T_World_Camera");
-  if (mwv == -1)
+  GLuint loc = glGetUniformLocation(m_shaderProgram, "u_T_World_Camera");
+  if (loc == -1)
     throw MyException("Failed to set world to camera matrix for the line renderer.");
-  glUniformMatrix3fv(mwv, 1, GL_FALSE, mat.GetData());
+  glUniformMatrix3fv(loc, 1, GL_FALSE, mat.GetData());
+}
+
+void LineRenderer::SetRenderSize(xn::vec2 const &sz)
+{
+  GLint prog;
+  glGetIntegerv(GL_CURRENT_PROGRAM, &prog);
+
+  glUseProgram(m_shaderProgram);
+  GLuint loc = glGetUniformLocation(m_shaderProgram, "u_windowSize");
+  if (loc == -1)
+    throw MyException("Failed to set world to camera matrix for the line renderer.");
+  glUniform2fv(loc, 1, sz.GetData());
+
+  glUseProgram(prog);
 }
 
 void LineRenderer::Draw(std::vector<xn::seg> const &segments, xn::Colour clr, float thickness, uint32_t flags, xn::mat33 const &T_Model_World)
@@ -122,10 +137,10 @@ void LineRenderer::Draw(std::vector<xn::seg> const &segments, xn::Colour clr, fl
 
   float colour[4] = 
   {
-    (float)clr.rgba.r,
-    (float)clr.rgba.g,
-    (float)clr.rgba.b,
-    (float)clr.rgba.a
+    (float)clr.rgba.r / 255.f,
+    (float)clr.rgba.g / 255.f,
+    (float)clr.rgba.b / 255.f,
+    (float)clr.rgba.a / 255.f
   };
 
   glUniform4fv(loc_color, 1, colour);

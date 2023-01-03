@@ -70,6 +70,8 @@ void OpenGLRenderer::SetSize(uint32_t width, uint32_t height)
   {
     Destroy();
     Init(width, height);
+
+    m_pLineRenderer->SetRenderSize(xn::vec2((float)width, (float)height));
   }
 }
 

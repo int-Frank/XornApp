@@ -92,6 +92,9 @@ private:
   bool m_isMouseDragging;
   xn::vec2 m_mousePosition;
 
+  float m_lineThickness;
+  float m_lineColour[4];
+
   bool m_geometryDirty;  // To determine if we need to recalculate geometry for the modules
   bool m_projectDirty;   // To determine if we should prompt to save project
   bool m_showDemoWindow;
