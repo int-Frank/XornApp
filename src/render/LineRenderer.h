@@ -1,7 +1,7 @@
 #ifndef LINERENDERER_H
 #define LINERENDERER_H
 
-#include "Renderable.h"
+#include "ObjectRenderer.h"
 
 class ILineRenderer : public ObjectRenderer
 {

@@ -1,7 +1,7 @@
 
 #include <vector>
 
-#include "Renderable.h"
+#include "ObjectRenderer.h"
 #include "MyException.h"
 
 struct GL_State

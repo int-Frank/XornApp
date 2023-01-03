@@ -13,10 +13,12 @@ public:
 
   void Scale(float);
   void Move(xn::vec2 const &);
+
+  void SetScale(float);
   void SetPosition(xn::vec2 const &);
-  xn::vec2 GetPosition() const;
   void SetViewSize(xn::vec2 const &);
 
+  xn::vec2 GetPosition() const;
   xn::mat33 GetMatrix_View_World() const;
 
 private:

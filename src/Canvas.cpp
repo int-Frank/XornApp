@@ -104,11 +104,6 @@ Canvas::~Canvas()
   delete m_pimpl;
 }
 
-void Canvas::SetPosition(xn::vec2 const &v)
-{
-  m_pimpl->position = v;
-}
-
 void Canvas::SetSize(xn::vec2 const &v)
 {
   m_pimpl->windowSize = v;
@@ -200,7 +195,7 @@ void Canvas::Handle(Message *pMsg)
     m_pimpl->scroll = ((Message_MouseScroll *)(pMsg))->val;
 }
 
-xn::vec2 Canvas::GetRenderSize() const
+xn::vec2 Canvas::GetRenderRegionSize() const
 {
   return m_pimpl->renderSize;
 }

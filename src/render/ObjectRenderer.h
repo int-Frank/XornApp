@@ -1,5 +1,5 @@
-#ifndef RENDERERABLE_H
-#define RENDERERABLE_H
+#ifndef OBJECTRENDERER_H
+#define OBJECTRENDERER_H
 
 #include <string>
 

@@ -131,6 +131,32 @@ xn::PolygonWithHoles LoopCollection::BuildScenePolygon() const
   return result;
 }
 
+bool LoopCollection::GetAABB(xn::aabb *pOut) const
+{
+  if (m_loopMap.empty())
+    return false;
+
+  bool first = true;
+  for (auto it = m_loopMap.cbegin_rand(); it != m_loopMap.cend_rand(); it++)
+  {
+    auto loop = it->second.loop.GetTransformed(it->second.T_Model_World.ToMatrix33());
+    xn::aabb aabb;
+    auto code = loop.GetAABB(&aabb);
+    if (code != Dg::ErrorCode::None)
+      continue;
+
+    if (first)
+    {
+      *pOut = aabb;
+      first = false;
+    }
+    else
+    {
+      *pOut += aabb;
+    }
+  }
+  return !first;
+}
 
 //--------------------------------------------------------------------------------
 // Project

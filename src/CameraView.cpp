@@ -12,6 +12,11 @@ void CameraView::Scale(float val)
   m_T_View_World.scale *= val;
 }
 
+void CameraView::SetScale(float val)
+{
+  m_T_View_World.scale = xn::vec2(val, val);
+}
+
 void CameraView::Move(xn::vec2 const &delta)
 {
   m_T_View_World.translation += delta;

@@ -17,9 +17,8 @@ public:
   Canvas(std::string const &name, MessageBus *, IRenderer *);
   ~Canvas();
 
-  void SetPosition(xn::vec2 const &);
   void SetSize(xn::vec2 const &);
-  xn::vec2 GetRenderSize() const; // Slightly less than the window size
+  xn::vec2 GetRenderRegionSize() const; // Slightly less than the window size
 
   IRenderer * GetRenderer();
   void BeginFrame();

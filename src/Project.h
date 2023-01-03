@@ -45,6 +45,7 @@ public:
 
   void Clear();
 
+  bool GetAABB(xn::aabb *) const;
   xn::PolygonWithHoles BuildScenePolygon() const;
 
 private:

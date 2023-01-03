@@ -35,35 +35,6 @@ static void glfw_error_callback(int error, const char *description)
   fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
-void DEBUG_CAMERA(xn::vec2 const &pos, xn::vec2 const &sz, float scale)
-{
-  LOG_DEBUG("position: [%f, %f], scale: %f, ar = %f", pos.x(), pos.y(), scale, sz.x() / sz.y());
-
-  CameraView cv;
-  cv.SetViewSize(sz);
-  cv.Scale(scale);
-  cv.Move(pos);
-
-  auto T_View_World = cv.GetMatrix_View_World();
-  auto T_World_View = T_View_World.GetInverse();
-
-  xn::vec3 tl(-1.f, 1.f, 1.f)
-    , tr(1.f, 1.f, 1.f)
-    , bl(-1.f, -1.f, 1.f)
-    , br(1.f, -1.f, 1.f);
-
-  tl = tl * T_View_World;
-  tr = tr * T_View_World;
-  bl = bl * T_View_World;
-  br = br * T_View_World;
-  LOG_WARNING("tl: [%f, %f]", tl.x(), tl.y());
-  LOG_WARNING("tr: [%f, %f]", tr.x(), tr.y());
-  LOG_WARNING("bl: [%f, %f]", bl.x(), bl.y());
-  LOG_WARNING("br: [%f, %f]", br.x(), br.y());
-
-  LOG_INFO("");
-}
-
 App::App()
   : m_pWindow(nullptr)
   , m_registeredModules()
@@ -123,54 +94,6 @@ App::App()
 
   NewProject();
   LoadPlugins();
-
-  // DEBUG!!!
-  {
-    xn::vec2 pos, sz;
-    float scale;
-
-    pos = xn::vec2(0.f, 0.f);
-    sz = xn::vec2(2.f, 2.f);
-    scale = 1.f;
-    DEBUG_CAMERA(pos, sz, scale);
-
-    pos = xn::vec2(0.f, 0.f);
-    sz = xn::vec2(2.f, 2.f);
-    scale = 2.f;
-    DEBUG_CAMERA(pos, sz, scale);
-
-    pos = xn::vec2(0.f, 0.f);
-    sz = xn::vec2(2.f, 2.f);
-    scale = 0.5f;
-    DEBUG_CAMERA(pos, sz, scale);
-
-    pos = xn::vec2(1.f, 1.f);
-    sz = xn::vec2(2.f, 2.f);
-    scale = 1.f;
-    DEBUG_CAMERA(pos, sz, scale);
-
-    pos = xn::vec2(0.f, 0.f);
-    sz = xn::vec2(2.f, 1.f);
-    scale = 1.f;
-    DEBUG_CAMERA(pos, sz, scale);
-
-    pos = xn::vec2(0.f, 0.f);
-    sz = xn::vec2(1.f, 2.f);
-    scale = 1.f;
-    DEBUG_CAMERA(pos, sz, scale);
-
-    pos = xn::vec2(0.f, 0.f);
-    sz = xn::vec2(2.f, 1.f);
-    scale = 2.f;
-    DEBUG_CAMERA(pos, sz, scale);
-
-    pos = xn::vec2(1.f, 1.f);
-    sz = xn::vec2(2.f, 1.f);
-    scale = 2.f;
-    DEBUG_CAMERA(pos, sz, scale);
-
-    char t = 0;
-  }
 }
 
 void App::Run()
@@ -432,7 +355,7 @@ void App::Render()
   IRenderer *pRenderer = m_pCanvas->GetRenderer();
   pRenderer->BeginDraw();
   
-  xn::vec2 renderSize = m_pCanvas->GetRenderSize();
+  xn::vec2 renderSize = m_pCanvas->GetRenderRegionSize();
   m_cameraView.SetViewSize(renderSize);
 
   pRenderer->SetMatrix_World_View(m_cameraView.GetMatrix_View_World().GetInverse());
@@ -582,6 +505,23 @@ void App::SaveProject()
   m_projectDirty = false;
 }
 
+void App::FitViewToProject()
+{
+  xn::aabb aabb;
+  if (!m_pProject->loops.GetAABB(&aabb))
+    return;
+
+  xn::vec2 size = aabb.Diagonal();
+  xn::vec2 centre = aabb.GetCenter();
+
+  float scale = size.x() < size.y() ? size.x() : size.y();
+  scale *= 0.75f;
+
+  m_cameraView.SetPosition(centre);
+  m_cameraView.SetScale(scale);
+  m_cameraView.SetViewSize(size);
+}
+
 void App::OpenProject(std::string const &filePath)
 {
   Project *pNewProject = new Project();
@@ -597,6 +537,8 @@ void App::OpenProject(std::string const &filePath)
   m_saveFile = filePath;
   m_geometryDirty = true;
   m_projectDirty = false;
+
+  FitViewToProject();
 }
 
 void App::ImportProject(std::string const &filePath)
@@ -614,6 +556,8 @@ void App::ImportProject(std::string const &filePath)
   m_saveFile = filePath + ".json";
   m_geometryDirty = true;
   m_projectDirty = false;
+
+  FitViewToProject();
 }
 
 void App::NewProject()
@@ -629,6 +573,8 @@ void App::NewProject()
   m_geometryDirty = true;
   m_projectDirty = true;
   m_saveFile.clear();
+
+  FitViewToProject();
 }
 
 void App::SetSaveFile(std::string const &newFilePath)

@@ -51,6 +51,8 @@ public:
 
 private:
   
+  void FitViewToProject();
+
   void ShowMenuBar();
   void ShowControlWindow();
   void HandleModals();
