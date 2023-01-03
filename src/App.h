@@ -11,6 +11,7 @@
 #include "XornAppMessages.h"
 #include "DgMap_AVL.h"
 #include "Canvas.h"
+#include "Camera.h"
 #include "Scene.h"
 #include "ActionList.h"
 
@@ -82,7 +83,7 @@ private:
 
   Dg::Map_AVL<uint32_t, ModuleData> m_registeredModules;
   ActionList m_actions;
-  xn::Transform m_T_Camera_World;
+  Camera m_camera;
   xn::PolygonWithHoles m_scenePolygon;
   std::vector<std::shared_ptr<Modal>> m_modalStack;
   uint32_t m_activeModuleID;

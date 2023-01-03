@@ -19,9 +19,9 @@ public:
 
   void SetPosition(xn::vec2 const &);
   void SetSize(xn::vec2 const &);
+  xn::vec2 GetRenderSize() const; // Slightly less than the window size
 
   IRenderer * GetRenderer();
-  xn::mat33 Get_T_Camera_View() const;
   void BeginFrame();
   void EndFrame();
 

@@ -8,9 +8,8 @@
 
 #include "LineRenderer.h"
 #include "MyException.h"
-#include "Renderable.h"
 
-class LineRenderer : public ILineRenderer, public ObjectRenderer
+class LineRenderer : public ILineRenderer
 {
 public:
 
@@ -21,8 +20,7 @@ public:
 
 private:
 
-  void _SetMatrix_World_View(xn::mat33 const &) override;
-  
+  void _SetMatrix_World_Camera(xn::mat33 const &) override;
   GLuint m_shaderProgram;
 };
 
@@ -49,13 +47,13 @@ LineRenderer::~LineRenderer()
   glDeleteProgram(m_shaderProgram);
 }
 
-void LineRenderer::_SetMatrix_World_View(xn::mat33 const &mat)
+void LineRenderer::_SetMatrix_World_Camera(xn::mat33 const &mat)
 {
-  //glUseProgram(m_shaderProgram);
-  //GLuint mwv = glGetUniformLocation(m_shaderProgram, "u_T_World_View");
-  //if (mwv == -1)
-  //  throw MyException("Failed to set world to view matrix for the line renderer.");
-  //glUniformMatrix4fv(mwv, 1, GL_FALSE, mat.GetData());
+  glUseProgram(m_shaderProgram);
+  GLuint mwv = glGetUniformLocation(m_shaderProgram, "u_T_World_Camera");
+  if (mwv == -1)
+    throw MyException("Failed to set world to camera matrix for the line renderer.");
+  glUniformMatrix3fv(mwv, 1, GL_FALSE, mat.GetData());
 }
 
 void LineRenderer::Draw(std::vector<xn::seg> const &segments, xn::Colour clr, float thickness, uint32_t flags, xn::mat33 const &T_Model_World)
@@ -132,10 +130,10 @@ void LineRenderer::Draw(std::vector<xn::seg> const &segments, xn::Colour clr, fl
 
   glUniform4fv(loc_color, 1, colour);
 
-  //GLuint loc_matrix = glGetUniformLocation(m_shaderProgram, "u_T_Model_World");
-  //if (loc_matrix == -1)
-  //  throw MyException("Failed to set model to world matrix for the line renderer.");
-  //glUniformMatrix4fv(loc_matrix, 1, GL_FALSE, T_Model_World.GetData());
+  GLuint loc_matrix = glGetUniformLocation(m_shaderProgram, "u_T_Model_World");
+  if (loc_matrix == -1)
+    throw MyException("Failed to set model to world matrix for the line renderer.");
+  glUniformMatrix3fv(loc_matrix, 1, GL_FALSE, T_Model_World.GetData());
 
   GLuint loc_thickness = glGetUniformLocation(m_shaderProgram, "u_thickness");
   if (loc_thickness == -1)

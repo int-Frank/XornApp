@@ -140,10 +140,10 @@ GLuint ObjectRenderer::GetShaderProgram(std::string const &a_vs, std::string con
   return shaderProgram;
 }
 
-void ObjectRenderer::SetMatrix_World_View(xn::mat33 const &mat)
+void ObjectRenderer::SetMatrix_World_Camera(xn::mat33 const &mat)
 {
   GLint prog;
   glGetIntegerv(GL_CURRENT_PROGRAM, &prog);
-  _SetMatrix_World_View(mat);
+  _SetMatrix_World_Camera(mat);
   glUseProgram(prog);
 }

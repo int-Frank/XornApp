@@ -14,12 +14,12 @@ class ObjectRenderer
 {
 public:
 
-  void SetMatrix_World_View(xn::mat33 const &);
+  void SetMatrix_World_Camera(xn::mat33 const &);
 
 protected:
 
   GLuint GetShaderProgram(std::string const &a_fs, std::string const &a_vs);
-  virtual void _SetMatrix_World_View(xn::mat33 const &) = 0;
+  virtual void _SetMatrix_World_Camera(xn::mat33 const &) = 0;
 };
 
 #endif

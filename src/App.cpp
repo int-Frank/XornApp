@@ -44,7 +44,7 @@ App::App()
   , m_pScene(nullptr)
   , m_actions()
   , m_activeModuleID(INVALID_ID)
-  , m_T_Camera_World()
+  , m_camera()
   , m_modalStack()
   , m_pProject(nullptr)
   , m_saveFile()
@@ -346,6 +346,9 @@ void App::Render()
   m_pCanvas->BeginFrame();
   IRenderer *pRenderer = m_pCanvas->GetRenderer();
   pRenderer->BeginDraw();
+  
+  m_camera.SetWindowSize(m_pCanvas->GetRenderSize());
+  pRenderer->SetMatrix_World_Camera(m_camera.GetMatrix_Camera_World().GetInverse());
 
   //xn::mat33 T_World_View = m_T_Camera_World.ToMatrix33().GetInverse() * m_pCanvas->Get_T_Camera_View();
 
@@ -387,9 +390,10 @@ void App::Render()
 
 xn::vec2 App::ViewToWorld(xn::vec2 const &p)
 {
-  xn::mat33 T_World_View = m_T_Camera_World.ToMatrix33().GetInverse() * m_pCanvas->Get_T_Camera_View();
-  xn::vec3 p1 = xn::vec3(p.x(), p.y(), 1.f) * T_World_View.GetInverse();
-  return xn::vec2(p1.x(), p1.y());
+  //xn::mat33 T_World_View = m_T_Camera_World.ToMatrix33().GetInverse() * m_pCanvas->Get_T_Camera_View();
+  //xn::vec3 p1 = xn::vec3(p.x(), p.y(), 1.f) * T_World_View.GetInverse();
+  //return xn::vec2(p1.x(), p1.y());
+  return p;
 }
 
 xn::Module *App::GetCurrentFocus()
@@ -404,7 +408,7 @@ xn::Module *App::GetCurrentFocus()
 
 void App::HandleMessage(Message_ZoomCamera *pMsg)
 {
-  m_T_Camera_World.scale *= pMsg->val;
+  //m_T_Camera_World.scale *= pMsg->val;
 }
 
 void App::HandleMessage(Message_MouseButtonUp *pMsg)
@@ -456,8 +460,8 @@ void App::HandleMessage(Message_MouseMove *pMsg)
     {
       xn::vec2 delta = pMsg->position - m_mousePosition;
       m_mousePosition = pMsg->position;
-      m_T_Camera_World.translation.x() -= delta.x() * m_T_Camera_World.scale.x();
-      m_T_Camera_World.translation.y() += delta.y() * m_T_Camera_World.scale.y();
+      //m_T_Camera_World.translation.x() -= delta.x() * m_T_Camera_World.scale.x() / 100.f;
+      //m_T_Camera_World.translation.y() += delta.y() * m_T_Camera_World.scale.y() / 100.f;;
     }
   }
 }
