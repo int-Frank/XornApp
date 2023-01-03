@@ -514,7 +514,7 @@ void App::FitViewToProject()
   xn::vec2 size = aabb.Diagonal();
   xn::vec2 centre = aabb.GetCenter();
 
-  float scale = size.x() < size.y() ? size.x() : size.y();
+  float scale = size.x() > size.y() ? size.x() : size.y();
   scale *= 0.75f;
 
   m_cameraView.SetPosition(centre);
