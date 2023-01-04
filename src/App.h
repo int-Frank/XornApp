@@ -11,7 +11,7 @@
 #include "XornAppMessages.h"
 #include "DgMap_AVL.h"
 #include "Canvas.h"
-#include "CameraView.h"
+#include "ViewWindow.h"
 #include "Scene.h"
 #include "ActionList.h"
 
@@ -69,7 +69,7 @@ private:
   void HandleMessage(Message_MouseMove *);
   void HandleMessage(Message_MouseScroll *);
 
-  xn::vec2 ViewToWorld(xn::vec2 const &);
+  xn::vec2 ViewToWorld(xn::vec2 const &, float w = 1.f);
   xn::Module *GetCurrentFocus();
 
   void Render();
@@ -85,8 +85,8 @@ private:
 
   Dg::Map_AVL<uint32_t, ModuleData> m_registeredModules;
   ActionList m_actions;
-  CameraView m_cameraView;
-  xn::PolygonWithHoles m_scenePolygon;
+  ViewWindow m_cameraView;
+  std::vector<xn::PolygonLoop> m_scenePolygonLoops;
   std::vector<std::shared_ptr<Modal>> m_modalStack;
   uint32_t m_activeModuleID;
   std::string m_saveFile;

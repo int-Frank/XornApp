@@ -262,7 +262,7 @@ void App::HandleModals()
 void App::HandleModules()
 {
   if (m_geometryDirty)
-    m_scenePolygon = m_pProject->loops.BuildScenePolygon();
+    m_scenePolygonLoops = m_pProject->loops.GetLoops();
 
   for (auto &kv : m_registeredModules)
   {
@@ -270,7 +270,7 @@ void App::HandleModules()
       continue;
 
     if (m_geometryDirty)
-      kv.second.pInstance->SetGeometry(m_scenePolygon);
+      kv.second.pInstance->SetGeometry(m_scenePolygonLoops);
 
     kv.second.pInstance->DoFrame(m_pUIContext, kv.second.pScene);
 
@@ -315,7 +315,7 @@ void App::OpenModule(uint32_t id, ModuleData *pData)
 
     pData->pInstance = pData->pPlugin->CreateModule(&data);
     pData->pScene = new Scene();
-    pData->pInstance->SetGeometry(m_scenePolygon);
+    pData->pInstance->SetGeometry(m_scenePolygonLoops);
   }
 }
 
@@ -402,12 +402,12 @@ void App::Render()
   glfwSwapBuffers(m_pWindow);
 }
 
-xn::vec2 App::ViewToWorld(xn::vec2 const &p)
+xn::vec2 App::ViewToWorld(xn::vec2 const &p, float w)
 {
-  //xn::mat33 T_World_View = m_T_Camera_World.ToMatrix33().GetInverse() * m_pCanvas->Get_T_Camera_View();
-  //xn::vec3 p1 = xn::vec3(p.x(), p.y(), 1.f) * T_World_View.GetInverse();
-  //return xn::vec2(p1.x(), p1.y());
-  return p;
+  xn::mat33 T_View_World = m_cameraView.GetMatrix_View_World();
+  xn::vec3 pWorldSpace3(p.x(), p.y(), w);
+  pWorldSpace3 = pWorldSpace3 * T_View_World;
+  return xn::vec2(pWorldSpace3.x(), pWorldSpace3.y());
 }
 
 xn::Module *App::GetCurrentFocus()
@@ -473,12 +473,7 @@ void App::HandleMessage(Message_MouseMove *pMsg)
   {
     if (m_isMouseDragging)
     {
-      xn::vec2 vViewSpace = pMsg->position - m_mousePositionAnchor;
-      xn::mat33 T_View_World = m_cameraView.GetMatrix_View_World();
-      xn::vec3 vWorldSpace3(vViewSpace.x(), vViewSpace.y(), 0.f);
-      vWorldSpace3 = vWorldSpace3 * T_View_World;
-      xn::vec2 vWorldSpace = xn::vec2(vWorldSpace3.x(), vWorldSpace3.y());
-
+      xn::vec2 vWorldSpace = ViewToWorld(pMsg->position - m_mousePositionAnchor, 0.f);
       m_cameraView.SetPosition(m_cameraPositionAnchor - vWorldSpace);
     }
   }

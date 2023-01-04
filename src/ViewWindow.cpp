@@ -1,43 +1,43 @@
-#include "CameraView.h"
+#include "ViewWindow.h"
 
-CameraView::CameraView()
+ViewWindow::ViewWindow()
   : m_T_View_World()
   , m_ar(1.f)
 {
 
 }
 
-void CameraView::Scale(float val)
+void ViewWindow::Scale(float val)
 {
   m_T_View_World.scale *= val;
 }
 
-void CameraView::SetScale(float val)
+void ViewWindow::SetScale(float val)
 {
   m_T_View_World.scale = xn::vec2(val, val);
 }
 
-void CameraView::Move(xn::vec2 const &delta)
+void ViewWindow::Move(xn::vec2 const &delta)
 {
   m_T_View_World.translation += delta;
 }
 
-void CameraView::SetPosition(xn::vec2 const &pos)
+void ViewWindow::SetPosition(xn::vec2 const &pos)
 {
   m_T_View_World.translation = pos;
 }
 
-xn::vec2 CameraView::GetPosition() const
+xn::vec2 ViewWindow::GetPosition() const
 {
   return m_T_View_World.translation;
 }
 
-void CameraView::SetViewSize(xn::vec2 const &v)
+void ViewWindow::SetViewSize(xn::vec2 const &v)
 {
   m_ar = v.x() / v.y();
 }
 
-xn::mat33 CameraView::GetMatrix_View_World() const
+xn::mat33 ViewWindow::GetMatrix_View_World() const
 {
   auto t = m_T_View_World;
 

@@ -86,6 +86,7 @@ void Scene::AddLineGroup(std::vector<xn::seg> const &segments, float thickness, 
   EntitySegment *pSegs = new EntitySegment();
   pSegs->segments = segments;
   pSegs->T_Model_World = T_Model_World;
+  pSegs->thickness = thickness;
   pSegs->color = clr;
   pSegs->flags = flags;
   pSegs->layer = layer;

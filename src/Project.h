@@ -43,10 +43,11 @@ public:
   const_iterator Begin() { return m_loopMap.cbegin_rand(); }
   const_iterator End() { return m_loopMap.cend_rand(); }
 
+  std::vector<xn::PolygonLoop> GetLoops() const;
+
   void Clear();
 
   bool GetAABB(xn::aabb *) const;
-  xn::PolygonWithHoles BuildScenePolygon() const;
 
 private:
   PolygonID m_nextID;

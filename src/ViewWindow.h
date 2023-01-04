@@ -1,15 +1,15 @@
-#ifndef CAMERAVIEW_H
-#define CAMERAVIEW_H
+#ifndef VIEWWINDOW_H
+#define VIEWWINDOW_H
 
 #include "xnGeometry.h"
 
-// Default camera is a centred on the origin with a size of
+// Default view window is a centred on the origin with a size of
 // 2 x 2 (ranging from -1 to 1).
-class CameraView
+class ViewWindow
 {
 public:
 
-  CameraView();
+  ViewWindow();
 
   void Scale(float);
   void Move(xn::vec2 const &);
