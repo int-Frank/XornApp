@@ -21,6 +21,7 @@ class ScenePolygonLoop
 public:
 
   ScenePolygonLoop();
+  xn::PolygonLoop GetTransformed() const;
 
   xn::FlagArray<ScenePolygonLoopFlag> flags;
   xn::PolygonLoop loop;

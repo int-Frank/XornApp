@@ -14,6 +14,24 @@
 #include "LineRenderer.h"
 #include "CircleRenderer.h"
 
+//----------------------------------------------------------------
+// Helper functions
+//----------------------------------------------------------------
+
+static bool PointExists(std::vector<xn::vec2> const &points, xn::vec2 const &point)
+{
+  for (auto const &p : points)
+  {
+    if (p == point)
+      return true;
+  }
+  return false;
+}
+
+//----------------------------------------------------------------
+// OpenGLRenderer
+//----------------------------------------------------------------
+
 class OpenGLRenderer : public IRenderer
 {
 public:
@@ -24,8 +42,8 @@ public:
   void SetSize(uint32_t width, uint32_t height);
 
   void BeginDraw() override;
-  void DrawLine(xn::seg const &, float thickness, xn::Colour clr, uint32_t flags, xn::mat33 T_Model_World) override;
-  void DrawLineGroup(std::vector<xn::seg> const &, float thickness, xn::Colour clr, uint32_t flags, xn::mat33 T_Model_World) override;
+  void DrawLine(xn::seg const &, float thickness, xn::Colour clr, uint32_t flags) override;
+  void DrawLineGroup(std::vector<xn::seg> const &, float thickness, xn::Colour clr, uint32_t flags) override;
   //void DrawFilledNGon(xn::vec2 const &centre, uint32_t sides, float radius, xn::Colour clr, uint32_t flags, xn::mat33 T_Model_World) override;
   //void DrawFilledNGonGroup(std::vector<xn::vec2> const &centres, uint32_t sides, float radius, uint32_t flags, xn::Colour clr, xn::mat33 T_Model_World) override;
   //void DrawPolygon(xn::DgPolygon const &, float thickness, xn::Colour clr, uint32_t flags, xn::mat33 T_Model_World) override;
@@ -132,25 +150,21 @@ void OpenGLRenderer::EndDraw()
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void OpenGLRenderer::DrawLine(xn::seg const &seg, float thickness, xn::Colour clr, uint32_t flags, xn::mat33 T_Model_World)
+void OpenGLRenderer::DrawLine(xn::seg const &seg, float thickness, xn::Colour clr, uint32_t flags)
 {
   std::vector<xn::seg> segments{seg};
-  m_pLineRenderer->Draw(segments, clr, thickness, flags, T_Model_World);
-}
+  m_pLineRenderer->Draw(segments, thickness, clr, flags);
 
-static bool PointExists(std::vector<xn::vec2> const &points, xn::vec2 const &point)
-{
-  for (auto const &p : points)
+  if (flags & xn::RF_RoundedEndPoints)
   {
-    if (p == point)
-      return true;
+    std::vector<xn::vec2> points = {seg.GetP0(), seg.GetP1()};
+    m_pCircleRenderer->Draw(points, thickness, clr, flags);
   }
-  return false;
 }
 
-void OpenGLRenderer::DrawLineGroup(std::vector<xn::seg> const &segments, float thickness, xn::Colour clr, uint32_t flags, xn::mat33 T_Model_World)
+void OpenGLRenderer::DrawLineGroup(std::vector<xn::seg> const &segments, float thickness, xn::Colour clr, uint32_t flags)
 {
-  m_pLineRenderer->Draw(segments, clr, thickness, flags, T_Model_World);
+  m_pLineRenderer->Draw(segments, thickness, clr, flags);
 
   if (flags & xn::RF_RoundedEndPoints)
   {
@@ -162,7 +176,7 @@ void OpenGLRenderer::DrawLineGroup(std::vector<xn::seg> const &segments, float t
       if (!PointExists(points, s.GetP1()))
         points.push_back(s.GetP1());
     }
-    m_pCircleRenderer->Draw(points, clr, thickness, 0, T_Model_World);
+    m_pCircleRenderer->Draw(points, thickness, clr, flags);
   }
 }
 

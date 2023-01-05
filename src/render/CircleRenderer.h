@@ -9,7 +9,7 @@ class ICircleRenderer : public ObjectRenderer
 public:
 
   virtual ~ICircleRenderer() {}
-  virtual void Draw(std::vector<xn::vec2> const &, xn::Colour, float radius, uint32_t flags, xn::mat33 const &T_Model_World) = 0;
+  virtual void Draw(std::vector<xn::vec2> const &, float radius, xn::Colour, uint32_t flags) = 0;
   virtual void SetRenderSize(xn::vec2 const &) = 0;
 };
 

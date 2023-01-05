@@ -12,7 +12,6 @@ uniform mat3 u_T_World_View;
 uniform vec2 u_offsets[6];
 
 out vec2 viewPosition;
-out float radius;
 
 void main(void)
 {

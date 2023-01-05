@@ -26,21 +26,19 @@ public:
   EntitySegment()
     : Renderable()
     , segments()
-    , T_Model_World()
     , color(0xFFFFFFFF)
     , thickness(2.0f)
     , flags(0)
   {
-    T_Model_World.Identity();
+
   }
 
   void Draw(IRenderer *pRenderer) override
   {
-    pRenderer->DrawLineGroup(segments, thickness, color, flags, T_Model_World);
+    pRenderer->DrawLineGroup(segments, thickness, color, flags);
   }
 
   std::vector<xn::seg>  segments;
-  xn::mat33             T_Model_World;
   xn::Colour            color;
   float                 thickness;
   uint32_t              flags;
@@ -81,11 +79,10 @@ void Scene::Clear()
   m_pimpl->renderables.clear();
 }
 
-void Scene::AddLineGroup(std::vector<xn::seg> const &segments, float thickness, xn::Colour clr, uint32_t flags, uint32_t layer, xn::mat33 T_Model_World)
+void Scene::AddLineGroup(std::vector<xn::seg> const &segments, float thickness, xn::Colour clr, uint32_t flags, uint32_t layer)
 {
   EntitySegment *pSegs = new EntitySegment();
   pSegs->segments = segments;
-  pSegs->T_Model_World = T_Model_World;
   pSegs->thickness = thickness;
   pSegs->color = clr;
   pSegs->flags = flags;
@@ -93,11 +90,10 @@ void Scene::AddLineGroup(std::vector<xn::seg> const &segments, float thickness, 
   m_pimpl->renderables.push_back(pSegs);
 }
 
-void Scene::AddLine(xn::seg const &segment, float thickness, xn::Colour clr, uint32_t flags, uint32_t layer, xn::mat33 T_Model_World)
+void Scene::AddLine(xn::seg const &segment, float thickness, xn::Colour clr, uint32_t flags, uint32_t layer)
 {
   EntitySegment *pSegs = new EntitySegment();
   pSegs->segments.push_back(segment);
-  pSegs->T_Model_World = T_Model_World;
   pSegs->thickness = thickness;
   pSegs->color = clr;
   pSegs->flags = flags;
@@ -105,14 +101,13 @@ void Scene::AddLine(xn::seg const &segment, float thickness, xn::Colour clr, uin
   m_pimpl->renderables.push_back(pSegs);
 }
 
-void Scene::AddPolygon(xn::DgPolygon const &polygon, float thickness, xn::Colour clr, uint32_t flags, uint32_t layer, xn::mat33 T_Model_World)
+void Scene::AddPolygon(xn::DgPolygon const &polygon, float thickness, xn::Colour clr, uint32_t flags, uint32_t layer)
 {
   EntitySegment *pSegs = new EntitySegment();
 
   for (auto it = polygon.cEdgesBegin(); it != polygon.cEdgesEnd(); it++)
     pSegs->segments.push_back(it.ToSegment());
 
-  pSegs->T_Model_World = T_Model_World;
   pSegs->thickness = thickness;
   pSegs->color = clr;
   pSegs->flags = flags;

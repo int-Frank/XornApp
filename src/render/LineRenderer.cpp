@@ -16,7 +16,7 @@ public:
   LineRenderer();
   ~LineRenderer();
 
-  void Draw(std::vector<xn::seg> const &, xn::Colour, float thickness, uint32_t flags, xn::mat33 const &T_Model_World);
+  void Draw(std::vector<xn::seg> const &, float thickness, xn::Colour, uint32_t flags);
   void SetRenderSize(xn::vec2 const &)override;
 
 private:
@@ -71,7 +71,7 @@ void LineRenderer::SetRenderSize(xn::vec2 const &sz)
   glUseProgram(prog);
 }
 
-void LineRenderer::Draw(std::vector<xn::seg> const &segments, xn::Colour clr, float thickness, uint32_t flags, xn::mat33 const &T_Model_World)
+void LineRenderer::Draw(std::vector<xn::seg> const &segments, float thickness, xn::Colour clr, uint32_t flags)
 {
   std::vector<xn::vec3> points;
   std::vector<xn::vec2> perpVectors;
@@ -144,11 +144,6 @@ void LineRenderer::Draw(std::vector<xn::seg> const &segments, xn::Colour clr, fl
   };
 
   glUniform4fv(loc_color, 1, colour);
-
-  GLuint loc_matrix = glGetUniformLocation(m_shaderProgram, "u_T_Model_World");
-  if (loc_matrix == -1)
-    throw MyException("Failed to set model to world matrix for the line renderer.");
-  glUniformMatrix3fv(loc_matrix, 1, GL_FALSE, T_Model_World.GetData());
 
   GLuint loc_thickness = glGetUniformLocation(m_shaderProgram, "u_thickness");
   if (loc_thickness == -1)

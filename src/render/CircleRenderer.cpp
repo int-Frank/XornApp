@@ -16,7 +16,7 @@ public:
   CircleRenderer();
   ~CircleRenderer();
 
-  void Draw(std::vector<xn::vec2> const &, xn::Colour, float radius, uint32_t flags, xn::mat33 const &T_Model_World);
+  void Draw(std::vector<xn::vec2> const &, float radius, xn::Colour, uint32_t flags);
   void SetRenderSize(xn::vec2 const &)override;
 
 private:
@@ -87,13 +87,13 @@ void CircleRenderer::SetRenderSize(xn::vec2 const &sz)
   glUseProgram(prog);
 }
 
-void CircleRenderer::Draw(std::vector<xn::vec2> const &positions, xn::Colour clr, float radius, uint32_t flags, xn::mat33 const &T_Model_World)
+void CircleRenderer::Draw(std::vector<xn::vec2> const &positions, float radius, xn::Colour clr, uint32_t flags)
 {
   GLuint vao;
   glGenVertexArrays(1, &vao);
   glBindVertexArray(vao);
 
-  // Set up the perp vector data
+  // Set up the positions data
 
   GLuint positionsBuffer;
   glGenBuffers(1, &positionsBuffer);
@@ -128,12 +128,6 @@ void CircleRenderer::Draw(std::vector<xn::vec2> const &positions, xn::Colour clr
   glUniform1f(loc, radius);
 
   glDrawArraysInstanced(GL_TRIANGLES, 0, 6, (GLsizei)positions.size());
-
-  //if (m_loadList[i].flags & RF_RoundedEndPoints)
-  //{
-  //  // Instance rendering of endpoints.
-  //  std::vector<xn::vec2> positions = GetUniqueEndPoints(m_loadList[i].segments);
-  //}
 
   // Clean up...
   glBindBuffer(GL_ARRAY_BUFFER, 0);

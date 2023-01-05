@@ -367,10 +367,9 @@ void App::Render()
 
   for (auto it = m_pProject->loops.Begin(); it != m_pProject->loops.End(); it++)
   {
-    m_pScene->AddPolygon(it->second.loop, 
-      m_lineThickness, 
-      lineColour, 0, 0,
-      it->second.T_Model_World.ToMatrix33());
+    m_pScene->AddPolygon(it->second.GetTransformed(),
+                         m_lineThickness, 
+                         lineColour, 0, 0);
   }
 
   m_pScene->Draw(pRenderer);

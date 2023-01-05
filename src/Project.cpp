@@ -17,6 +17,11 @@ ScenePolygonLoop::ScenePolygonLoop()
 
 }
 
+xn::PolygonLoop ScenePolygonLoop::GetTransformed() const
+{
+  return loop.GetTransformed(T_Model_World.ToMatrix33());
+}
+
 //--------------------------------------------------------------------------------
 // LoopCollection
 //--------------------------------------------------------------------------------
@@ -62,7 +67,7 @@ bool LoopCollection::GetAABB(xn::aabb *pOut) const
   bool first = true;
   for (auto it = m_loopMap.cbegin_rand(); it != m_loopMap.cend_rand(); it++)
   {
-    auto loop = it->second.loop.GetTransformed(it->second.T_Model_World.ToMatrix33());
+    auto loop = it->second.GetTransformed();
     xn::aabb aabb;
     auto code = loop.GetAABB(&aabb);
     if (code != Dg::ErrorCode::None)
@@ -85,7 +90,7 @@ std::vector<xn::PolygonLoop> LoopCollection::GetLoops() const
 {
   std::vector<xn::PolygonLoop> result;
   for (auto it = m_loopMap.cbegin_rand(); it != m_loopMap.cend_rand(); it++)
-    result.push_back(it->second.loop.GetTransformed(it->second.T_Model_World.ToMatrix33()));
+    result.push_back(it->second.GetTransformed());
   return result;
 }
 
