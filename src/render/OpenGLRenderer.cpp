@@ -44,8 +44,8 @@ public:
   void BeginDraw() override;
   void DrawLine(xn::seg const &, float thickness, xn::Colour clr, uint32_t flags) override;
   void DrawLineGroup(std::vector<xn::seg> const &, float thickness, xn::Colour clr, uint32_t flags) override;
-  //void DrawFilledNGon(xn::vec2 const &centre, uint32_t sides, float radius, xn::Colour clr, uint32_t flags, xn::mat33 T_Model_World) override;
-  //void DrawFilledNGonGroup(std::vector<xn::vec2> const &centres, uint32_t sides, float radius, uint32_t flags, xn::Colour clr, xn::mat33 T_Model_World) override;
+  void DrawFilledCircle(xn::vec2 const &centre, float radius, xn::Colour clr, uint32_t flags);
+  void DrawFilledCircleGroup(std::vector<xn::vec2> const &centres, float radius, xn::Colour clr, uint32_t flags);
   //void DrawPolygon(xn::DgPolygon const &, float thickness, xn::Colour clr, uint32_t flags, xn::mat33 T_Model_World) override;
   //void DrawFilledPolygon(xn::DgPolygon const &, xn::Colour clr, uint32_t flags, xn::mat33 T_Model_World) override;
   void EndDraw() override;
@@ -84,6 +84,7 @@ OpenGLRenderer::~OpenGLRenderer()
 {
   Destroy();
   delete m_pLineRenderer;
+  delete m_pCircleRenderer;
 }
 
 void OpenGLRenderer::SetSize(uint32_t width, uint32_t height)
@@ -178,6 +179,17 @@ void OpenGLRenderer::DrawLineGroup(std::vector<xn::seg> const &segments, float t
     }
     m_pCircleRenderer->Draw(points, thickness, clr, flags);
   }
+}
+
+void OpenGLRenderer::DrawFilledCircle(xn::vec2 const &centre, float radius, xn::Colour clr, uint32_t flags)
+{
+  std::vector<xn::vec2> positions{ centre };
+  m_pCircleRenderer->Draw(positions, radius, clr, flags);
+}
+
+void OpenGLRenderer::DrawFilledCircleGroup(std::vector<xn::vec2> const &positions, float radius, xn::Colour clr, uint32_t flags)
+{
+  m_pCircleRenderer->Draw(positions, radius, clr, flags);
 }
 
 void OpenGLRenderer::SetMatrix_World_View(xn::mat33 const &mat)
