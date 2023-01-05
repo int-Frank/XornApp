@@ -219,7 +219,6 @@ void App::ShowControlWindow()
 
   ImGui::SliderFloat("Line thickness##" MAIN_WINDOW_NAME, &m_lineThickness, 1.f, 10.f);
   ImGui::ColorEdit4("Line colour##" MAIN_WINDOW_NAME, m_lineColour, ImGuiColorEditFlags_NoDragDrop | ImGuiColorEditFlags_AlphaPreview);
-
   ImGui::Separator();
   ImGui::Text("Mouse input gets sent to...");
 

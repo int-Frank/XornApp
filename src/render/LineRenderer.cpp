@@ -65,7 +65,7 @@ void LineRenderer::SetRenderSize(xn::vec2 const &sz)
   glUseProgram(m_shaderProgram);
   GLuint loc = glGetUniformLocation(m_shaderProgram, "u_windowSize");
   if (loc == -1)
-    throw MyException("Failed to set world to camera matrix for the line renderer.");
+    throw MyException("Failed to set window size for the line renderer.");
   glUniform2fv(loc, 1, sz.GetData());
 
   glUseProgram(prog);
@@ -156,13 +156,7 @@ void LineRenderer::Draw(std::vector<xn::seg> const &segments, xn::Colour clr, fl
   glUniform1f(loc_thickness, thickness);
 
   glDrawArrays(GL_TRIANGLES, 0, (GLsizei)points.size());
-
-  //if (m_loadList[i].flags & RF_RoundedEndPoints)
-  //{
-  //  // Instance rendering of endpoints.
-  //  std::vector<xn::vec2> positions = GetUniqueEndPoints(m_loadList[i].segments);
-  //}
-
+  
   // Clean up...
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);

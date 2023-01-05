@@ -7,10 +7,12 @@
 
 #include "xnColour.h"
 #include "xnGeometry.h"
+#include "xnIScene.h"
 
 #include "IRenderer.h"
 #include "MyException.h"
 #include "LineRenderer.h"
+#include "CircleRenderer.h"
 
 class OpenGLRenderer : public IRenderer
 {
@@ -41,6 +43,7 @@ private:
   void Destroy();
 
   ILineRenderer *m_pLineRenderer;
+  ICircleRenderer *m_pCircleRenderer;
 
   uint32_t m_width;
   uint32_t m_height;
@@ -50,6 +53,7 @@ private:
 
 OpenGLRenderer::OpenGLRenderer(uint32_t width, uint32_t height)
   : m_pLineRenderer(CreateLineRenderer())
+  , m_pCircleRenderer(CreateCircleRenderer())
   , m_width(-1)
   , m_height(-1)
   , m_frameBuffer(0)
@@ -72,6 +76,7 @@ void OpenGLRenderer::SetSize(uint32_t width, uint32_t height)
     Init(width, height);
 
     m_pLineRenderer->SetRenderSize(xn::vec2((float)width, (float)height));
+    m_pCircleRenderer->SetRenderSize(xn::vec2((float)width, (float)height));
   }
 }
 
@@ -133,14 +138,38 @@ void OpenGLRenderer::DrawLine(xn::seg const &seg, float thickness, xn::Colour cl
   m_pLineRenderer->Draw(segments, clr, thickness, flags, T_Model_World);
 }
 
+static bool PointExists(std::vector<xn::vec2> const &points, xn::vec2 const &point)
+{
+  for (auto const &p : points)
+  {
+    if (p == point)
+      return true;
+  }
+  return false;
+}
+
 void OpenGLRenderer::DrawLineGroup(std::vector<xn::seg> const &segments, float thickness, xn::Colour clr, uint32_t flags, xn::mat33 T_Model_World)
 {
   m_pLineRenderer->Draw(segments, clr, thickness, flags, T_Model_World);
+
+  if (flags & xn::RF_RoundedEndPoints)
+  {
+    std::vector<xn::vec2> points;
+    for (auto const &s : segments)
+    {
+      if (!PointExists(points, s.GetP0()))
+        points.push_back(s.GetP0());
+      if (!PointExists(points, s.GetP1()))
+        points.push_back(s.GetP1());
+    }
+    m_pCircleRenderer->Draw(points, clr, thickness, 0, T_Model_World);
+  }
 }
 
 void OpenGLRenderer::SetMatrix_World_View(xn::mat33 const &mat)
 {
   m_pLineRenderer->SetMatrix_World_View(mat);
+  m_pCircleRenderer->SetMatrix_World_View(mat);
 }
 
 IRenderer *CreateRenderer()

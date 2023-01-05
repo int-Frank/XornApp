@@ -1,6 +1,8 @@
 R"(
 #version 430 core
 
+// TODO We don't need to encode the offset direction in the position.
+//      use a uniform, and so only need to upload vec2's.
 layout (location = 0) in vec3 in_position;
 
 layout(std430, binding = 1) buffer myLayout
@@ -15,10 +17,10 @@ uniform vec2 u_windowSize;
 
 void main(void)
 {
-  float ar = u_windowSize.x / u_windowSize.y;
+  float ar = u_windowSize.y / u_windowSize.x;
   vec2 perpVec = perpVects[gl_VertexID / 6];
-  vec3 pos = u_T_Model_World * u_T_World_View * vec3(in_position.x, in_position.y, 1.0); //u_T_Model_World * u_T_World_Camera * vec3(in_position.x, in_position.y, 1.0);
-  vec3 extensionVector = in_position.z * vec3(perpVec.x / ar, perpVec.y, 0.0);
+  vec3 pos = u_T_Model_World * u_T_World_View * vec3(in_position.x, in_position.y, 1.0);
+  vec3 extensionVector = in_position.z * vec3(perpVec.x * ar, perpVec.y, 0.0);
   float extensionLength = u_thickness / u_windowSize.y;
   vec3 finalPos = pos + extensionLength * extensionVector;
 
