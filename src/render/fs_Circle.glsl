@@ -15,12 +15,8 @@ void main(void)
   vec2 vp = (viewPosition + vec2(1.0, 1.0)) / 2.0 * u_resolution;
 
   if (distance(vp, st) > u_radius / 2.0)
-  {
     discard;
-  }
   else
-  {
     colour = u_colour;
-  }
 }
 )"

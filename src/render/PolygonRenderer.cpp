@@ -69,13 +69,11 @@ void PolygonRenderer::SetResolution(xn::vec2 const &sz)
 {
   GLint prog;
   glGetIntegerv(GL_CURRENT_PROGRAM, &prog);
-
   glUseProgram(m_shaderProgram);
   GLuint loc = glGetUniformLocation(m_shaderProgram, "u_resolution");
   if (loc == -1)
     throw MyException("Failed to set resolution for the polygon renderer.");
   glUniform2fv(loc, 1, sz.GetData());
-
   glUseProgram(prog);
 }
 
@@ -83,10 +81,6 @@ void PolygonRenderer::Draw(std::vector<xn::seg> const &segments, xn::Colour clr,
 {
   if (segments.empty())
     return;
-
-  GLuint vao;
-  glGenVertexArrays(1, &vao);
-  glBindVertexArray(vao);
 
   std::vector<xn::vec4> edges;
   xn::vec2 minPt(FLT_MAX, FLT_MAX);
@@ -116,6 +110,10 @@ void PolygonRenderer::Draw(std::vector<xn::seg> const &segments, xn::Colour clr,
 
   // Set up polygon data
 
+  GLuint vao;
+  glGenVertexArrays(1, &vao);
+  glBindVertexArray(vao);
+
   GLuint edgesBuffer;
   glGenBuffers(1, &edgesBuffer);
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, edgesBuffer);
@@ -128,7 +126,7 @@ void PolygonRenderer::Draw(std::vector<xn::seg> const &segments, xn::Colour clr,
   // Set up the positions data
 
   GLuint quadBuffer;
-  float const quad[12] =
+  float quad[12] =
   {
     minPt.x(),  minPt.y(),
     maxPt.x(),  minPt.y(),

@@ -9,6 +9,7 @@
 #include "xnGeometry.h"
 #include "xnIScene.h"
 
+#include "DefaultData.h"
 #include "IRenderer.h"
 #include "MyException.h"
 #include "LineRenderer.h"
@@ -150,7 +151,7 @@ void OpenGLRenderer::BeginDraw()
 {
   // Clear the frame
   glBindFramebuffer(GL_FRAMEBUFFER, m_frameBuffer);
-  glClearColor(0.f, 0.f, 0.f, 1.f);
+  glClearColor(DefaultData::data.backgroundColour.r(), DefaultData::data.backgroundColour.g(), DefaultData::data.backgroundColour.b(), DefaultData::data.backgroundColour.a());
   glClear(GL_COLOR_BUFFER_BIT);
 
   // Prepare the draw state

@@ -80,13 +80,11 @@ void CircleRenderer::SetResolution(xn::vec2 const &sz)
 {
   GLint prog;
   glGetIntegerv(GL_CURRENT_PROGRAM, &prog);
-  
   glUseProgram(m_shaderProgram);
   GLuint loc = glGetUniformLocation(m_shaderProgram, "u_resolution");
   if (loc == -1)
     throw MyException("Failed to set window size for the circle renderer.");
   glUniform2fv(loc, 1, sz.GetData());
-  
   glUseProgram(prog);
 }
 
@@ -102,9 +100,9 @@ void CircleRenderer::Draw(std::vector<xn::vec2> const &positions, float radius, 
   glGenBuffers(1, &positionsBuffer);
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, positionsBuffer);
   glBufferData(GL_SHADER_STORAGE_BUFFER,
-    positions.size() * sizeof(xn::vec2),
-    positions.data(),
-    GL_STATIC_DRAW);
+               positions.size() * sizeof(xn::vec2),
+               positions.data(),
+               GL_STATIC_DRAW);
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, positionsBuffer);
 
   // Draw elements...

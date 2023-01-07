@@ -1,7 +1,7 @@
 R"(
 #version 430 core
 
-in vec2 in_position;
+layout (location = 0) in vec2 in_position;
 
 uniform mat3 u_T_World_View;
 

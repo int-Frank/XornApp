@@ -52,7 +52,7 @@ App::App()
   , m_mousePositionAnchor(0.f, 0.f)
   , m_cameraPositionAnchor(0.f, 0.f)
   , m_lineThickness(DefaultData::data.polygonThickness)
-  , m_lineColour{1.f, 0.f, 0.f, 1.f}
+  , m_lineColour{ DefaultData::data.polygonColour.r(), DefaultData::data.polygonColour.g(), DefaultData::data.polygonColour.b(), DefaultData::data.polygonColour.a() }
   , m_geometryDirty(true)
   , m_projectDirty(false)
   , m_showDemoWindow(false)

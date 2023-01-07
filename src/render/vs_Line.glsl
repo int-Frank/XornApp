@@ -1,8 +1,6 @@
 R"(
 #version 430 core
 
-// TODO We don't need to encode the offset direction in the position.
-//      use a uniform, and so only need to upload vec2's.
 layout (location = 0) in vec3 in_position;
 
 layout(std430, binding = 1) buffer myLayout

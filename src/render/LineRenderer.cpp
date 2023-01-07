@@ -64,13 +64,11 @@ void LineRenderer::SetResolution(xn::vec2 const &sz)
 {
   GLint prog;
   glGetIntegerv(GL_CURRENT_PROGRAM, &prog);
-
   glUseProgram(m_shaderProgram);
   GLuint loc = glGetUniformLocation(m_shaderProgram, "u_resolution");
   if (loc == -1)
     throw MyException("Failed to set window size for the line renderer.");
   glUniform2fv(loc, 1, sz.GetData());
-
   glUseProgram(prog);
 }
 

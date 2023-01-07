@@ -20,6 +20,7 @@ struct DefaultData
   std::string defaultProjectName;
 
   ImVec2 buttonSize;
+  xn::Colour backgroundColour;
   xn::Colour polygonColour;
   float polygonThickness;
 };
