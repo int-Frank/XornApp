@@ -13,6 +13,9 @@
 #include "MyException.h"
 #include "LineRenderer.h"
 #include "CircleRenderer.h"
+#include "PolygonRenderer.h"
+
+#define RENDERER(x) ((I ## x*)m_pRenderers[x])
 
 //----------------------------------------------------------------
 // Helper functions
@@ -47,7 +50,7 @@ public:
   void DrawFilledCircle(xn::vec2 const &centre, float radius, xn::Colour clr, uint32_t flags);
   void DrawFilledCircleGroup(std::vector<xn::vec2> const &centres, float radius, xn::Colour clr, uint32_t flags);
   //void DrawPolygon(xn::DgPolygon const &, float thickness, xn::Colour clr, uint32_t flags, xn::mat33 T_Model_World) override;
-  //void DrawFilledPolygon(xn::DgPolygon const &, xn::Colour clr, uint32_t flags, xn::mat33 T_Model_World) override;
+  void DrawFilledPolygon(std::vector<xn::seg> const &, xn::Colour clr, uint32_t flags) override;
   void EndDraw() override;
 
   void SetMatrix_World_View(xn::mat33 const &) override;
@@ -60,8 +63,15 @@ private:
   void Init(uint32_t width, uint32_t height);
   void Destroy();
 
-  ILineRenderer *m_pLineRenderer;
-  ICircleRenderer *m_pCircleRenderer;
+  enum Renderers
+  {
+    LineRenderer = 0,
+    CircleRenderer,
+    PolygonRenderer,
+    Renderers_COUNT
+  };
+
+  ObjectRenderer *m_pRenderers[Renderers_COUNT];
 
   uint32_t m_width;
   uint32_t m_height;
@@ -70,21 +80,25 @@ private:
 };
 
 OpenGLRenderer::OpenGLRenderer(uint32_t width, uint32_t height)
-  : m_pLineRenderer(CreateLineRenderer())
-  , m_pCircleRenderer(CreateCircleRenderer())
+  : m_pRenderers{}
   , m_width(-1)
   , m_height(-1)
   , m_frameBuffer(0)
   , m_texture(0)
 {
+  m_pRenderers[LineRenderer] = CreateLineRenderer();
+  m_pRenderers[CircleRenderer] = CreateCircleRenderer();
+  m_pRenderers[PolygonRenderer] = CreatePolygonRenderer();
+
   Init(width, height);
 }
 
 OpenGLRenderer::~OpenGLRenderer()
 {
   Destroy();
-  delete m_pLineRenderer;
-  delete m_pCircleRenderer;
+
+  for (int i = 0; i < Renderers_COUNT; i++)
+    delete m_pRenderers[i];
 }
 
 void OpenGLRenderer::SetSize(uint32_t width, uint32_t height)
@@ -94,8 +108,8 @@ void OpenGLRenderer::SetSize(uint32_t width, uint32_t height)
     Destroy();
     Init(width, height);
 
-    m_pLineRenderer->SetRenderSize(xn::vec2((float)width, (float)height));
-    m_pCircleRenderer->SetRenderSize(xn::vec2((float)width, (float)height));
+    for (int i = 0; i < Renderers_COUNT; i++)
+      m_pRenderers[i]->SetResolution(xn::vec2((float)width, (float)height));
   }
 }
 
@@ -154,18 +168,18 @@ void OpenGLRenderer::EndDraw()
 void OpenGLRenderer::DrawLine(xn::seg const &seg, float thickness, xn::Colour clr, uint32_t flags)
 {
   std::vector<xn::seg> segments{seg};
-  m_pLineRenderer->Draw(segments, thickness, clr, flags);
+  RENDERER(LineRenderer)->Draw(segments, thickness, clr, flags);
 
   if (flags & xn::RF_RoundedEndPoints)
   {
     std::vector<xn::vec2> points = {seg.GetP0(), seg.GetP1()};
-    m_pCircleRenderer->Draw(points, thickness, clr, flags);
+    RENDERER(CircleRenderer)->Draw(points, thickness, clr, flags);
   }
 }
 
 void OpenGLRenderer::DrawLineGroup(std::vector<xn::seg> const &segments, float thickness, xn::Colour clr, uint32_t flags)
 {
-  m_pLineRenderer->Draw(segments, thickness, clr, flags);
+  RENDERER(LineRenderer)->Draw(segments, thickness, clr, flags);
 
   if (flags & xn::RF_RoundedEndPoints)
   {
@@ -177,25 +191,30 @@ void OpenGLRenderer::DrawLineGroup(std::vector<xn::seg> const &segments, float t
       if (!PointExists(points, s.GetP1()))
         points.push_back(s.GetP1());
     }
-    m_pCircleRenderer->Draw(points, thickness, clr, flags);
+    RENDERER(CircleRenderer)->Draw(points, thickness, clr, flags);
   }
 }
 
 void OpenGLRenderer::DrawFilledCircle(xn::vec2 const &centre, float radius, xn::Colour clr, uint32_t flags)
 {
   std::vector<xn::vec2> positions{ centre };
-  m_pCircleRenderer->Draw(positions, radius, clr, flags);
+  RENDERER(CircleRenderer)->Draw(positions, radius, clr, flags);
 }
 
 void OpenGLRenderer::DrawFilledCircleGroup(std::vector<xn::vec2> const &positions, float radius, xn::Colour clr, uint32_t flags)
 {
-  m_pCircleRenderer->Draw(positions, radius, clr, flags);
+  RENDERER(CircleRenderer)->Draw(positions, radius, clr, flags);
+}
+
+void OpenGLRenderer::DrawFilledPolygon(std::vector<xn::seg> const &edges, xn::Colour clr, uint32_t flags)
+{
+  RENDERER(PolygonRenderer)->Draw(edges, clr, flags);
 }
 
 void OpenGLRenderer::SetMatrix_World_View(xn::mat33 const &mat)
 {
-  m_pLineRenderer->SetMatrix_World_View(mat);
-  m_pCircleRenderer->SetMatrix_World_View(mat);
+  for (int i = 0; i < Renderers_COUNT; i++)
+    m_pRenderers[i]->SetMatrix_World_View(mat);
 }
 
 IRenderer *CreateRenderer()

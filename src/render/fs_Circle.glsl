@@ -4,15 +4,15 @@ R"(
 in vec2 viewPosition;
 
 uniform float u_radius;
-uniform vec2 u_windowSize;
-uniform vec4 u_color;
+uniform vec2 u_resolution;
+uniform vec4 u_colour;
 
-out vec4 color;
+out vec4 colour;
 
 void main(void)
 {
   vec2 st = gl_FragCoord.xy;
-  vec2 vp = (viewPosition + vec2(1.0, 1.0)) / 2.0 * u_windowSize;
+  vec2 vp = (viewPosition + vec2(1.0, 1.0)) / 2.0 * u_resolution;
 
   if (distance(vp, st) > u_radius / 2.0)
   {
@@ -20,7 +20,7 @@ void main(void)
   }
   else
   {
-    color = u_color;
+    colour = u_colour;
   }
 }
 )"

@@ -1,11 +1,11 @@
 R"(
 #version 430
 
-uniform vec4 u_color;
-out vec4 color;
+uniform vec4 u_colour;
+out vec4 colour;
 
 void main(void)
 {
-  color = u_color;
+  colour = u_colour;
 }
 )"

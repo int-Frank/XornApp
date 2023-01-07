@@ -7,7 +7,7 @@ layout(std430, binding = 1) buffer myLayout
 };
 
 uniform float u_radius;
-uniform vec2 u_windowSize;
+uniform vec2 u_resolution;
 uniform mat3 u_T_World_View;
 uniform vec2 u_offsets[6];
 
@@ -15,8 +15,8 @@ out vec2 viewPosition;
 
 void main(void)
 {
-  float ar = u_windowSize.y / u_windowSize.x;
-  vec2 offset = u_radius * u_offsets[gl_VertexID] / u_windowSize.y;
+  float ar = u_resolution.y / u_resolution.x;
+  vec2 offset = u_radius * u_offsets[gl_VertexID] / u_resolution.y;
   offset = vec2(offset.x * ar, offset.y);
   vec2 worldPos = positions[gl_InstanceID];
   vec3 viewPosition3 = u_T_World_View * vec3(worldPos.x, worldPos.y, 1.0);

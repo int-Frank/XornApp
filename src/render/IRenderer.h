@@ -20,7 +20,7 @@ public:
   virtual void DrawFilledCircle(xn::vec2 const &centre, float radius, xn::Colour clr, uint32_t flags) = 0;
   virtual void DrawFilledCircleGroup(std::vector<xn::vec2> const &centres, float radius, xn::Colour clr, uint32_t flags) = 0;
   //virtual void DrawPolygon(xn::DgPolygon const &, float thickness, xn::Colour clr, uint32_t flags, xn::mat33 T_Model_World) = 0;
-  //virtual void DrawFilledPolygon(xn::DgPolygon const &, xn::Colour clr, uint32_t flags, xn::mat33 T_Model_World) = 0;
+  virtual void DrawFilledPolygon(std::vector<xn::seg> const &, xn::Colour clr, uint32_t flags) = 0;
   virtual void EndDraw() = 0;
 
   virtual void SetMatrix_World_View(xn::mat33 const &) = 0;

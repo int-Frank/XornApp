@@ -17,11 +17,11 @@ public:
   ~CircleRenderer();
 
   void Draw(std::vector<xn::vec2> const &, float radius, xn::Colour, uint32_t flags);
-  void SetRenderSize(xn::vec2 const &)override;
+  void SetMatrix_World_View(xn::mat33 const &) override;
+  void SetResolution(xn::vec2 const &) override;
 
 private:
 
-  void _SetMatrix_World_View(xn::mat33 const &) override;
   GLuint m_shaderProgram;
 };
 
@@ -64,22 +64,25 @@ CircleRenderer::~CircleRenderer()
   glDeleteProgram(m_shaderProgram);
 }
 
-void CircleRenderer::_SetMatrix_World_View(xn::mat33 const &mat)
+void CircleRenderer::SetMatrix_World_View(xn::mat33 const &mat)
 {
+  GLint prog;
+  glGetIntegerv(GL_CURRENT_PROGRAM, &prog);
   glUseProgram(m_shaderProgram);
   GLuint loc = glGetUniformLocation(m_shaderProgram, "u_T_World_View");
   if (loc == -1)
-    throw MyException("Failed to set world to view matrix for the line renderer.");
+    throw MyException("Failed to set world to view matrix for the circle renderer.");
   glUniformMatrix3fv(loc, 1, GL_FALSE, mat.GetData());
+  glUseProgram(prog);
 }
 
-void CircleRenderer::SetRenderSize(xn::vec2 const &sz)
+void CircleRenderer::SetResolution(xn::vec2 const &sz)
 {
   GLint prog;
   glGetIntegerv(GL_CURRENT_PROGRAM, &prog);
   
   glUseProgram(m_shaderProgram);
-  GLuint loc = glGetUniformLocation(m_shaderProgram, "u_windowSize");
+  GLuint loc = glGetUniformLocation(m_shaderProgram, "u_resolution");
   if (loc == -1)
     throw MyException("Failed to set window size for the circle renderer.");
   glUniform2fv(loc, 1, sz.GetData());
@@ -108,9 +111,9 @@ void CircleRenderer::Draw(std::vector<xn::vec2> const &positions, float radius, 
   GLuint loc;
 
   glUseProgram(m_shaderProgram);
-  loc = glGetUniformLocation(m_shaderProgram, "u_color");
+  loc = glGetUniformLocation(m_shaderProgram, "u_colour");
   if (loc == -1)
-    throw MyException("Failed to set colour for the line renderer.");
+    throw MyException("Failed to set colour for the circle renderer.");
 
   float colour[4] =
   {
@@ -124,7 +127,7 @@ void CircleRenderer::Draw(std::vector<xn::vec2> const &positions, float radius, 
 
   loc = glGetUniformLocation(m_shaderProgram, "u_radius");
   if (loc == -1)
-    throw MyException("Failed to set thickness for the line renderer.");
+    throw MyException("Failed to set radius for the circle renderer.");
   glUniform1f(loc, radius);
 
   glDrawArraysInstanced(GL_TRIANGLES, 0, 6, (GLsizei)positions.size());

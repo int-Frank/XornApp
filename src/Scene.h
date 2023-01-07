@@ -17,7 +17,8 @@ public:
   void AddFilledCircle(xn::vec2 const &centre, float radius, xn::Colour clr, uint32_t flags, uint32_t layer) override;
   void AddFilledCircleGroup(std::vector<xn::vec2> const &centres, float radius, xn::Colour clr, uint32_t flags, uint32_t layer) override;
   void AddPolygon(xn::DgPolygon const &, float thickness, xn::Colour clr, uint32_t flags, uint32_t layer) override;
-  void AddFilledPolygon(xn::DgPolygon const &, xn::Colour clr, uint32_t flags, uint32_t layer) override {}
+  void AddFilledPolygon(xn::DgPolygon const &, xn::Colour clr, uint32_t flags, uint32_t layer) override;
+  void AddFilledPolygon(xn::PolygonWithHoles const &, xn::Colour clr, uint32_t flags, uint32_t layer) override;
 
   void Draw(IRenderer *);
   void Clear();

@@ -17,11 +17,11 @@ public:
   ~LineRenderer();
 
   void Draw(std::vector<xn::seg> const &, float thickness, xn::Colour, uint32_t flags);
-  void SetRenderSize(xn::vec2 const &)override;
+  void SetMatrix_World_View(xn::mat33 const &) override;
+  void SetResolution(xn::vec2 const &) override;
 
 private:
 
-  void _SetMatrix_World_View(xn::mat33 const &) override;
   GLuint m_shaderProgram;
 };
 
@@ -48,22 +48,25 @@ LineRenderer::~LineRenderer()
   glDeleteProgram(m_shaderProgram);
 }
 
-void LineRenderer::_SetMatrix_World_View(xn::mat33 const &mat)
+void LineRenderer::SetMatrix_World_View(xn::mat33 const &mat)
 {
+  GLint prog;
+  glGetIntegerv(GL_CURRENT_PROGRAM, &prog);
   glUseProgram(m_shaderProgram);
   GLuint loc = glGetUniformLocation(m_shaderProgram, "u_T_World_View");
   if (loc == -1)
     throw MyException("Failed to set world to view matrix for the line renderer.");
   glUniformMatrix3fv(loc, 1, GL_FALSE, mat.GetData());
+  glUseProgram(prog);
 }
 
-void LineRenderer::SetRenderSize(xn::vec2 const &sz)
+void LineRenderer::SetResolution(xn::vec2 const &sz)
 {
   GLint prog;
   glGetIntegerv(GL_CURRENT_PROGRAM, &prog);
 
   glUseProgram(m_shaderProgram);
-  GLuint loc = glGetUniformLocation(m_shaderProgram, "u_windowSize");
+  GLuint loc = glGetUniformLocation(m_shaderProgram, "u_resolution");
   if (loc == -1)
     throw MyException("Failed to set window size for the line renderer.");
   glUniform2fv(loc, 1, sz.GetData());
@@ -131,7 +134,7 @@ void LineRenderer::Draw(std::vector<xn::seg> const &segments, float thickness, x
   // Draw elements...
 
   glUseProgram(m_shaderProgram);
-  GLuint loc_color = glGetUniformLocation(m_shaderProgram, "u_color");
+  GLuint loc_color = glGetUniformLocation(m_shaderProgram, "u_colour");
   if (loc_color == -1)
     throw MyException("Failed to set colour for the line renderer.");
 

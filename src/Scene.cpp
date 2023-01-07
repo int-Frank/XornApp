@@ -4,6 +4,10 @@
 #include "IRenderer.h"
 #include "Scene.h"
 
+//---------------------------------------------------------------------------
+// Renderables
+//---------------------------------------------------------------------------
+
 class Renderable
 {
 public:
@@ -74,6 +78,35 @@ private:
   uint32_t              m_flags;
 };
 
+class EntityFilledPolygon : public Renderable
+{
+public:
+
+  EntityFilledPolygon(std::vector<xn::seg> const &edges, xn::Colour clr, uint32_t flags, uint32_t layer)
+    : Renderable(layer)
+    , m_edges(edges)
+    , m_color(clr)
+    , m_flags(flags)
+  {
+
+  }
+
+  void Draw(IRenderer *pRenderer) override
+  {
+    pRenderer->DrawFilledPolygon(m_edges, m_color, m_flags);
+  }
+
+private:
+
+  std::vector<xn::seg>  m_edges;
+  xn::Colour            m_color;
+  uint32_t              m_flags;
+};
+
+//---------------------------------------------------------------------------
+// Scene
+//---------------------------------------------------------------------------
+
 class Scene::PIMPL 
 {
 public:
@@ -143,4 +176,25 @@ void Scene::AddPolygon(xn::DgPolygon const &polygon, float thickness, xn::Colour
 
   EntitySegment *pSegs = new EntitySegment(segments, thickness, clr, flags, layer);
   m_pimpl->renderables.push_back(pSegs);
+}
+
+void Scene::AddFilledPolygon(xn::PolygonWithHoles const &pwh, xn::Colour clr, uint32_t flags, uint32_t layer)
+{
+  std::vector<xn::seg> edges;
+  for (auto pit = pwh.loops.cbegin(); pit != pwh.loops.cend(); pit++)
+  {
+    for (auto eit = pit->cEdgesBegin(); eit != pit->cEdgesEnd(); eit++)
+      edges.push_back(*eit);
+  }
+  EntityFilledPolygon *pPolygon = new EntityFilledPolygon(edges, clr, flags, layer);
+  m_pimpl->renderables.push_back(pPolygon);
+}
+
+void Scene::AddFilledPolygon(xn::DgPolygon const &polygon, xn::Colour clr, uint32_t flags, uint32_t layer)
+{
+  std::vector<xn::seg> edges;
+  for (auto eit = polygon.cEdgesBegin(); eit != polygon.cEdgesEnd(); eit++)
+    edges.push_back(*eit);
+  EntityFilledPolygon *pPolygon = new EntityFilledPolygon(edges, clr, flags, layer);
+  m_pimpl->renderables.push_back(pPolygon);
 }
