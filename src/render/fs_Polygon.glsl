@@ -20,6 +20,8 @@ const int onBoundary = 2;
 //   0: outside
 //   1: inside
 //   2: on boundary
+// Adapted from "Optimal Reliable Point-in-Polygon Test and Differential Coding Boolean Operations on Polygons"
+// Authors: Jianqiang Hao, Jianzhi Sun, Yi Chen, Qiang Cai and Li Tan 
 int PointInsidePolygon(in vec2 point)
 {
   int k = 0;
