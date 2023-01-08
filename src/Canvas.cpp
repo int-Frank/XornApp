@@ -126,7 +126,7 @@ void Canvas::BeginFrame()
   // Draw border and background color
   ImGuiIO &io = ImGui::GetIO();
   m_pimpl->renderSize = xn::vec2(canvas_sz.x, canvas_sz.y);
-  m_pimpl->pRenderer->SetSize(uint32_t(m_pimpl->renderSize.x()), uint32_t(m_pimpl->renderSize.y()));
+  m_pimpl->pRenderer->SetResolution(uint32_t(m_pimpl->renderSize.x()), uint32_t(m_pimpl->renderSize.y()));
 
   // This will catch our interactions
   ImGui::InvisibleButton(std::string(std::string("canvas##") + m_pimpl->name).c_str(), canvas_sz, ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight);

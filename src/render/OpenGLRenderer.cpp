@@ -43,7 +43,7 @@ public:
   OpenGLRenderer(uint32_t width, uint32_t height);
   ~OpenGLRenderer();
 
-  void SetSize(uint32_t width, uint32_t height);
+  void SetResolution(uint32_t width, uint32_t height) override;
 
   void BeginDraw() override;
   void DrawLine(xn::seg const &, float thickness, xn::Colour clr, uint32_t flags) override;
@@ -102,7 +102,7 @@ OpenGLRenderer::~OpenGLRenderer()
     delete m_pRenderers[i];
 }
 
-void OpenGLRenderer::SetSize(uint32_t width, uint32_t height)
+void OpenGLRenderer::SetResolution(uint32_t width, uint32_t height)
 {
   if (width != m_width || height != m_height)
   {
