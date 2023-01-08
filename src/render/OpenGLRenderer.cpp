@@ -43,7 +43,7 @@ public:
   OpenGLRenderer(uint32_t width, uint32_t height);
   ~OpenGLRenderer();
 
-  void SetSize(uint32_t width, uint32_t height);
+  void SetResolution(uint32_t width, uint32_t height) override;
 
   void BeginDraw() override;
   void DrawLine(xn::seg const &, float thickness, xn::Colour clr, uint32_t flags) override;
@@ -78,6 +78,8 @@ private:
   uint32_t m_height;
   GLuint m_frameBuffer;
   GLuint m_texture;
+  GLuint m_frameBufferMultisample;
+  GLuint m_textureMultisample;
 };
 
 OpenGLRenderer::OpenGLRenderer(uint32_t width, uint32_t height)
@@ -86,6 +88,8 @@ OpenGLRenderer::OpenGLRenderer(uint32_t width, uint32_t height)
   , m_height(-1)
   , m_frameBuffer(0)
   , m_texture(0)
+  , m_frameBufferMultisample(0)
+  , m_textureMultisample(0)
 {
   m_pRenderers[LineRenderer] = CreateLineRenderer();
   m_pRenderers[CircleRenderer] = CreateCircleRenderer();
@@ -102,7 +106,7 @@ OpenGLRenderer::~OpenGLRenderer()
     delete m_pRenderers[i];
 }
 
-void OpenGLRenderer::SetSize(uint32_t width, uint32_t height)
+void OpenGLRenderer::SetResolution(uint32_t width, uint32_t height)
 {
   if (width != m_width || height != m_height)
   {
@@ -116,6 +120,27 @@ void OpenGLRenderer::SetSize(uint32_t width, uint32_t height)
 
 void OpenGLRenderer::Init(uint32_t width, uint32_t height)
 {
+  // Multisample frame buffer
+  glGenFramebuffers(1, &m_frameBufferMultisample);
+  glBindFramebuffer(GL_FRAMEBUFFER, m_frameBufferMultisample);
+
+  // generate texture
+  glGenTextures(1, &m_textureMultisample);
+  glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_textureMultisample);
+  glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 8, GL_RGBA, width, height,GL_TRUE);
+  glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+
+  // attach it to currently bound framebuffer object
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, m_textureMultisample, 0);
+
+  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    throw MyException("Failed to initialise multisample frame buffer.");
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+  // Normal frame buffer
   glGenFramebuffers(1, &m_frameBuffer);
   glBindFramebuffer(GL_FRAMEBUFFER, m_frameBuffer);
 
@@ -133,16 +158,20 @@ void OpenGLRenderer::Init(uint32_t width, uint32_t height)
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     throw MyException("Failed to initialise frame buffer.");
 
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
   m_width = width;
   m_height = height;
-
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void OpenGLRenderer::Destroy()
 {
+  glDeleteFramebuffers(1, &m_frameBufferMultisample);
+  glDeleteTextures(1, &m_textureMultisample);
   glDeleteFramebuffers(1, &m_frameBuffer);
   glDeleteTextures(1, &m_texture);
+  m_frameBufferMultisample = 0;
+  m_textureMultisample = 0;
   m_frameBuffer = 0;
   m_texture = 0;
 }
@@ -150,7 +179,7 @@ void OpenGLRenderer::Destroy()
 void OpenGLRenderer::BeginDraw()
 {
   // Clear the frame
-  glBindFramebuffer(GL_FRAMEBUFFER, m_frameBuffer);
+  glBindFramebuffer(GL_FRAMEBUFFER, m_frameBufferMultisample);
   glClearColor(DefaultData::data.backgroundColour.r(), DefaultData::data.backgroundColour.g(), DefaultData::data.backgroundColour.b(), DefaultData::data.backgroundColour.a());
   glClear(GL_COLOR_BUFFER_BIT);
 
@@ -163,7 +192,12 @@ void OpenGLRenderer::BeginDraw()
 
 void OpenGLRenderer::EndDraw()
 {
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, m_frameBufferMultisample);
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_frameBuffer);
+  glBlitFramebuffer(0, 0, m_width, m_height, 0, 0, m_width, m_height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
 void OpenGLRenderer::DrawLine(xn::seg const &seg, float thickness, xn::Colour clr, uint32_t flags)
