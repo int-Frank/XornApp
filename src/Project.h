@@ -22,9 +22,10 @@ public:
 
   ScenePolygonLoop();
   xn::PolygonLoop GetTransformed() const;
+  xn::PolygonLoop GetLoop() const;
 
   xn::FlagArray<ScenePolygonLoopFlag> flags;
-  xn::PolygonLoop loop;
+  std::vector<xn::vec2> vertices;
   xn::Transform T_Model_World;
 };
 

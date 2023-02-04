@@ -4,6 +4,8 @@
 #include <vector>
 #include "Action.h"
 
+typedef uint32_t ActionID;
+
 class ActionList
 {
 public:

@@ -1,6 +1,7 @@
 #ifndef DEFAULTDATA_H
 #define DEFAULTDATA_H
 
+#include <vector>
 #include <string>
 #include "Common.h"
 #include "xnColour.h"
@@ -16,7 +17,7 @@ struct DefaultData
   std::string projectsPath;
   std::string pluginsPath;
 
-  xn::PolygonLoop defaultBoundary;
+  std::vector<xn::vec2> defaultBoundary;
   std::string defaultProjectName;
 
   ImVec2 buttonSize;

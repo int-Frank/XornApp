@@ -10,6 +10,8 @@ project "XornApp"
   {
     "src/**.h",
     "src/**.cpp",
+    "src/events/**.cpp",
+    "src/events/**.h",
     "src/render/**.cpp",
     "src/render/**.h",
     "src/render/**.glsl",
@@ -22,6 +24,7 @@ project "XornApp"
   {
     "src",
     "src/render",
+    "src/events",
     "%{wks.location}/XornCore/src",
     "%{wks.location}/DgLib/src",
 	"3rdParty/glad/include",

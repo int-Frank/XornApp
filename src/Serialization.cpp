@@ -199,7 +199,7 @@ std::ostream &operator<<(std::ostream &os, xn::Transform const &obj)
 // PolygonLoop IO
 //-------------------------------------------------------------------
 
-bool ReadLoop(std::istream &is, xn::PolygonLoop &loop)
+bool ReadLoop(std::istream &is, std::vector<xn::vec2> &loop)
 {
   ASSERT_NEXT('[');
 
@@ -209,7 +209,7 @@ bool ReadLoop(std::istream &is, xn::PolygonLoop &loop)
 
     xn::vec2 point;
     CHECK(ReadVec2(is, point));
-    loop.PushBack(point);
+    loop.push_back(point);
 
     DISCARD_NEXT_IF(',');
   }
@@ -217,15 +217,14 @@ bool ReadLoop(std::istream &is, xn::PolygonLoop &loop)
   return true;
 }
 
-std::ostream &operator<<(std::ostream &os, xn::PolygonLoop const &obj)
+std::ostream &operator<<(std::ostream &os, std::vector<xn::vec2> const &obj)
 {
   os << "[";
 
-  size_t i = 0;
-  for (auto it = obj.cPointsBegin(); it != obj.cPointsEnd(); it++)
+  for (size_t i = 0; i < obj.size(); i++)
   {
-    os << *it;
-    if (i + 1 != obj.Size())
+    os << obj[i];
+    if (i + 1 != obj.size())
       os << ',';
     i++;
   }
@@ -255,7 +254,7 @@ bool ReadScenePolygonLoop(std::istream &is, ScenePolygonLoop &obj)
 
     if (str == ID_SCENEPOLYGONLOOP_POINTS)
     {
-      CHECK(ReadLoop(is, obj.loop));
+      CHECK(ReadLoop(is, obj.vertices));
     }
     else if (str == ID_SCENEPOLYGONLOOP_TRANSFORM)
     {
@@ -277,7 +276,7 @@ std::ostream &operator<<(std::ostream &os, ScenePolygonLoop const &obj)
 {
   os << '{';
 
-  os << "\"" ID_SCENEPOLYGONLOOP_POINTS "\":" << obj.loop;
+  os << "\"" ID_SCENEPOLYGONLOOP_POINTS "\":" << obj.vertices;
   os << ",\"" ID_SCENEPOLYGONLOOP_TRANSFORM "\":" << obj.T_Model_World;
 
   os << '}';

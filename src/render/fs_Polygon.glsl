@@ -16,6 +16,54 @@ const int outside = 0;
 const int inside = 1;
 const int onBoundary = 2;
 
+float Dot(in vec2 a, in vec2 b)
+{
+  return (a.x * b.x) + (a.y * b.y);
+}
+
+vec2 ClosestPointToSegment(in vec2 point, in vec4 segment)
+{
+  vec2 p0 = vec2(segment.x, segment.y);
+  vec2 p1 = vec2(segment.z, segment.w);
+  vec2 v = p1 - p0;
+  float u = 0.0;
+
+  vec2 w = point - p0;
+  float proj = Dot(w, v);
+  if (proj < 0.0)
+  {
+    u = 0.0;
+  }
+  else
+  {
+    float vsq = Dot(v, v);
+    if (proj >= vsq)
+      u = 1.0;
+    else
+      u = proj / vsq;
+  }
+
+  return p0 + u * v;
+}
+
+vec2 ClosestPointToPolygon(in vec2 point)
+{
+  float minDist = 3.402823466e+38;
+  vec2 closestPoint = vec2(0.0, 0.0);
+  for (int i = 0; i < u_edgeCount; i++)
+  {
+    vec2 cp = ClosestPointToSegment(point, edges[i]);
+    vec2 v = cp - point;
+    float dist = Dot(v, v);
+    if (dist < minDist)
+    {
+      minDist = dist;
+      closestPoint = cp;
+    }
+  }
+  return closestPoint;
+}
+
 // Returns:
 //   0: outside
 //   1: inside
@@ -122,8 +170,26 @@ void main(void)
   vec2 point = (gl_FragCoord.xy / u_resolution) * 2.0 - 1.0;
 
   if (PointInsidePolygon(point) == outside)
-    discard;
+  {
+    vec2 cp = ClosestPointToPolygon(point);
+    cp = (cp + 1.0) / 2.0 * u_resolution;
+    vec2 v = cp - gl_FragCoord.xy;
+    float dist = sqrt(Dot(v, v));
+    float thickness = 1.2;
+
+    if (dist <= thickness)
+    {
+      float alpha = 1.0 - dist / thickness;
+      colour = vec4(u_colour.x, u_colour.y, u_colour.z, alpha * alpha);
+    }
+    else
+    {
+      discard;
+    }
+  }
   else
+  {
     colour = u_colour;
+  }
 }
 )"

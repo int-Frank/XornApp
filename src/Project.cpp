@@ -19,7 +19,15 @@ ScenePolygonLoop::ScenePolygonLoop()
 
 xn::PolygonLoop ScenePolygonLoop::GetTransformed() const
 {
-  return loop.GetTransformed(T_Model_World.ToMatrix33());
+  return GetLoop().GetTransformed(T_Model_World.ToMatrix33());
+}
+
+xn::PolygonLoop ScenePolygonLoop::GetLoop() const
+{
+  xn::PolygonLoop loop;
+  for (auto const & v : vertices)
+    loop.PushBack(v);
+  return loop;
 }
 
 //--------------------------------------------------------------------------------
@@ -158,7 +166,7 @@ bool Project::ReadFromOBJFile(std::string const &filePath)
         ScenePolygonLoop loop;
         int index;
         while (iss >> index)
-          loop.loop.PushBack(verts[index - 1]);
+          loop.vertices.push_back(verts[index - 1]);
 
         loops.Add(loop);
       }

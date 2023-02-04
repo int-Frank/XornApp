@@ -559,7 +559,7 @@ void App::NewProject()
   m_pProject = new Project();
 
   ScenePolygonLoop loop;
-  loop.loop = DefaultData::data.defaultBoundary;
+  loop.vertices = DefaultData::data.defaultBoundary;
 
   m_pProject->loops.Add(loop);
 

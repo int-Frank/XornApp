@@ -12,10 +12,10 @@ DefaultData::DefaultData()
   , buttonSize(80.f, 24.f)
   , backgroundColour(0xFF323232)
   , polygonColour(0xFF00FFFF)
-  , polygonThickness(3.f)
+  , polygonThickness(2.f)
 {
-  defaultBoundary.PushBack(xn::vec2(50.f, 50.f));
-  defaultBoundary.PushBack(xn::vec2(-50.f, 50.f));
-  defaultBoundary.PushBack(xn::vec2(-50.f, -50.f));
-  defaultBoundary.PushBack(xn::vec2(50.f, -50.f));
+  defaultBoundary.push_back(xn::vec2(50.f, 50.f));
+  defaultBoundary.push_back(xn::vec2(-50.f, 50.f));
+  defaultBoundary.push_back(xn::vec2(-50.f, -50.f));
+  defaultBoundary.push_back(xn::vec2(50.f, -50.f));
 }
