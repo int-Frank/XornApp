@@ -1,28 +1,22 @@
 #ifndef ACTIONLIST_H
 #define ACTIONLIST_H
 
-#include <vector>
 #include "Action.h"
 
 typedef uint32_t ActionID;
 
-class ActionList
+class IActionList
 {
 public:
 
-  ActionList();
-
-  void PushBack(Action *, ActionData *);
-  void PopBack();
-  void Redo(ActionData *);
-  void Undo(ActionData *);
-
-  void Clear();
-
-private:
-
-  int m_index; // Index of the last completed action
-  std::vector<Action *> m_actions;
+  virtual ~IActionList() {};
+  virtual ActionID PushBack(Action *, ActionData *) = 0;
+  virtual void Redo(ActionData *) = 0;
+  virtual void Undo(ActionData *) = 0;
+  virtual Action *GetAction(ActionID) const = 0;
+  virtual void Clear() = 0;
 };
+
+IActionList *CreateActionList();
 
 #endif

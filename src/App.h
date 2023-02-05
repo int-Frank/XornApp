@@ -84,7 +84,7 @@ private:
   Project *m_pProject;
 
   Dg::Map_AVL<uint32_t, ModuleData> m_registeredModules;
-  ActionList m_actions;
+  IActionList *m_pActions;
   ViewWindow m_cameraView;
   std::vector<xn::PolygonLoop> m_scenePolygonLoops;
   std::vector<std::shared_ptr<Modal>> m_modalStack;

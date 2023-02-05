@@ -1,47 +1,60 @@
 #ifndef EDITSTATE_H
 #define EDITSTATE_H
 
+#include "xnCommon.h"
 #include "xnGeometry.h"
+#include "Project.h"
 
 class EditState
 {
 public:
 
-  EditState *MouseMove(xn::vec2 const &);
-  EditState *MouseDown(xn::vec2 const &);
-  EditState *MouseUp(xn::vec2 const &);
+  virtual EditState *MouseMove(xn::vec2 const &) = 0;
+  virtual EditState *MouseDown(xn::MouseInput, xn::vec2 const &) = 0;
+  virtual EditState *MouseUp(xn::MouseInput, xn::vec2 const &) = 0;
 
 private:
 };
 
-class EditStateMoveCamera : public EditState
+class EditStateIdle : public EditState
 {
+public:
 
+private:
+
+  std::vector<PolygonID> m_selectedPolygons;
 };
 
-class EditStateSelectVertex : public EditState
+class EditStateDrag : public EditState
 {
 
 };
 
 class EditStateMoveVertex : public EditState
 {
+public:
 
-};
-
-class EditStateSelectLoops : public EditState
-{
-
+private:
+  PolygonID m_polygon;
+  uint32_t m_vertexIndex;
 };
 
 class EditStateMoveLoops : public EditState
 {
+public:
 
+private:
+
+  std::vector<PolygonID> m_selectedPolygons;
 };
 
 class EditStateRotateLoops : public EditState
 {
+public:
 
+private:
+
+  std::vector<PolygonID> m_selectedPolygons;
 };
 
 #endif

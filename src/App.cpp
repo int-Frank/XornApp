@@ -42,7 +42,7 @@ App::App()
   , m_pMsgBus(nullptr)
   , m_pCanvas(nullptr)
   , m_pScene(nullptr)
-  , m_actions()
+  , m_pActions(nullptr)
   , m_activeModuleID(INVALID_ID)
   , m_cameraView()
   , m_modalStack()
@@ -91,6 +91,7 @@ App::App()
   m_pCanvas = new Canvas("Output", m_pMsgBus, CreateRenderer());
   m_pCanvas->SetSize(xn::vec2(DefaultData::data.windowWidth, DefaultData::data.windowHeight));
   m_pScene = new Scene();
+  m_pActions = CreateActionList();
 
   NewProject();
   LoadPlugins();
@@ -127,6 +128,7 @@ App::~App()
   delete m_pProject;
   delete m_pScene;
   delete m_pMsgBus;
+  delete m_pActions;
   g_pMsgBus = nullptr;
 
   for (auto &kv : m_registeredModules)
@@ -217,7 +219,6 @@ void App::ShowControlWindow()
   ImGui::Text("%s", std::filesystem::path(m_saveFile).stem().string().c_str());
   ImGui::Separator();
 
-  ImGui::SliderFloat("Line thickness##" MAIN_WINDOW_NAME, &m_lineThickness, 1.f, 10.f);
   ImGui::ColorEdit4("Line colour##" MAIN_WINDOW_NAME, m_lineColour, ImGuiColorEditFlags_NoDragDrop | ImGuiColorEditFlags_AlphaPreview);
   ImGui::Separator();
   ImGui::Text("Mouse input gets sent to...");
