@@ -42,17 +42,15 @@ App::App()
   , m_pMsgBus(nullptr)
   , m_pCanvas(nullptr)
   , m_pScene(nullptr)
-  , m_pActions(nullptr)
   , m_activeModuleID(INVALID_ID)
   , m_cameraView()
   , m_modalStack()
   , m_pProject(nullptr)
+  , m_pProjectController(nullptr)
   , m_saveFile()
   , m_isMouseDragging(false)
   , m_mousePositionAnchor(0.f, 0.f)
   , m_cameraPositionAnchor(0.f, 0.f)
-  , m_lineThickness(DefaultData::data.polygonThickness)
-  , m_lineColour{ DefaultData::data.polygonColour.r(), DefaultData::data.polygonColour.g(), DefaultData::data.polygonColour.b(), DefaultData::data.polygonColour.a() }
   , m_geometryDirty(true)
   , m_projectDirty(false)
   , m_showDemoWindow(false)
@@ -91,9 +89,10 @@ App::App()
   m_pCanvas = new Canvas("Output", m_pMsgBus, CreateRenderer());
   m_pCanvas->SetSize(xn::vec2(DefaultData::data.windowWidth, DefaultData::data.windowHeight));
   m_pScene = new Scene();
-  m_pActions = CreateActionList();
 
   NewProject();
+  m_pProjectController = CreateProjectController(m_pProject);
+
   LoadPlugins();
 }
 
@@ -128,7 +127,7 @@ App::~App()
   delete m_pProject;
   delete m_pScene;
   delete m_pMsgBus;
-  delete m_pActions;
+  delete m_pProjectController;
   g_pMsgBus = nullptr;
 
   for (auto &kv : m_registeredModules)
@@ -219,8 +218,8 @@ void App::ShowControlWindow()
   ImGui::Text("%s", std::filesystem::path(m_saveFile).stem().string().c_str());
   ImGui::Separator();
 
-  ImGui::ColorEdit4("Line colour##" MAIN_WINDOW_NAME, m_lineColour, ImGuiColorEditFlags_NoDragDrop | ImGuiColorEditFlags_AlphaPreview);
-  ImGui::Separator();
+  //ImGui::ColorEdit4("Line colour##" MAIN_WINDOW_NAME, m_lineColour, ImGuiColorEditFlags_NoDragDrop | ImGuiColorEditFlags_AlphaPreview);
+  //ImGui::Separator();
   ImGui::Text("Mouse input gets sent to...");
 
   bool hasFocus = GetCurrentFocus() == nullptr;
@@ -359,19 +358,8 @@ void App::Render()
   m_cameraView.SetViewSize(renderSize);
 
   pRenderer->SetMatrix_World_View(m_cameraView.GetMatrix_View_World().GetInverse());
-
-  xn::Colour lineColour;
-  lineColour.rgba.r = (uint8_t)(m_lineColour[0] * 255.f);
-  lineColour.rgba.g = (uint8_t)(m_lineColour[1] * 255.f);
-  lineColour.rgba.b = (uint8_t)(m_lineColour[2] * 255.f);
-  lineColour.rgba.a = (uint8_t)(m_lineColour[3] * 255.f);
-
-  for (auto it = m_pProject->loops.Begin(); it != m_pProject->loops.End(); it++)
-  {
-    m_pScene->AddPolygon(it->second.GetTransformed(),
-                         m_lineThickness, 
-                         lineColour, 0, 0);
-  }
+  m_pProjectController->SetMatrix_View_World(m_cameraView.GetMatrix_View_World());
+  m_pProjectController->UpdateScene(m_pScene);
 
   m_pScene->Draw(pRenderer);
   m_pScene->Clear();
@@ -434,7 +422,7 @@ void App::HandleMessage(Message_MouseButtonUp *pMsg)
   }
   else
   {
-    if (pMsg->button == xn::MouseInput::LeftButton)
+    if (pMsg->button == MOUSE_BUTTON_MOVE)
     {
       m_isMouseDragging = false;
     }
@@ -451,7 +439,7 @@ void App::HandleMessage(Message_MouseButtonDown *pMsg)
   }
   else
   {
-    if (pMsg->button == xn::MouseInput::LeftButton)
+    if (pMsg->button == MOUSE_BUTTON_MOVE)
     {
       m_mousePositionAnchor = pMsg->position;
       m_cameraPositionAnchor = m_cameraView.GetPosition();
@@ -474,6 +462,10 @@ void App::HandleMessage(Message_MouseMove *pMsg)
     {
       xn::vec2 vWorldSpace = ViewToWorld(pMsg->position - m_mousePositionAnchor, 0.f);
       m_cameraView.SetPosition(m_cameraPositionAnchor - vWorldSpace);
+    }
+    else
+    {
+      m_pProjectController->MouseMove(pMsg->position);
     }
   }
 }
