@@ -12,7 +12,7 @@ public:
   ~ProjectController();
   ProjectController(Project *);
 
-  void SetMatrix_View_World(xn::mat33 const &) override;
+  void SetMatrix_World_Screen(xn::mat33 const &) override;
 
   void MouseMove(xn::vec2 const &) override;
   void MouseDown(xn::MouseInput, ModKey, xn::vec2 const &) override;
@@ -39,6 +39,7 @@ ProjectController::ProjectController(Project *pProject)
   , m_pStateData(nullptr)
 {
   m_pStateData = new ProjectControllerStateData{};
+  m_pStateData->T_World_Screen.Identity();
   m_pStateData->pProject = pProject;
   m_pStateData->pActions = CreateActionList();
   m_pStateData->pRotate = nullptr;
@@ -53,10 +54,9 @@ ProjectController::~ProjectController()
   delete m_pState;
 }
 
-void ProjectController::SetMatrix_View_World(xn::mat33 const &T_View_World)
+void ProjectController::SetMatrix_World_Screen(xn::mat33 const &m)
 {
-  m_pStateData->T_View_World = T_View_World;
-  m_pStateData->T_World_View = T_View_World.GetInverse();
+  m_pStateData->T_World_Screen = m;
 }
 
 #define UPDATE_STATE(f) auto pState = m_pState->f;\

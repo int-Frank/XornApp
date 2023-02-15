@@ -18,6 +18,7 @@
 struct GLFWwindow;
 class Logger;
 class MessageBus;
+class IRenderer;
 
 namespace xn
 {
@@ -69,7 +70,7 @@ private:
   void HandleMessage(Message_MouseMove *);
   void HandleMessage(Message_MouseScroll *);
 
-  xn::vec2 ViewToWorld(xn::vec2 const &, float w = 1.f);
+  xn::vec2 ScreenToWorld(xn::vec2 const &, float w = 1.f);
   xn::Module *GetCurrentFocus();
 
   void Render();
@@ -80,6 +81,7 @@ private:
   xn::UIContext *m_pUIContext;
   MessageBus *m_pMsgBus;
   Canvas *m_pCanvas;
+  IRenderer *m_pRenderer;
   Scene *m_pScene;
   Project *m_pProject;
   IProjectController *m_pProjectController;

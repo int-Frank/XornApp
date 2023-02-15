@@ -97,15 +97,16 @@ bool ProjectControllerStateIdle::PolygonUnderMouse(xn::vec2 const &mouse, Polygo
       xn::vec3 p0_3(seg.GetP0().x(), seg.GetP0().y(), 1.f);
       xn::vec3 p1_3(seg.GetP1().x(), seg.GetP1().y(), 1.f);
 
-      auto p0 = p0_3 * m_pStateData->T_World_View;
-      auto p1 = p1_3 * m_pStateData->T_World_View;
+      auto p0 = p0_3 * m_pStateData->T_World_Screen;
+      auto p1 = p1_3 * m_pStateData->T_World_Screen;
 
       seg.Set(p0, p1);
 
       Dg::CP2PointSegment<float> query;
       auto result = query(mouse, seg);
       float dist = Dg::MagSq(result.cp - mouse);
-      float threshold = 25.f;
+      float threshold = DefaultData::data.renderData.polygonAspect[HS_Hover].thickness;
+      threshold *= threshold;
       if (dist < threshold)
       {
         *pID = loop_it->first;

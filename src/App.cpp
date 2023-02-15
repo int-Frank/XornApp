@@ -41,6 +41,7 @@ App::App()
   , m_pUIContext(nullptr)
   , m_pMsgBus(nullptr)
   , m_pCanvas(nullptr)
+  , m_pRenderer(nullptr)
   , m_pScene(nullptr)
   , m_activeModuleID(INVALID_ID)
   , m_cameraView()
@@ -86,7 +87,8 @@ App::App()
   m_pMsgBus = new MessageBus();
   g_pMsgBus = m_pMsgBus;
   m_pUIContext = new ImGuiUIContext(m_pWindow, true, glsl_version);
-  m_pCanvas = new Canvas("Output", m_pMsgBus, CreateRenderer());
+  m_pRenderer = CreateRenderer();
+  m_pCanvas = new Canvas("Output", m_pMsgBus);
   m_pCanvas->SetSize(xn::vec2(DefaultData::data.windowWidth, DefaultData::data.windowHeight));
   m_pScene = new Scene();
 
@@ -351,17 +353,27 @@ void App::Render()
 {
   // TODO Set window size
   m_pCanvas->BeginFrame();
-  IRenderer *pRenderer = m_pCanvas->GetRenderer();
-  pRenderer->BeginDraw();
+  m_pRenderer->BeginDraw();
   
   xn::vec2 renderSize = m_pCanvas->GetRenderRegionSize();
+
+  uint32_t w = uint32_t(renderSize.x());
+  uint32_t h = uint32_t(renderSize.y());
+
+  m_pRenderer->SetResolution(uint32_t(renderSize.x()), uint32_t(renderSize.y()));
   m_cameraView.SetViewSize(renderSize);
 
-  pRenderer->SetMatrix_World_View(m_cameraView.GetMatrix_View_World().GetInverse());
-  m_pProjectController->SetMatrix_View_World(m_cameraView.GetMatrix_View_World());
+  xn::mat33 T_View_World = m_cameraView.GetMatrix_View_World();
+  xn::mat33 T_Screen_View = m_pCanvas->GetMatrix_Screen_View();
+  xn::mat33 T_World_View = T_View_World.GetInverse();
+  xn::mat33 T_View_Screen = T_Screen_View.GetInverse();
+  xn::mat33 T_World_Screen = xn::mat33(T_Screen_View * T_View_World).GetInverse();
+
+  m_pRenderer->SetMatrix_World_View(T_World_View);
+  m_pProjectController->SetMatrix_World_Screen(T_World_Screen);
   m_pProjectController->UpdateScene(m_pScene);
 
-  m_pScene->Draw(pRenderer);
+  m_pScene->Draw(m_pRenderer);
   m_pScene->Clear();
 
   // TODO sort module scenes to draw correctly.
@@ -370,11 +382,12 @@ void App::Render()
     if (kv.second.pInstance == nullptr)
       continue;
 
-    kv.second.pScene->Draw(pRenderer);
+    kv.second.pScene->Draw(m_pRenderer);
     kv.second.pScene->Clear();
   }
 
-  pRenderer->EndDraw();
+  m_pRenderer->EndDraw();
+  m_pCanvas->BlitImage((void*)m_pRenderer->GetTexture(), w, h);
   m_pCanvas->EndFrame();
 
   // Rendering
@@ -389,11 +402,12 @@ void App::Render()
   glfwSwapBuffers(m_pWindow);
 }
 
-xn::vec2 App::ViewToWorld(xn::vec2 const &p, float w)
+xn::vec2 App::ScreenToWorld(xn::vec2 const &p, float w)
 {
+  xn::mat33 T_Screen_View = m_pCanvas->GetMatrix_Screen_View();
   xn::mat33 T_View_World = m_cameraView.GetMatrix_View_World();
   xn::vec3 pWorldSpace3(p.x(), p.y(), w);
-  pWorldSpace3 = pWorldSpace3 * T_View_World;
+  pWorldSpace3 = pWorldSpace3 * (T_Screen_View * T_View_World);
   return xn::vec2(pWorldSpace3.x(), pWorldSpace3.y());
 }
 
@@ -435,7 +449,7 @@ void App::HandleMessage(Message_MouseButtonDown *pMsg)
 
   if (pFocus)
   {
-    pFocus->MouseDown(pMsg->button, ViewToWorld(pMsg->position));
+    pFocus->MouseDown(pMsg->button, ScreenToWorld(pMsg->position));
   }
   else
   {
@@ -454,13 +468,13 @@ void App::HandleMessage(Message_MouseMove *pMsg)
 
   if (pFocus)
   {
-    pFocus->MouseMove(ViewToWorld(pMsg->position));
+    pFocus->MouseMove(ScreenToWorld(pMsg->position));
   }
   else
   {
     if (m_isMouseDragging)
     {
-      xn::vec2 vWorldSpace = ViewToWorld(pMsg->position - m_mousePositionAnchor, 0.f);
+      xn::vec2 vWorldSpace = ScreenToWorld(pMsg->position - m_mousePositionAnchor, 0.f);
       m_cameraView.SetPosition(m_cameraPositionAnchor - vWorldSpace);
     }
     else

@@ -9,8 +9,7 @@ class IRotateWidget;
 
 struct ProjectControllerStateData
 {
-  xn::mat33 T_View_World;
-  xn::mat33 T_World_View;
+  xn::mat33 T_World_Screen;
   Dg::Set_AVL<PolygonID> selectedPolygons;
   IActionList *pActions;
   Project *pProject;

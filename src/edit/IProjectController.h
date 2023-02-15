@@ -17,7 +17,7 @@ public:
 
   virtual ~IProjectController() {}
 
-  virtual void SetMatrix_View_World(xn::mat33 const &) = 0;
+  virtual void SetMatrix_World_Screen(xn::mat33 const &) = 0;
 
   virtual void MouseMove(xn::vec2 const &) = 0;
   virtual void MouseDown(xn::MouseInput, ModKey, xn::vec2 const &) = 0;
