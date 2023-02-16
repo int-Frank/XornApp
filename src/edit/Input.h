@@ -6,6 +6,7 @@
 
 enum ModKey
 {
+  MK_none,
   MK_shift,
   MK_ctrl
 };

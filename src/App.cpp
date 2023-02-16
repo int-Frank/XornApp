@@ -93,8 +93,6 @@ App::App()
   m_pScene = new Scene();
 
   NewProject();
-  m_pProjectController = CreateProjectController(m_pProject);
-
   LoadPlugins();
 }
 
@@ -366,7 +364,6 @@ void App::Render()
   xn::mat33 T_View_World = m_cameraView.GetMatrix_View_World();
   xn::mat33 T_Screen_View = m_pCanvas->GetMatrix_Screen_View();
   xn::mat33 T_World_View = T_View_World.GetInverse();
-  xn::mat33 T_View_Screen = T_Screen_View.GetInverse();
   xn::mat33 T_World_Screen = xn::mat33(T_Screen_View * T_View_World).GetInverse();
 
   m_pRenderer->SetMatrix_World_View(T_World_View);
@@ -440,6 +437,10 @@ void App::HandleMessage(Message_MouseButtonUp *pMsg)
     {
       m_isMouseDragging = false;
     }
+    if (pMsg->button == MOUSE_BUTTON_SELECT)
+    {
+      m_pProjectController->MouseUp(MK_none, pMsg->position);
+    }
   }
 }
 
@@ -458,6 +459,10 @@ void App::HandleMessage(Message_MouseButtonDown *pMsg)
       m_mousePositionAnchor = pMsg->position;
       m_cameraPositionAnchor = m_cameraView.GetPosition();
       m_isMouseDragging = true;
+    }
+    if (pMsg->button == MOUSE_BUTTON_SELECT)
+    {
+      m_pProjectController->MouseDown(MK_none, pMsg->position);
     }
   }
 }
@@ -539,6 +544,9 @@ void App::OpenProject(std::string const &filePath)
   m_projectDirty = false;
 
   FitViewToProject();
+
+  delete m_pProjectController;
+  m_pProjectController = CreateProjectController(m_pProject);
 }
 
 void App::ImportProject(std::string const &filePath)
@@ -558,6 +566,9 @@ void App::ImportProject(std::string const &filePath)
   m_projectDirty = false;
 
   FitViewToProject();
+
+  delete m_pProjectController;
+  m_pProjectController = CreateProjectController(m_pProject);
 }
 
 void App::NewProject()
@@ -575,6 +586,9 @@ void App::NewProject()
   m_saveFile.clear();
 
   FitViewToProject();
+
+  delete m_pProjectController;
+  m_pProjectController = CreateProjectController(m_pProject);
 }
 
 void App::SetSaveFile(std::string const &newFilePath)

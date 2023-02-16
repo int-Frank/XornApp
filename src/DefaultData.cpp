@@ -15,10 +15,10 @@ DefaultData::DefaultData()
 {
   renderData.polygonAspect[HS_None].colour = 0xFF00FFFF;
   renderData.polygonAspect[HS_None].thickness = 1.5f;
-  renderData.polygonAspect[HS_Hover].colour = 0xFF0000FF;
-  renderData.polygonAspect[HS_Hover].thickness = 2.3f;
+  renderData.polygonAspect[HS_Hover].colour = 0xFF88FFFF;
+  renderData.polygonAspect[HS_Hover].thickness = 2.2f;
   renderData.polygonAspect[HS_Acitve].colour = 0xFFFFFFFF;
-  renderData.polygonAspect[HS_Acitve].thickness = 2.3f;
+  renderData.polygonAspect[HS_Acitve].thickness = 2.2f;
 
   renderData.vertexAspect[HS_None].colour = 0xFF334455;
   renderData.vertexAspect[HS_None].radius = 5.f;

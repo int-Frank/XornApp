@@ -20,8 +20,8 @@ public:
   virtual void SetMatrix_World_Screen(xn::mat33 const &) = 0;
 
   virtual void MouseMove(xn::vec2 const &) = 0;
-  virtual void MouseDown(xn::MouseInput, ModKey, xn::vec2 const &) = 0;
-  virtual void MouseUp(xn::MouseInput, ModKey, xn::vec2 const &) = 0;
+  virtual void MouseDown(ModKey, xn::vec2 const &) = 0;
+  virtual void MouseUp(ModKey, xn::vec2 const &) = 0;
   virtual void KeyPress(Key, ModKey) = 0;
 
   virtual void UpdateScene(xn::IScene *) = 0;

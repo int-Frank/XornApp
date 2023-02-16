@@ -15,8 +15,8 @@ public:
   void SetMatrix_World_Screen(xn::mat33 const &) override;
 
   void MouseMove(xn::vec2 const &) override;
-  void MouseDown(xn::MouseInput, ModKey, xn::vec2 const &) override;
-  void MouseUp(xn::MouseInput, ModKey, xn::vec2 const &) override;
+  void MouseDown(ModKey, xn::vec2 const &) override;
+  void MouseUp(ModKey, xn::vec2 const &) override;
   void KeyPress(Key, ModKey) override;
 
   void UpdateScene(xn::IScene *) override;
@@ -71,14 +71,14 @@ void ProjectController::MouseMove(xn::vec2 const &p)
   UPDATE_STATE(MouseMove(p));
 }
 
-void ProjectController::MouseDown(xn::MouseInput button, ModKey mod, xn::vec2 const &p)
+void ProjectController::MouseDown(ModKey mod, xn::vec2 const &p)
 {
-  UPDATE_STATE(MouseDown(button, mod, p));
+  UPDATE_STATE(MouseDown(mod, p));
 }
 
-void ProjectController::MouseUp(xn::MouseInput button, ModKey mod, xn::vec2 const &p)
+void ProjectController::MouseUp(ModKey mod, xn::vec2 const &p)
 {
-  UPDATE_STATE(MouseUp(button, mod, p));
+  UPDATE_STATE(MouseUp(mod, p));
 }
 
 void ProjectController::KeyPress(Key key, ModKey mod)
