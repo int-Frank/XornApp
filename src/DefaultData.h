@@ -37,8 +37,8 @@ struct RenderData
   };
 
   PolygonAspect polygonAspect[HS_COUNT];
-  VertexAspect vertexAspect[HS_COUNT];
-  VertexAspect splitVertexAspect[HS_COUNT];
+  VertexAspect vertexAspect;
+  VertexAspect splitVertexAspect;
   RotateWidgetAspect rotateWidgetAspect[HS_COUNT];
 };
 

@@ -5,16 +5,31 @@ class Project;
 
 struct ActionData
 {
-  Project *pProj;
+  ActionData(Project *pProj)
+    : pProject(pProj)
+  {
+
+  }
+
+  Project *pProject;
 };
 
 class Action
 {
 public:
 
+  Action(ActionData const &data)
+    : m_actionData(data)
+  {
+
+  }
+
   virtual ~Action() {}
-  virtual bool Do(ActionData *) = 0;
-  virtual bool Undo(ActionData *) = 0;
+  virtual bool Do() = 0;
+  virtual bool Undo() = 0;
+
+protected:
+  ActionData m_actionData;
 };
 
 #endif

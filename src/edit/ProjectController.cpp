@@ -4,6 +4,7 @@
 #include "ProjectControllerState.h"
 #include "ActionList.h"
 #include "IRotateWidget.h"
+#include "DefaultData.h"
 
 class ProjectController : public IProjectController
 {
@@ -42,7 +43,6 @@ ProjectController::ProjectController(Project *pProject)
   m_pStateData->T_World_Screen.Identity();
   m_pStateData->pProject = pProject;
   m_pStateData->pActions = CreateActionList();
-  m_pStateData->pRotate = nullptr;
 
   m_pState = new ProjectControllerStateIdle(m_pStateData);
 }
@@ -88,6 +88,48 @@ void ProjectController::KeyPress(Key key, ModKey mod)
 
 void ProjectController::UpdateScene(xn::IScene *pScene)
 {
+  for (auto it = m_pStateData->pProject->loops.Begin(); it != m_pStateData->pProject->loops.End(); it++)
+  {
+    auto polygon = it->second.GetTransformed();
+
+    if (m_pStateData->sceneState.selectedPolygons.exists(it->first))
+    {
+      pScene->AddPolygon(polygon,
+        DefaultData::data.renderData.polygonAspect[HS_Acitve].thickness,
+        DefaultData::data.renderData.polygonAspect[HS_Acitve].colour, 0, 0);
+
+      std::vector<xn::vec2> vertices;
+      std::vector<xn::vec2> midVertices;
+
+      for (auto edge_it = polygon.cEdgesBegin(); edge_it != polygon.cEdgesEnd(); edge_it++)
+      {
+        auto seg = edge_it.ToSegment();
+        midVertices.push_back(seg.GetCenter());
+        vertices.push_back(seg.GetP0());
+      }
+
+      pScene->AddFilledCircleGroup(vertices,
+        DefaultData::data.renderData.vertexAspect.radius,
+        DefaultData::data.renderData.vertexAspect.colour, 0, 0);
+
+      pScene->AddFilledCircleGroup(midVertices,
+        DefaultData::data.renderData.splitVertexAspect.radius,
+        DefaultData::data.renderData.splitVertexAspect.colour, 0, 0);
+    }
+    else if (it->first == m_pStateData->sceneState.hoverPolygon)
+    {
+      pScene->AddPolygon(polygon,
+        DefaultData::data.renderData.polygonAspect[HS_Hover].thickness,
+        DefaultData::data.renderData.polygonAspect[HS_Hover].colour, 0, 0);
+    }
+    else
+    {
+      pScene->AddPolygon(polygon,
+        DefaultData::data.renderData.polygonAspect[HS_None].thickness,
+        DefaultData::data.renderData.polygonAspect[HS_None].colour, 0, 0);
+    }
+  }
+
   m_pState->UpdateScene(pScene);
 }
 

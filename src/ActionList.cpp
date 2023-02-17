@@ -15,9 +15,9 @@ public:
   ~ActionList();
   ActionList();
 
-  ActionID PushBack(Action *, ActionData *) override;
-  void Redo(ActionData *) override;
-  void Undo(ActionData *) override;
+  ActionID PushBack(Action *) override;
+  void Redo() override;
+  void Undo() override;
   Action *GetAction(ActionID) const override;
   void Clear() override;
 
@@ -40,25 +40,25 @@ ActionList::ActionList()
 
 }
 
-void ActionList::Undo(ActionData *pData)
+void ActionList::Undo()
 {
   if (m_index > 0)
   {
-    m_actions[m_index].pAction->Undo(pData);
+    m_actions[m_index].pAction->Undo();
     m_index--;
   }
 }
 
-void ActionList::Redo(ActionData *pData)
+void ActionList::Redo()
 {
   if (m_index + 1 < (int)m_actions.size())
   {
     m_index++;
-    m_actions[m_index].pAction->Do(pData);
+    m_actions[m_index].pAction->Do();
   }
 }
 
-ActionID ActionList::PushBack(Action *pAction, ActionData *pData)
+ActionID ActionList::PushBack(Action *pAction)
 {
   while (m_index + 1 < (int)m_actions.size())
   {
@@ -71,7 +71,7 @@ ActionID ActionList::PushBack(Action *pAction, ActionData *pData)
   action.pAction = pAction;
 
   m_actions.push_back(action);
-  m_actions.back().pAction->Do(pData);
+  m_actions.back().pAction->Do();
   return action.ID;
 }
 

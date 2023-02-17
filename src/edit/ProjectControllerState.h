@@ -44,9 +44,8 @@ public:
 private:
 
   PolygonID PolygonUnderMouse(xn::vec2 const &) const;
-  xn::vec2 *VertexUnderMouse(xn::vec2 const &) const;
-  xn::vec2 *SplitVertexUnderMouse(xn::vec2 const &) const;
-  PolygonID m_hoverPolygon;
+  bool VertexUnderMouse(xn::vec2 const &, PolygonID *, uint32_t *) const;
+  bool SplitVertexUnderMouse(xn::vec2 const &, PolygonID *, uint32_t *) const;
 };
 
 class ProjectControllerStateMultiSelect : public ProjectControllerState
@@ -64,18 +63,19 @@ private:
   xn::vec2 m_mouseAnchor;
 };
 
-class ProjectControllerStateDragSelected : public ProjectControllerState
+class ProjectControllerStateMoveSelected : public ProjectControllerState
 {
 public:
 
-  ProjectControllerStateDragSelected(ProjectControllerStateData *, xn::vec2 const &mouseAnchor);
+  ProjectControllerStateMoveSelected(ProjectControllerStateData *, xn::vec2 const &mouseAnchor);
 
   ProjectControllerState *MouseMove(xn::vec2 const &) override;
   ProjectControllerState *MouseUp(ModKey, xn::vec2 const &) override;
-  void UpdateScene(xn::IScene *) override {}
+  void UpdateScene(xn::IScene *) override;
 
 private:
 
+  Dg::Map_AVL<PolygonID, xn::Transform> m_transforms;
   xn::vec2 m_mouseAnchor;
 };
 
@@ -83,7 +83,7 @@ class ProjectControllerStateMoveVertex : public ProjectControllerState
 {
 public:
 
-  ProjectControllerStateMoveVertex(ProjectControllerStateData *, xn::vec2 const & offset, xn::vec2 *);
+  ProjectControllerStateMoveVertex(ProjectControllerStateData *, xn::vec2 const & offset, PolygonID, uint32_t index);
 
   ProjectControllerState *MouseMove(xn::vec2 const &) override;
   ProjectControllerState *MouseUp(ModKey, xn::vec2 const &) override;
@@ -92,7 +92,8 @@ public:
 private:
 
   xn::vec2 m_offset;
-  xn::vec2 *m_pVertex;
+  PolygonID m_polygonID;
+  uint32_t m_index;
 };
 
 class ProjectControllerStateRotateSelected : public ProjectControllerState
