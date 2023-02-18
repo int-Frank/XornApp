@@ -13,6 +13,8 @@ enum class MessageType
   MouseMove,
 
   ZoomCamera,
+  Undo,
+  Redo
 };
 
 MESSAGE_HEADER(MouseButtonDown)
@@ -35,6 +37,14 @@ MESSAGE_HEADER(MouseScroll)
 
 MESSAGE_HEADER(ZoomCamera)
   float val;
+};
+
+MESSAGE_HEADER(Undo)
+  int dummy;
+};
+
+MESSAGE_HEADER(Redo)
+  int dummy;
 };
 
 #endif

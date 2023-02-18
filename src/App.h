@@ -64,6 +64,8 @@ private:
   void LogMessage(Message const *);
 
   void HandleMessages();
+  void HandleMessage(Message_Undo *);
+  void HandleMessage(Message_Redo *);
   void HandleMessage(Message_ZoomCamera *);
   void HandleMessage(Message_MouseButtonDown *);
   void HandleMessage(Message_MouseButtonUp *);

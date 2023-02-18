@@ -160,6 +160,15 @@ bool ProjectControllerStateIdle::SplitVertexUnderMouse(xn::vec2 const &mouse, Po
   return nullptr;
 }
 
+void ProjectControllerStateIdle::Undo() 
+{
+  m_pStateData->pActions->Undo();
+}
+
+void ProjectControllerStateIdle::Redo() 
+{
+  m_pStateData->pActions->Redo();
+}
 
 //------------------------------------------------------------------------
 // ProjectControllerStateMultiSelect

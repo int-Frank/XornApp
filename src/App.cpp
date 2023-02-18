@@ -335,6 +335,8 @@ void App::HandleMessages()
     {
       DISPATCH(MouseScroll);
       DISPATCH(ZoomCamera);
+      DISPATCH(Undo);
+      DISPATCH(Redo);
       DISPATCH(MouseButtonDown);
       DISPATCH(MouseButtonUp);
       DISPATCH(MouseMove);
@@ -421,6 +423,16 @@ xn::Module *App::GetCurrentFocus()
 void App::HandleMessage(Message_ZoomCamera *pMsg)
 {
   m_cameraView.Scale(pMsg->val);
+}
+
+void App::HandleMessage(Message_Undo *pMsg)
+{
+  m_pProjectController->Undo();
+}
+
+void App::HandleMessage(Message_Redo *pMsg)
+{
+  m_pProjectController->Redo();
 }
 
 void App::HandleMessage(Message_MouseButtonUp *pMsg)

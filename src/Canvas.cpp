@@ -155,10 +155,25 @@ void Canvas::BeginFrame()
       m_pimpl->HandleMouseDown(xn::MouseInput::MiddleButton, mousePos);
   }
 
+  // Zoom
   if (is_hovered && m_pimpl->scroll != 0.f)
   {
     Message_ZoomCamera *pMsg = m_pimpl->pMsgBus->NewMessage<Message_ZoomCamera>();
     pMsg->val = m_pimpl->scroll < 0.f ? 1.15f : 0.85f;
+    m_pimpl->pMsgBus->Post(pMsg);
+  }
+
+  // Undo
+  if (ImGui::IsKeyPressed(ImGuiKey_Z, false) && ((ImGui::GetIO().KeyMods & ImGuiModFlags_Ctrl) > 0))
+  {
+    Message_Undo *pMsg = m_pimpl->pMsgBus->NewMessage<Message_Undo>();
+    m_pimpl->pMsgBus->Post(pMsg);
+  }
+
+  // Redo
+  if (ImGui::IsKeyPressed(ImGuiKey_Y, false) && ((ImGui::GetIO().KeyMods & ImGuiModFlags_Ctrl) > 0))
+  {
+    Message_Redo *pMsg = m_pimpl->pMsgBus->NewMessage<Message_Redo>();
     m_pimpl->pMsgBus->Post(pMsg);
   }
 
