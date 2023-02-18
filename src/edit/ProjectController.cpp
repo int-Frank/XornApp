@@ -25,6 +25,9 @@ public:
   void Redo() override;
 
 private:
+
+  void SetRotateWidget();
+
   ProjectControllerState *m_pState;
   ProjectControllerStateData *m_pStateData;
 };
@@ -124,7 +127,48 @@ void ProjectController::UpdateScene(xn::IScene *pScene)
     }
   }
 
+  SetRotateWidget();
+  if (m_pStateData->sceneState.pRotate != nullptr)
+  {
+
+  }
+
   m_pState->UpdateScene(pScene);
+}
+
+void ProjectController::SetRotateWidget()
+{
+  xn::vec2 minPoint(FLT_MAX, FLT_MAX);
+  xn::vec2 maxPoint(-FLT_MAX, -FLT_MAX);
+
+  for (auto it = m_pStateData->pProject->loops.Begin(); it != m_pStateData->pProject->loops.End(); it++)
+  {
+    if (!m_pStateData->sceneState.selectedPolygons.exists(it->first))
+      continue;
+
+    auto polygon = it->second.GetTransformed();
+    for (auto it = polygon.cPointsBegin(); it != polygon.cPointsEnd(); it++)
+    {
+      if (it->x() < minPoint.x()) minPoint.x() = it->x();
+      if (it->x() > maxPoint.x()) maxPoint.x() = it->x();
+      if (it->y() < minPoint.y()) minPoint.y() = it->y();
+      if (it->y() > maxPoint.y()) maxPoint.y() = it->y();
+    }
+  }
+
+  if (minPoint.x() == FLT_MAX)
+  {
+    delete m_pStateData->sceneState.pRotate;
+    m_pStateData->sceneState.pRotate = nullptr;
+    return;
+  }
+
+  xn::vec2 centre = (minPoint + maxPoint) / 2.f;
+  xn::vec3 centre3 = Dg::ToVector3(centre, 1.f);
+  centre3 = centre3 * m_pStateData->T_World_Screen;
+  centre = Dg::ToVector2(centre3);
+
+  m_pStateData->sceneState.pRotate = CreateRotateWidget(centre);
 }
 
 void ProjectController::Undo()

@@ -6,14 +6,6 @@
 #include "Common.h"
 #include "xnColour.h"
 
-enum HoverState
-{
-  HS_None = 0,
-  HS_Hover = 1,
-  HS_Acitve = 2,
-  HS_COUNT
-};
-
 struct RenderData
 {
   struct PolygonAspect
