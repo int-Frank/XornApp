@@ -93,6 +93,9 @@ PolygonID ProjectControllerStateIdle::PolygonUnderMouse(xn::vec2 const &mouse) c
 
 bool ProjectControllerStateIdle::VertexUnderMouse(xn::vec2 const &mouse, PolygonID *pPolygonID, uint32_t *pVertexIndex) const
 {
+  if (SplitVertexUnderMouse(mouse, pPolygonID, pVertexIndex))
+    return true;
+
   for (auto loop_it = m_pStateData->pProject->loops.Begin(); loop_it != m_pStateData->pProject->loops.End(); loop_it++)
   {
     if (!m_pStateData->sceneState.selectedPolygons.exists(loop_it->first))
@@ -129,9 +132,8 @@ bool ProjectControllerStateIdle::SplitVertexUnderMouse(xn::vec2 const &mouse, Po
 
     for (uint32_t i = 0; i < (uint32_t)loop_it->second.vertices.size(); i++)
     {
-
       auto vertex = loop_it->second.vertices[i];
-      auto vNext = loop_it->second.vertices[i];
+      auto vNext = loop_it->second.vertices[(i + 1) % loop_it->second.vertices.size()];
 
       xn::vec2 centreWorld = (vertex + vNext) / 2.f;
       xn::vec3 centreScreen3(centreWorld.x(), centreWorld.y(), 1.f);
@@ -144,8 +146,12 @@ bool ProjectControllerStateIdle::SplitVertexUnderMouse(xn::vec2 const &mouse, Po
       if (dist < threshold)
       {
         ActionData actionData(m_pStateData->pProject);
-        auto pAction = new Action_AddVertex(actionData, loop_it->first, i, centreWorld);
-        m_pStateData->pActions->PushBack(pAction);
+
+        auto index = (i + 1) % loop_it->second.vertices.size();
+        auto pAction = new Action_AddVertex(actionData, loop_it->first, index, centreWorld);
+        m_pStateData->pActions->AddAndExecute(pAction);
+        *pPolygonID = loop_it->first;
+        *pVertexIndex = index;
         return true;
       }
     }
@@ -173,29 +179,6 @@ ProjectControllerState *ProjectControllerStateMultiSelect::MouseMove(xn::vec2 co
 ProjectControllerState *ProjectControllerStateMultiSelect::MouseUp(ModKey, xn::vec2 const &)
 {
   return nullptr;
-}
-
-//------------------------------------------------------------------------
-// ProjectControllerStateMoveVertex
-//------------------------------------------------------------------------
-
-ProjectControllerStateMoveVertex::ProjectControllerStateMoveVertex(ProjectControllerStateData *pState, xn::vec2 const &mousePosition, PolygonID polygonID, uint32_t vertexIndex)
-  : ProjectControllerState(pState)
-  , m_offset(pState->pProject->loops.Get(polygonID)->vertices[vertexIndex] - mousePosition)
-  , m_polygonID(polygonID)
-  , m_index(vertexIndex)
-{
-
-}
-
-ProjectControllerState *ProjectControllerStateMoveVertex::MouseMove(xn::vec2 const &)
-{
-  return nullptr;
-}
-
-ProjectControllerState *ProjectControllerStateMoveVertex::MouseUp(ModKey, xn::vec2 const &)
-{
-  return new ProjectControllerStateIdle(m_pStateData);
 }
 
 //------------------------------------------------------------------------

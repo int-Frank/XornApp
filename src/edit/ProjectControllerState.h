@@ -6,6 +6,7 @@
 
 #include "ProjectControllerStateData.h"
 #include "Input.h"
+#include "ActionList.h"
 
 class ProjectControllerState
 {
@@ -92,8 +93,11 @@ public:
 private:
 
   xn::vec2 m_offset;
+  xn::vec2 m_originalPoint;
+  ActionID m_actionID;
   PolygonID m_polygonID;
   uint32_t m_index;
+  bool m_first;
 };
 
 class ProjectControllerStateRotateSelected : public ProjectControllerState
