@@ -18,11 +18,13 @@ enum class MessageType
 };
 
 MESSAGE_HEADER(MouseButtonDown)
+  uint32_t modState;
   xn::MouseInput button;
   Dg::Vector2<float> position;
 };
 
 MESSAGE_HEADER(MouseButtonUp)
+  uint32_t modState;
   xn::MouseInput button;
   Dg::Vector2<float> position;
 };

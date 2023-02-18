@@ -22,7 +22,7 @@ ProjectControllerState *ProjectControllerStateMoveSelected::MouseMove(xn::vec2 c
   return nullptr;
 }
 
-ProjectControllerState *ProjectControllerStateMoveSelected::MouseUp(ModKey, xn::vec2 const &)
+ProjectControllerState *ProjectControllerStateMoveSelected::MouseUp(uint32_t modState, xn::vec2 const &)
 {
   return new ProjectControllerStateIdle(m_pStateData);
 }

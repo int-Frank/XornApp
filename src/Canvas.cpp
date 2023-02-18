@@ -2,6 +2,7 @@
 #include "xnCommon.h"
 #include "XornAppMessages.h"
 #include "MessageBus.h"
+#include "Input.h"
 
 #include "imgui.h"
 #include "Canvas.h"
@@ -9,6 +10,15 @@
 #include <Logger.h>
 
 using namespace xn;
+
+static uint32_t GetModState()
+{
+  uint32_t modState = 0;
+  if (ImGui::GetIO().KeyMods & ImGuiModFlags_Ctrl) modState |= MK_ctrl;
+  if (ImGui::GetIO().KeyMods & ImGuiModFlags_Shift) modState |= MK_shift;
+  if (ImGui::GetIO().KeyMods & ImGuiModFlags_Alt) modState |= MK_alt;
+  return modState;
+}
 
 class Canvas::PIMPL 
 {
@@ -35,6 +45,7 @@ public:
     Message_MouseButtonUp *pMsg = pMsgBus->NewMessage<Message_MouseButtonUp>();
     pMsg->button = button;
     pMsg->position = mousePos;
+    pMsg->modState = GetModState();
     pMsgBus->Post(pMsg);
     mouseButtonDown[(int)button] = false;
   }
@@ -44,6 +55,7 @@ public:
     Message_MouseButtonDown *pMsg = pMsgBus->NewMessage<Message_MouseButtonDown>();
     pMsg->button = button;
     pMsg->position = mousePos;
+    pMsg->modState = GetModState();
     pMsgBus->Post(pMsg);
     mouseButtonDown[(int)button] = true;
   }

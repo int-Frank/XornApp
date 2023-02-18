@@ -451,7 +451,7 @@ void App::HandleMessage(Message_MouseButtonUp *pMsg)
     }
     if (pMsg->button == MOUSE_BUTTON_SELECT)
     {
-      m_pProjectController->MouseUp(MK_none, pMsg->position);
+      m_pProjectController->MouseUp(pMsg->modState, pMsg->position);
     }
   }
 }
@@ -474,7 +474,7 @@ void App::HandleMessage(Message_MouseButtonDown *pMsg)
     }
     if (pMsg->button == MOUSE_BUTTON_SELECT)
     {
-      m_pProjectController->MouseDown(MK_none, pMsg->position);
+      m_pProjectController->MouseDown(pMsg->modState, pMsg->position);
     }
   }
 }

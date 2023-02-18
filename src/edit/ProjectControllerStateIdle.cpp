@@ -23,7 +23,7 @@ ProjectControllerState *ProjectControllerStateIdle::MouseMove(xn::vec2 const &mo
   return nullptr;
 }
 
-ProjectControllerState *ProjectControllerStateIdle::MouseDown(ModKey mod, xn::vec2 const &mouse)
+ProjectControllerState *ProjectControllerStateIdle::MouseDown(uint32_t modState, xn::vec2 const &mouse)
 {
   m_pStateData->sceneState.hoverPolygon = INVALID_POLYGON_ID;
 
@@ -40,7 +40,7 @@ ProjectControllerState *ProjectControllerStateIdle::MouseDown(ModKey mod, xn::ve
   if (m_pStateData->sceneState.hoverPolygon != INVALID_POLYGON_ID)
   {
     bool selectedExists = m_pStateData->sceneState.selectedPolygons.exists(m_pStateData->sceneState.hoverPolygon);
-    if (mod == MK_shift)
+    if ((modState & MK_shift) != 0)
     {
       if (selectedExists)
         m_pStateData->sceneState.selectedPolygons.erase(m_pStateData->sceneState.hoverPolygon);
@@ -185,7 +185,7 @@ ProjectControllerState *ProjectControllerStateMultiSelect::MouseMove(xn::vec2 co
   return nullptr;
 }
 
-ProjectControllerState *ProjectControllerStateMultiSelect::MouseUp(ModKey, xn::vec2 const &)
+ProjectControllerState *ProjectControllerStateMultiSelect::MouseUp(uint32_t modState, xn::vec2 const &)
 {
   return nullptr;
 }
@@ -205,7 +205,7 @@ ProjectControllerState *ProjectControllerStateRotateSelected::MouseMove(xn::vec2
   return nullptr;
 }
 
-ProjectControllerState *ProjectControllerStateRotateSelected::MouseUp(ModKey, xn::vec2 const &)
+ProjectControllerState *ProjectControllerStateRotateSelected::MouseUp(uint32_t modState, xn::vec2 const &)
 {
   return nullptr;
 }

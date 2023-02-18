@@ -50,7 +50,7 @@ ActionList::ActionList()
 
 void ActionList::Undo()
 {
-  if (m_index > 0)
+  if (m_index >= 0)
   {
     m_actions[m_index].pAction->Undo();
     m_index--;
