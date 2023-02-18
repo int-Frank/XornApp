@@ -88,9 +88,14 @@ public:
 
   ProjectControllerState *MouseMove(xn::vec2 const &) override;
   ProjectControllerState *MouseUp(ModKey, xn::vec2 const &) override;
-  void UpdateScene(xn::IScene *) override {}
+  void UpdateScene(xn::IScene *) override;
 
 private:
+
+  uint32_t GetCloseVertex() const;
+
+  static float const s_mergeDistanceSq;
+  static xn::Colour const s_mergeColour;
 
   xn::vec2 m_offset;
   xn::vec2 m_originalPoint;
