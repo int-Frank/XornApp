@@ -17,15 +17,15 @@ public:
   PolygonRenderer();
   ~PolygonRenderer();
 
-  void Draw(std::vector<xn::seg> const &, xn::Colour, uint32_t flags) override;
-  void SetMatrix_World_View(xn::mat33 const &) override;
+  void Draw(std::vector<xn::vec2> const &vertices, std::vector<int> const &polygonSizes, xn::Colour, uint32_t flags) override;
+  void SetViewMatrix(xn::mat33 const &) override;
   void SetResolution(xn::vec2 const &) override;
 
 private:
 
 
   GLuint m_shaderProgram;
-  xn::mat33 m_T_World_View;
+  xn::mat33 m_mView;
 };
 
 IPolygonRenderer *CreatePolygonRenderer()
@@ -51,18 +51,18 @@ PolygonRenderer::~PolygonRenderer()
   glDeleteProgram(m_shaderProgram);
 }
 
-void PolygonRenderer::SetMatrix_World_View(xn::mat33 const &mat)
+void PolygonRenderer::SetViewMatrix(xn::mat33 const &mat)
 {
   GLint prog;
   glGetIntegerv(GL_CURRENT_PROGRAM, &prog);
   glUseProgram(m_shaderProgram);
-  GLuint loc = glGetUniformLocation(m_shaderProgram, "u_T_World_View");
+  GLuint loc = glGetUniformLocation(m_shaderProgram, "u_mView");
   if (loc == -1)
-    throw MyException("Failed to set world to view matrix for the polygon renderer.");
+    throw MyException("Failed to set view matrix for the polygon renderer.");
   glUniformMatrix3fv(loc, 1, GL_FALSE, mat.GetData());
   glUseProgram(prog);
 
-  m_T_World_View = mat;
+  m_mView = mat;
 }
 
 void PolygonRenderer::SetResolution(xn::vec2 const &sz)
@@ -77,35 +77,26 @@ void PolygonRenderer::SetResolution(xn::vec2 const &sz)
   glUseProgram(prog);
 }
 
-void PolygonRenderer::Draw(std::vector<xn::seg> const &segments, xn::Colour clr, uint32_t flags)
+void PolygonRenderer::Draw(std::vector<xn::vec2> const &_vertices, std::vector<int> const &polygonSizes, xn::Colour clr, uint32_t flags)
 {
-  if (segments.empty())
+  if (_vertices.empty())
     return;
 
-  std::vector<xn::vec4> edges;
+  std::vector<xn::vec2> vertices;
   xn::vec2 minPt(FLT_MAX, FLT_MAX);
   xn::vec2 maxPt(-FLT_MAX, -FLT_MAX);
-  for (auto const &e : segments)
+  for (size_t i = 0; i < _vertices.size(); i++)
   {
-    xn::vec2 p0 = e.GetP0();
-    xn::vec2 p1 = e.GetP1();
+    xn::vec2 p0 = _vertices[i];
 
-    float maxX = std::max(p0.x(), p1.x());
-    float maxY = std::max(p0.y(), p1.y());
-    float minX = std::min(p0.x(), p1.x());
-    float minY = std::min(p0.y(), p1.y());
-    if (maxX > maxPt.x()) maxPt.x() = maxX;
-    if (maxY > maxPt.y()) maxPt.y() = maxY;
-    if (minX < minPt.x()) minPt.x() = minX;
-    if (minY < minPt.y()) minPt.y() = minY;
+    if (p0.x() > maxPt.x()) maxPt.x() = p0.x();
+    if (p0.x() < minPt.x()) minPt.x() = p0.x();
+    if (p0.y() > maxPt.y()) maxPt.y() = p0.y();
+    if (p0.y() < minPt.y()) minPt.y() = p0.y();
 
     xn::vec3 p03(p0.x(), p0.y(), 1.f);
-    xn::vec3 p13(p1.x(), p1.y(), 1.f);
-
-    p03 = p03 * m_T_World_View;
-    p13 = p13 * m_T_World_View;
-
-    edges.push_back(xn::vec4(p03.x(), p03.y(), p13.x(), p13.y()));
+    p03 = p03 * m_mView;
+    vertices.push_back(xn::vec2(p03.x(), p03.y()));
   }
 
   // Set up polygon data
@@ -114,14 +105,23 @@ void PolygonRenderer::Draw(std::vector<xn::seg> const &segments, xn::Colour clr,
   glGenVertexArrays(1, &vao);
   glBindVertexArray(vao);
 
-  GLuint edgesBuffer;
-  glGenBuffers(1, &edgesBuffer);
-  glBindBuffer(GL_SHADER_STORAGE_BUFFER, edgesBuffer);
+  GLuint vertexBuffer;
+  glGenBuffers(1, &vertexBuffer);
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, vertexBuffer);
   glBufferData(GL_SHADER_STORAGE_BUFFER,
-               edges.size() * sizeof(xn::vec4),
-               edges.data(),
-               GL_STATIC_DRAW);
-  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, edgesBuffer);
+    vertices.size() * sizeof(xn::vec2),
+    vertices.data(),
+    GL_STATIC_DRAW);
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, vertexBuffer);
+
+  GLuint polygonBuffer;
+  glGenBuffers(1, &polygonBuffer);
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, polygonBuffer);
+  glBufferData(GL_SHADER_STORAGE_BUFFER,
+    polygonSizes.size() * sizeof(int),
+    polygonSizes.data(),
+    GL_STATIC_DRAW);
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, polygonBuffer);
 
   // Set up the positions data
 
@@ -164,10 +164,10 @@ void PolygonRenderer::Draw(std::vector<xn::seg> const &segments, xn::Colour clr,
 
   glUniform4fv(loc, 1, colour);
 
-  loc = glGetUniformLocation(m_shaderProgram, "u_edgeCount");
+  loc = glGetUniformLocation(m_shaderProgram, "u_polygonCount");
   if (loc == -1)
-    throw MyException("Failed to set edge count for the polygon renderer.");
-  glUniform1i(loc, (int)edges.size());
+    throw MyException("Failed to set vertex count for the polygon renderer.");
+  glUniform1i(loc, (int)polygonSizes.size());
 
   glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -176,6 +176,7 @@ void PolygonRenderer::Draw(std::vector<xn::seg> const &segments, xn::Colour clr,
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
   glDeleteBuffers(1, &quadBuffer);
-  glDeleteBuffers(1, &edgesBuffer);
+  glDeleteBuffers(1, &vertexBuffer);
+  glDeleteBuffers(1, &polygonBuffer);
   glDeleteVertexArrays(1, &vao);
 }

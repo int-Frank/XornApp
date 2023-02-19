@@ -4,7 +4,14 @@
 
 struct ActionItem
 {
-  ActionID ID;
+  ActionItem(ActionID _id, Action *_pAction)
+    : id(_id)
+    , pAction(_pAction)
+  {
+
+  }
+
+  ActionID id;
   Action *pAction;
 };
 
@@ -15,10 +22,10 @@ public:
   ~ActionList();
   ActionList();
 
-  ActionID PushBack(Action *, ActionData *) override;
-  void Redo(ActionData *) override;
-  void Undo(ActionData *) override;
-  Action *GetAction(ActionID) const override;
+  ActionID AddAndExecute(Action *) override;
+  ActionID TopID() const override;
+  void Redo() override;
+  void Undo() override;
   void Clear() override;
 
 private:
@@ -36,29 +43,30 @@ ActionList::~ActionList()
 ActionList::ActionList()
   : m_nextID(0)
   , m_index(-1)
+  , m_actions()
 {
 
 }
 
-void ActionList::Undo(ActionData *pData)
+void ActionList::Undo()
 {
-  if (m_index > 0)
+  if (m_index >= 0)
   {
-    m_actions[m_index].pAction->Undo(pData);
+    m_actions[m_index].pAction->Undo();
     m_index--;
   }
 }
 
-void ActionList::Redo(ActionData *pData)
+void ActionList::Redo()
 {
   if (m_index + 1 < (int)m_actions.size())
   {
     m_index++;
-    m_actions[m_index].pAction->Do(pData);
+    m_actions[m_index].pAction->Do();
   }
 }
 
-ActionID ActionList::PushBack(Action *pAction, ActionData *pData)
+ActionID ActionList::AddAndExecute(Action *pAction)
 {
   while (m_index + 1 < (int)m_actions.size())
   {
@@ -66,13 +74,18 @@ ActionID ActionList::PushBack(Action *pAction, ActionData *pData)
     m_actions.pop_back();
   }
 
-  ActionItem action = {};
-  action.ID = m_nextID++;
-  action.pAction = pAction;
+  auto id = m_nextID++;
+  m_actions.push_back(ActionItem(id, pAction));
+  m_actions.back().pAction->Do();
+  m_index++;
+  return id;
+}
 
-  m_actions.push_back(action);
-  m_actions.back().pAction->Do(pData);
-  return action.ID;
+ActionID ActionList::TopID() const
+{
+  if (m_index >= 0)
+    return m_actions[m_index].id;
+  return INVALID_ACTION_ID;
 }
 
 void ActionList::Clear()
@@ -81,27 +94,6 @@ void ActionList::Clear()
     delete action.pAction;
   m_actions.clear();
   m_index = -1;
-}
-
-Action *ActionList::GetAction(ActionID id) const
-{
-  size_t low = 0;
-  size_t high = m_actions.size();
-  while (low <= high)
-  {
-    size_t mid = low + (high - low) / 2;
-
-    if (m_actions[mid].ID == id)
-      return m_actions[mid].pAction;
-
-    if (m_actions[mid].ID < id)
-      low = mid + 1;
-
-    else
-      high = mid - 1;
-  }
-
-  return nullptr;
 }
 
 IActionList *CreateActionList()

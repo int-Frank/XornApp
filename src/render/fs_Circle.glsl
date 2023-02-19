@@ -23,10 +23,11 @@ void main(void)
   }
   else
   {
-    float alpha = (fragDist - radius - 1.0) / 2.0;
+    float alpha = -(fragDist - radius - 1.0) / 2.0;
     if (alpha > 1.0)
       alpha = 1.0;
-    colour = vec4(u_colour.x, u_colour.y, u_colour.z, alpha * alpha);
+
+    colour = vec4(u_colour.x, u_colour.y, u_colour.z, u_colour.w * alpha * alpha);
   }
 }
 )"

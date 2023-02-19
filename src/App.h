@@ -13,11 +13,12 @@
 #include "Canvas.h"
 #include "ViewWindow.h"
 #include "Scene.h"
-#include "ActionList.h"
+#include "edit/IProjectController.h"
 
 struct GLFWwindow;
 class Logger;
 class MessageBus;
+class Renderer;
 
 namespace xn
 {
@@ -31,7 +32,6 @@ class App
   {
     Plugin *pPlugin;
     xn::Module *pInstance;
-    Scene *pScene;
     bool hasFocus;
   };
 
@@ -63,13 +63,15 @@ private:
   void LogMessage(Message const *);
 
   void HandleMessages();
+  void HandleMessage(Message_Undo *);
+  void HandleMessage(Message_Redo *);
   void HandleMessage(Message_ZoomCamera *);
   void HandleMessage(Message_MouseButtonDown *);
   void HandleMessage(Message_MouseButtonUp *);
   void HandleMessage(Message_MouseMove *);
   void HandleMessage(Message_MouseScroll *);
 
-  xn::vec2 ViewToWorld(xn::vec2 const &, float w = 1.f);
+  xn::vec2 ScreenToWorld(xn::vec2 const &, float w = 1.f);
   xn::Module *GetCurrentFocus();
 
   void Render();
@@ -80,11 +82,11 @@ private:
   xn::UIContext *m_pUIContext;
   MessageBus *m_pMsgBus;
   Canvas *m_pCanvas;
-  Scene *m_pScene;
+  Renderer *m_pRenderer;
   Project *m_pProject;
+  IProjectController *m_pProjectController;
 
   Dg::Map_AVL<uint32_t, ModuleData> m_registeredModules;
-  IActionList *m_pActions;
   ViewWindow m_cameraView;
   std::vector<xn::PolygonLoop> m_scenePolygonLoops;
   std::vector<std::shared_ptr<Modal>> m_modalStack;
@@ -95,9 +97,6 @@ private:
   bool m_isMouseDragging;
   xn::vec2 m_mousePositionAnchor;
   xn::vec2 m_cameraPositionAnchor;
-
-  float m_lineThickness;
-  float m_lineColour[4];
 
   bool m_geometryDirty;  // To determine if we need to recalculate geometry for the modules
   bool m_projectDirty;   // To determine if we should prompt to save project

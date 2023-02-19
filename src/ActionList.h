@@ -4,16 +4,17 @@
 #include "Action.h"
 
 typedef uint32_t ActionID;
+#define INVALID_ACTION_ID 0xFFFFFFFFul
 
 class IActionList
 {
 public:
 
   virtual ~IActionList() {};
-  virtual ActionID PushBack(Action *, ActionData *) = 0;
-  virtual void Redo(ActionData *) = 0;
-  virtual void Undo(ActionData *) = 0;
-  virtual Action *GetAction(ActionID) const = 0;
+  virtual ActionID AddAndExecute(Action *) = 0;
+  virtual ActionID TopID() const = 0;
+  virtual void Redo() = 0;
+  virtual void Undo() = 0;
   virtual void Clear() = 0;
 };
 

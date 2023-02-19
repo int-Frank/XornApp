@@ -10,7 +10,7 @@
 
 #include "App.h"
 #include "Logger.h"
-#include "IRenderer.h"
+#include "Renderer.h"
 #include "DefaultData.h"
 #include "ImGuiUIContext.h"
 #include "MessageBus.h"
@@ -41,18 +41,16 @@ App::App()
   , m_pUIContext(nullptr)
   , m_pMsgBus(nullptr)
   , m_pCanvas(nullptr)
-  , m_pScene(nullptr)
-  , m_pActions(nullptr)
+  , m_pRenderer(nullptr)
   , m_activeModuleID(INVALID_ID)
   , m_cameraView()
   , m_modalStack()
   , m_pProject(nullptr)
+  , m_pProjectController(nullptr)
   , m_saveFile()
   , m_isMouseDragging(false)
   , m_mousePositionAnchor(0.f, 0.f)
   , m_cameraPositionAnchor(0.f, 0.f)
-  , m_lineThickness(DefaultData::data.polygonThickness)
-  , m_lineColour{ DefaultData::data.polygonColour.r(), DefaultData::data.polygonColour.g(), DefaultData::data.polygonColour.b(), DefaultData::data.polygonColour.a() }
   , m_geometryDirty(true)
   , m_projectDirty(false)
   , m_showDemoWindow(false)
@@ -88,10 +86,9 @@ App::App()
   m_pMsgBus = new MessageBus();
   g_pMsgBus = m_pMsgBus;
   m_pUIContext = new ImGuiUIContext(m_pWindow, true, glsl_version);
-  m_pCanvas = new Canvas("Output", m_pMsgBus, CreateRenderer());
+  m_pRenderer = CreateRenderer();
+  m_pCanvas = new Canvas("Output", m_pMsgBus);
   m_pCanvas->SetSize(xn::vec2(DefaultData::data.windowWidth, DefaultData::data.windowHeight));
-  m_pScene = new Scene();
-  m_pActions = CreateActionList();
 
   NewProject();
   LoadPlugins();
@@ -126,9 +123,8 @@ App::~App()
   delete m_pCanvas;
   delete m_pUIContext;
   delete m_pProject;
-  delete m_pScene;
   delete m_pMsgBus;
-  delete m_pActions;
+  delete m_pProjectController;
   g_pMsgBus = nullptr;
 
   for (auto &kv : m_registeredModules)
@@ -136,7 +132,6 @@ App::~App()
     if (kv.second.pInstance != nullptr)
       kv.second.pPlugin->DestroyModule(&kv.second.pInstance);
     delete kv.second.pPlugin;
-    delete kv.second.pScene;
   }
 
   glfwDestroyWindow(m_pWindow);
@@ -219,8 +214,8 @@ void App::ShowControlWindow()
   ImGui::Text("%s", std::filesystem::path(m_saveFile).stem().string().c_str());
   ImGui::Separator();
 
-  ImGui::ColorEdit4("Line colour##" MAIN_WINDOW_NAME, m_lineColour, ImGuiColorEditFlags_NoDragDrop | ImGuiColorEditFlags_AlphaPreview);
-  ImGui::Separator();
+  //ImGui::ColorEdit4("Line colour##" MAIN_WINDOW_NAME, m_lineColour, ImGuiColorEditFlags_NoDragDrop | ImGuiColorEditFlags_AlphaPreview);
+  //ImGui::Separator();
   ImGui::Text("Mouse input gets sent to...");
 
   bool hasFocus = GetCurrentFocus() == nullptr;
@@ -272,14 +267,10 @@ void App::HandleModules()
     if (m_geometryDirty)
       kv.second.pInstance->SetGeometry(m_scenePolygonLoops);
 
-    kv.second.pInstance->DoFrame(m_pUIContext, kv.second.pScene);
+    kv.second.pInstance->DoFrame(m_pUIContext);
 
     if (!kv.second.pInstance->IsOpen())
-    {
       kv.second.pPlugin->DestroyModule(&kv.second.pInstance);
-      delete kv.second.pScene;
-      kv.second.pScene = nullptr;
-    }
   }
   m_geometryDirty = false;
 }
@@ -314,7 +305,6 @@ void App::OpenModule(uint32_t id, ModuleData *pData)
     data.name = pData->pPlugin->GetModuleName();
 
     pData->pInstance = pData->pPlugin->CreateModule(&data);
-    pData->pScene = new Scene();
     pData->pInstance->SetGeometry(m_scenePolygonLoops);
   }
 }
@@ -336,6 +326,8 @@ void App::HandleMessages()
     {
       DISPATCH(MouseScroll);
       DISPATCH(ZoomCamera);
+      DISPATCH(Undo);
+      DISPATCH(Redo);
       DISPATCH(MouseButtonDown);
       DISPATCH(MouseButtonUp);
       DISPATCH(MouseMove);
@@ -352,41 +344,40 @@ void App::Render()
 {
   // TODO Set window size
   m_pCanvas->BeginFrame();
-  IRenderer *pRenderer = m_pCanvas->GetRenderer();
-  pRenderer->BeginDraw();
+  m_pRenderer->BeginDraw();
   
   xn::vec2 renderSize = m_pCanvas->GetRenderRegionSize();
+
+  uint32_t w = uint32_t(renderSize.x());
+  uint32_t h = uint32_t(renderSize.y());
+
+  m_pRenderer->SetResolution(uint32_t(renderSize.x()), uint32_t(renderSize.y()));
   m_cameraView.SetViewSize(renderSize);
 
-  pRenderer->SetMatrix_World_View(m_cameraView.GetMatrix_View_World().GetInverse());
+  xn::mat33 T_View_World = m_cameraView.GetMatrix_View_World();
+  xn::mat33 T_Screen_View = m_pCanvas->GetMatrix_Screen_View();
+  xn::mat33 T_View_Screen = T_Screen_View.GetInverse();
+  xn::mat33 T_World_View = T_View_World.GetInverse();
+  xn::mat33 T_World_Screen = xn::mat33(T_Screen_View * T_View_World).GetInverse();
 
-  xn::Colour lineColour;
-  lineColour.rgba.r = (uint8_t)(m_lineColour[0] * 255.f);
-  lineColour.rgba.g = (uint8_t)(m_lineColour[1] * 255.f);
-  lineColour.rgba.b = (uint8_t)(m_lineColour[2] * 255.f);
-  lineColour.rgba.a = (uint8_t)(m_lineColour[3] * 255.f);
+  m_pRenderer->SetViewMatrix(T_World_View);
+  m_pProjectController->SetMatrices(T_World_View, T_View_Screen);
+  m_pProjectController->DrawBackSprites(m_pRenderer);
 
-  for (auto it = m_pProject->loops.Begin(); it != m_pProject->loops.End(); it++)
-  {
-    m_pScene->AddPolygon(it->second.GetTransformed(),
-                         m_lineThickness, 
-                         lineColour, 0, 0);
-  }
-
-  m_pScene->Draw(pRenderer);
-  m_pScene->Clear();
-
-  // TODO sort module scenes to draw correctly.
+  // TODO sort module to draw correctly.
+  m_pRenderer->SetViewMatrix(T_World_View);
   for (auto &kv : m_registeredModules)
   {
     if (kv.second.pInstance == nullptr)
       continue;
 
-    kv.second.pScene->Draw(pRenderer);
-    kv.second.pScene->Clear();
+    kv.second.pInstance->Render(m_pRenderer);
   }
 
-  pRenderer->EndDraw();
+  m_pProjectController->DrawFrontSprites(m_pRenderer);
+
+  m_pRenderer->EndDraw();
+  m_pCanvas->BlitImage((void*)m_pRenderer->GetTexture(), w, h);
   m_pCanvas->EndFrame();
 
   // Rendering
@@ -401,11 +392,12 @@ void App::Render()
   glfwSwapBuffers(m_pWindow);
 }
 
-xn::vec2 App::ViewToWorld(xn::vec2 const &p, float w)
+xn::vec2 App::ScreenToWorld(xn::vec2 const &p, float w)
 {
+  xn::mat33 T_Screen_View = m_pCanvas->GetMatrix_Screen_View();
   xn::mat33 T_View_World = m_cameraView.GetMatrix_View_World();
   xn::vec3 pWorldSpace3(p.x(), p.y(), w);
-  pWorldSpace3 = pWorldSpace3 * T_View_World;
+  pWorldSpace3 = pWorldSpace3 * (T_Screen_View * T_View_World);
   return xn::vec2(pWorldSpace3.x(), pWorldSpace3.y());
 }
 
@@ -424,19 +416,33 @@ void App::HandleMessage(Message_ZoomCamera *pMsg)
   m_cameraView.Scale(pMsg->val);
 }
 
+void App::HandleMessage(Message_Undo *pMsg)
+{
+  m_pProjectController->Undo();
+}
+
+void App::HandleMessage(Message_Redo *pMsg)
+{
+  m_pProjectController->Redo();
+}
+
 void App::HandleMessage(Message_MouseButtonUp *pMsg)
 {
   xn::Module *pFocus = GetCurrentFocus();
 
   if (pFocus)
   {
-    pFocus->MouseUp(pMsg->button);
+    pFocus->MouseUp(pMsg->modState);
   }
   else
   {
-    if (pMsg->button == xn::MouseInput::LeftButton)
+    if (pMsg->button == MOUSE_BUTTON_MOVE)
     {
       m_isMouseDragging = false;
+    }
+    if (pMsg->button == MOUSE_BUTTON_SELECT)
+    {
+      m_pProjectController->MouseUp(pMsg->modState, pMsg->position);
     }
   }
 }
@@ -447,15 +453,19 @@ void App::HandleMessage(Message_MouseButtonDown *pMsg)
 
   if (pFocus)
   {
-    pFocus->MouseDown(pMsg->button, ViewToWorld(pMsg->position));
+    pFocus->MouseDown(pMsg->modState, ScreenToWorld(pMsg->position));
   }
   else
   {
-    if (pMsg->button == xn::MouseInput::LeftButton)
+    if (pMsg->button == MOUSE_BUTTON_MOVE)
     {
       m_mousePositionAnchor = pMsg->position;
       m_cameraPositionAnchor = m_cameraView.GetPosition();
       m_isMouseDragging = true;
+    }
+    if (pMsg->button == MOUSE_BUTTON_SELECT)
+    {
+      m_pProjectController->MouseDown(pMsg->modState, pMsg->position);
     }
   }
 }
@@ -466,14 +476,18 @@ void App::HandleMessage(Message_MouseMove *pMsg)
 
   if (pFocus)
   {
-    pFocus->MouseMove(ViewToWorld(pMsg->position));
+    pFocus->MouseMove(pMsg->modState, ScreenToWorld(pMsg->position));
   }
   else
   {
     if (m_isMouseDragging)
     {
-      xn::vec2 vWorldSpace = ViewToWorld(pMsg->position - m_mousePositionAnchor, 0.f);
+      xn::vec2 vWorldSpace = ScreenToWorld(pMsg->position - m_mousePositionAnchor, 0.f);
       m_cameraView.SetPosition(m_cameraPositionAnchor - vWorldSpace);
+    }
+    else
+    {
+      m_pProjectController->MouseMove(pMsg->modState, pMsg->position);
     }
   }
 }
@@ -533,6 +547,9 @@ void App::OpenProject(std::string const &filePath)
   m_projectDirty = false;
 
   FitViewToProject();
+
+  delete m_pProjectController;
+  m_pProjectController = CreateProjectController(m_pProject);
 }
 
 void App::ImportProject(std::string const &filePath)
@@ -552,6 +569,9 @@ void App::ImportProject(std::string const &filePath)
   m_projectDirty = false;
 
   FitViewToProject();
+
+  delete m_pProjectController;
+  m_pProjectController = CreateProjectController(m_pProject);
 }
 
 void App::NewProject()
@@ -569,6 +589,9 @@ void App::NewProject()
   m_saveFile.clear();
 
   FitViewToProject();
+
+  delete m_pProjectController;
+  m_pProjectController = CreateProjectController(m_pProject);
 }
 
 void App::SetSaveFile(std::string const &newFilePath)

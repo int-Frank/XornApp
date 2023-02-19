@@ -2,8 +2,8 @@
 #include "xnCommon.h"
 #include "XornAppMessages.h"
 #include "MessageBus.h"
+#include "Input.h"
 
-#include "IRenderer.h"
 #include "imgui.h"
 #include "Canvas.h"
 #include "Common.h"
@@ -11,14 +11,22 @@
 
 using namespace xn;
 
+static uint32_t GetModState()
+{
+  uint32_t modState = 0;
+  if (ImGui::GetIO().KeyMods & ImGuiModFlags_Ctrl) modState |= MK_ctrl;
+  if (ImGui::GetIO().KeyMods & ImGuiModFlags_Shift) modState |= MK_shift;
+  if (ImGui::GetIO().KeyMods & ImGuiModFlags_Alt) modState |= MK_alt;
+  return modState;
+}
+
 class Canvas::PIMPL 
 {
 public:
 
-  PIMPL(std::string const &name, MessageBus *pMsgBus, IRenderer *pRenderer)
+  PIMPL(std::string const &name, MessageBus *pMsgBus)
     : name(name)
     , pMsgBus(pMsgBus)
-    , pRenderer(pRenderer)
     , position(0.f, 0.f)
     , windowSize(100.f, 100.f)
     , renderSize(100.f, 100.f)
@@ -29,23 +37,25 @@ public:
 
   ~PIMPL()
   {
-    delete pRenderer;
+
   }
 
-  void HandleMouseUp(xn::MouseInput button, vec2 const &mousePos)
+  void HandleMouseUp(MouseInput button, vec2 const &mousePos)
   {
     Message_MouseButtonUp *pMsg = pMsgBus->NewMessage<Message_MouseButtonUp>();
     pMsg->button = button;
-    pMsg->position = GetViewSpaceMousePosition(mousePos);
+    pMsg->position = mousePos;
+    pMsg->modState = GetModState();
     pMsgBus->Post(pMsg);
     mouseButtonDown[(int)button] = false;
   }
 
-  void HandleMouseDown(xn::MouseInput button, vec2 const &mousePos)
+  void HandleMouseDown(MouseInput button, vec2 const &mousePos)
   {
     Message_MouseButtonDown *pMsg = pMsgBus->NewMessage<Message_MouseButtonDown>();
     pMsg->button = button;
-    pMsg->position = GetViewSpaceMousePosition(mousePos);
+    pMsg->position = mousePos;
+    pMsg->modState = GetModState();
     pMsgBus->Post(pMsg);
     mouseButtonDown[(int)button] = true;
   }
@@ -58,14 +68,15 @@ public:
     if (newImageMousePos == oldImageMousePos)
       return;
 
-    vec2 newViewMousePos = GetViewSpaceMousePosition(newImageMousePos);
+    vec2 newViewMousePos = newImageMousePos;
     Message_MouseMove *pMsg = pMsgBus->NewMessage<Message_MouseMove>();
     pMsg->position = newViewMousePos;
+    pMsg->modState = GetModState();
     pMsgBus->Post(pMsg);
     oldImageMousePos = newImageMousePos;
   }
 
-  vec2 GetViewSpaceMousePosition(vec2 const &mousePos)
+  mat33 GetMatrix_Screen_View() const
   {
     float w = renderSize.x();
     float h = renderSize.y();
@@ -73,28 +84,25 @@ public:
     t.Translation(vec2(-w, -h) / 2.f);
     s.Scaling(vec2(2.f / w, -2.f / h));
 
-    xn::vec3 p = vec3(mousePos.x(), mousePos.y(), 1.f);
-    p = p * (t * s);
-    return vec2(p.x(), p.y());
+    return (t * s);
   }
 
   static float const s_minCanvasSize;
 
   std::string name;
   MessageBus *pMsgBus;
-  IRenderer *pRenderer;
   xn::vec2 windowSize;
   xn::vec2 renderSize;
   xn::vec2 position;
   float scroll;
-  bool mouseButtonDown[(int)xn::MouseInput::COUNT];
+  bool mouseButtonDown[(int)MouseInput::COUNT];
   vec2 oldImageMousePos;
 };
 
 float const Canvas::PIMPL::s_minCanvasSize = 50.f;
 
-Canvas::Canvas(std::string const &name, MessageBus *pMsgBus, IRenderer *pRenderer)
-  : m_pimpl(new PIMPL(name, pMsgBus, pRenderer))
+Canvas::Canvas(std::string const &name, MessageBus *pMsgBus)
+  : m_pimpl(new PIMPL(name, pMsgBus))
 {
 
 }
@@ -126,8 +134,7 @@ void Canvas::BeginFrame()
   // Draw border and background color
   ImGuiIO &io = ImGui::GetIO();
   m_pimpl->renderSize = xn::vec2(canvas_sz.x, canvas_sz.y);
-  m_pimpl->pRenderer->SetResolution(uint32_t(m_pimpl->renderSize.x()), uint32_t(m_pimpl->renderSize.y()));
-
+  
   // This will catch our interactions
   ImGui::InvisibleButton(std::string(std::string("canvas##") + m_pimpl->name).c_str(), canvas_sz, ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight);
   const bool is_hovered = ImGui::IsItemHovered(); // Hovered
@@ -136,14 +143,14 @@ void Canvas::BeginFrame()
   vec2 mousePos(io.MousePos.x, io.MousePos.y);
 
   // Handle mouse button up...
-  if (!ImGui::IsMouseDown(ImGuiMouseButton_Left) && m_pimpl->mouseButtonDown[(int)xn::MouseInput::LeftButton])
-    m_pimpl->HandleMouseUp(xn::MouseInput::LeftButton, mousePos);
+  if (!ImGui::IsMouseDown(ImGuiMouseButton_Left) && m_pimpl->mouseButtonDown[(int)MouseInput::LeftButton])
+    m_pimpl->HandleMouseUp(MouseInput::LeftButton, mousePos);
 
-  if (!ImGui::IsMouseDown(ImGuiMouseButton_Right) && m_pimpl->mouseButtonDown[(int)xn::MouseInput::RightButton])
-    m_pimpl->HandleMouseUp(xn::MouseInput::RightButton, mousePos);
+  if (!ImGui::IsMouseDown(ImGuiMouseButton_Right) && m_pimpl->mouseButtonDown[(int)MouseInput::RightButton])
+    m_pimpl->HandleMouseUp(MouseInput::RightButton, mousePos);
 
-  if (!ImGui::IsMouseDown(ImGuiMouseButton_Middle) && m_pimpl->mouseButtonDown[(int)xn::MouseInput::MiddleButton])
-    m_pimpl->HandleMouseUp(xn::MouseInput::MiddleButton, mousePos);
+  if (!ImGui::IsMouseDown(ImGuiMouseButton_Middle) && m_pimpl->mouseButtonDown[(int)MouseInput::MiddleButton])
+    m_pimpl->HandleMouseUp(MouseInput::MiddleButton, mousePos);
 
   // Handle mouse move
   m_pimpl->HandleMouseMove(mousePos);
@@ -151,16 +158,17 @@ void Canvas::BeginFrame()
   // Handle mouse button down...
   if (is_hovered)
   {
-    if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && !m_pimpl->mouseButtonDown[(int)xn::MouseInput::LeftButton])
-      m_pimpl->HandleMouseDown(xn::MouseInput::LeftButton, mousePos);
+    if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && !m_pimpl->mouseButtonDown[(int)MouseInput::LeftButton])
+      m_pimpl->HandleMouseDown(MouseInput::LeftButton, mousePos);
 
-    if (ImGui::IsMouseDown(ImGuiMouseButton_Right) && !m_pimpl->mouseButtonDown[(int)xn::MouseInput::RightButton])
-      m_pimpl->HandleMouseDown(xn::MouseInput::RightButton, mousePos);
+    if (ImGui::IsMouseDown(ImGuiMouseButton_Right) && !m_pimpl->mouseButtonDown[(int)MouseInput::RightButton])
+      m_pimpl->HandleMouseDown(MouseInput::RightButton, mousePos);
 
-    if (ImGui::IsMouseDown(ImGuiMouseButton_Middle) && !m_pimpl->mouseButtonDown[(int)xn::MouseInput::MiddleButton])
-      m_pimpl->HandleMouseDown(xn::MouseInput::MiddleButton, mousePos);
+    if (ImGui::IsMouseDown(ImGuiMouseButton_Middle) && !m_pimpl->mouseButtonDown[(int)MouseInput::MiddleButton])
+      m_pimpl->HandleMouseDown(MouseInput::MiddleButton, mousePos);
   }
 
+  // Zoom
   if (is_hovered && m_pimpl->scroll != 0.f)
   {
     Message_ZoomCamera *pMsg = m_pimpl->pMsgBus->NewMessage<Message_ZoomCamera>();
@@ -168,25 +176,36 @@ void Canvas::BeginFrame()
     m_pimpl->pMsgBus->Post(pMsg);
   }
 
+  // Undo
+  if (ImGui::IsKeyPressed(ImGuiKey_Z, false) && ((ImGui::GetIO().KeyMods & ImGuiModFlags_Ctrl) > 0))
+  {
+    Message_Undo *pMsg = m_pimpl->pMsgBus->NewMessage<Message_Undo>();
+    m_pimpl->pMsgBus->Post(pMsg);
+  }
+
+  // Redo
+  if (ImGui::IsKeyPressed(ImGuiKey_Y, false) && ((ImGui::GetIO().KeyMods & ImGuiModFlags_Ctrl) > 0))
+  {
+    Message_Redo *pMsg = m_pimpl->pMsgBus->NewMessage<Message_Redo>();
+    m_pimpl->pMsgBus->Post(pMsg);
+  }
+
   m_pimpl->scroll = 0.f;
+}
+
+void Canvas::BlitImage(void *pImage, uint32_t w, uint32_t h)
+{
+  ImVec2 pos = ToImGui(m_pimpl->position);
+  ImGui::GetWindowDrawList()->AddImage(
+    pImage,
+    pos,
+    ImVec2(pos.x + w, pos.y + h),
+    ImVec2(0, 1), ImVec2(1, 0));
 }
 
 void Canvas::EndFrame()
 {
-  ImVec2 pos = ToImGui(m_pimpl->position);
-  ImGui::GetWindowDrawList()->AddImage(
-    (void *)m_pimpl->pRenderer->GetTexture(),
-    pos,
-    ImVec2(pos.x + m_pimpl->pRenderer->GetWidth(),
-           pos.y + m_pimpl->pRenderer->GetHeight()),
-    ImVec2(0, 1), ImVec2(1, 0));
-
   ImGui::End();
-}
-
-IRenderer *Canvas::GetRenderer()
-{
-  return m_pimpl->pRenderer;
 }
 
 void Canvas::Handle(Message *pMsg)
@@ -198,4 +217,9 @@ void Canvas::Handle(Message *pMsg)
 xn::vec2 Canvas::GetRenderRegionSize() const
 {
   return m_pimpl->renderSize;
+}
+
+mat33 Canvas::GetMatrix_Screen_View() const
+{
+  return m_pimpl->GetMatrix_Screen_View();
 }

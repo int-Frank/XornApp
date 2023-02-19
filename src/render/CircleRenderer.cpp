@@ -17,7 +17,7 @@ public:
   ~CircleRenderer();
 
   void Draw(std::vector<xn::vec2> const &, float radius, xn::Colour, uint32_t flags);
-  void SetMatrix_World_View(xn::mat33 const &) override;
+  void SetViewMatrix(xn::mat33 const &) override;
   void SetResolution(xn::vec2 const &) override;
 
 private:
@@ -64,12 +64,12 @@ CircleRenderer::~CircleRenderer()
   glDeleteProgram(m_shaderProgram);
 }
 
-void CircleRenderer::SetMatrix_World_View(xn::mat33 const &mat)
+void CircleRenderer::SetViewMatrix(xn::mat33 const &mat)
 {
   GLint prog;
   glGetIntegerv(GL_CURRENT_PROGRAM, &prog);
   glUseProgram(m_shaderProgram);
-  GLuint loc = glGetUniformLocation(m_shaderProgram, "u_T_World_View");
+  GLuint loc = glGetUniformLocation(m_shaderProgram, "u_mView");
   if (loc == -1)
     throw MyException("Failed to set world to view matrix for the circle renderer.");
   glUniformMatrix3fv(loc, 1, GL_FALSE, mat.GetData());

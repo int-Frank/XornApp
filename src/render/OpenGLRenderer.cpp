@@ -7,10 +7,9 @@
 
 #include "xnColour.h"
 #include "xnGeometry.h"
-#include "xnIScene.h"
+#include "Renderer.h"
 
 #include "DefaultData.h"
-#include "IRenderer.h"
 #include "MyException.h"
 #include "LineRenderer.h"
 #include "CircleRenderer.h"
@@ -36,7 +35,7 @@ static bool PointExists(std::vector<xn::vec2> const &points, xn::vec2 const &poi
 // OpenGLRenderer
 //----------------------------------------------------------------
 
-class OpenGLRenderer : public IRenderer
+class OpenGLRenderer : public Renderer
 {
 public:
 
@@ -48,13 +47,16 @@ public:
   void BeginDraw() override;
   void DrawLine(xn::seg const &, float thickness, xn::Colour clr, uint32_t flags) override;
   void DrawLineGroup(std::vector<xn::seg> const &, float thickness, xn::Colour clr, uint32_t flags) override;
-  void DrawFilledCircle(xn::vec2 const &centre, float radius, xn::Colour clr, uint32_t flags);
-  void DrawFilledCircleGroup(std::vector<xn::vec2> const &centres, float radius, xn::Colour clr, uint32_t flags);
-  //void DrawPolygon(xn::DgPolygon const &, float thickness, xn::Colour clr, uint32_t flags, xn::mat33 T_Model_World) override;
-  void DrawFilledPolygon(std::vector<xn::seg> const &, xn::Colour clr, uint32_t flags) override;
+  void DrawFilledCircle(xn::vec2 const &centre, float radius, xn::Colour clr, uint32_t flags) override;
+  void DrawFilledCircleGroup(std::vector<xn::vec2> const &centres, float radius, xn::Colour clr, uint32_t flags) override;
+  void DrawPolygon(xn::DgPolygon const &, float thickness, xn::Colour clr, uint32_t flags) override;
+  void DrawPolygon(std::vector<xn::vec2> const &vertices, float thickness, xn::Colour clr, uint32_t flags) override;
+  void DrawFilledPolygon(xn::DgPolygon const &, xn::Colour clr, uint32_t flags) override;
+  void DrawFilledPolygon(xn::PolygonWithHoles const &, xn::Colour clr, uint32_t flags) override;
+  void DrawFilledPolygon(std::vector<xn::vec2> const &vertices, std::vector<int> const &polygonSizes, xn::Colour clr, uint32_t flags) override;
   void EndDraw() override;
 
-  void SetMatrix_World_View(xn::mat33 const &) override;
+  void SetViewMatrix(xn::mat33 const &) override;
   unsigned int GetTexture() const override { return m_texture; };
   unsigned int GetWidth() const override { return m_width; }
   unsigned int GetHeight() const override { return m_height; }
@@ -241,18 +243,62 @@ void OpenGLRenderer::DrawFilledCircleGroup(std::vector<xn::vec2> const &position
   RENDERER(CircleRenderer)->Draw(positions, radius, clr, flags);
 }
 
-void OpenGLRenderer::DrawFilledPolygon(std::vector<xn::seg> const &edges, xn::Colour clr, uint32_t flags)
+void OpenGLRenderer::DrawPolygon(xn::DgPolygon const &polygon, float thickness, xn::Colour clr, uint32_t flags)
 {
-  RENDERER(PolygonRenderer)->Draw(edges, clr, flags);
+  std::vector<xn::seg> edges;
+  for (auto edge_it = polygon.cEdgesBegin(); edge_it != polygon.cEdgesEnd(); edge_it++)
+    edges.push_back(edge_it.ToSegment());
+  DrawLineGroup(edges, thickness, clr, flags);
 }
 
-void OpenGLRenderer::SetMatrix_World_View(xn::mat33 const &mat)
+void OpenGLRenderer::DrawPolygon(std::vector<xn::vec2> const &vertices, float thickness, xn::Colour clr, uint32_t flags)
+{
+  std::vector<xn::seg> edges;
+  for (size_t i = 0; i < vertices.size(); i++)
+  {
+    xn::vec2 p0 = vertices[i];
+    xn::vec2 p1 = vertices[(i + 1) % vertices.size()];
+    edges.push_back(xn::seg(p0, p1));
+  }
+  DrawLineGroup(edges, thickness, clr, flags);
+}
+
+void OpenGLRenderer::DrawFilledPolygon(xn::DgPolygon const &polygon, xn::Colour clr, uint32_t flags)
+{
+  std::vector<int> polygons;
+  polygons.push_back((int)polygon.Size());
+
+  std::vector<xn::vec2> vertices;
+  for (auto vert_it = polygon.cPointsBegin(); vert_it != polygon.cPointsEnd(); vert_it++)
+    vertices.push_back(*vert_it);
+  DrawFilledPolygon(vertices, polygons, clr, flags);
+}
+
+void OpenGLRenderer::DrawFilledPolygon(xn::PolygonWithHoles const &polygon, xn::Colour clr, uint32_t flags)
+{
+  std::vector<int> polygons;
+  std::vector<xn::vec2> vertices;
+  for (auto loop_it = polygon.loops.cbegin(); loop_it != polygon.loops.cend(); loop_it++)
+  {
+    polygons.push_back((int)loop_it->Size());
+    for (auto vert_it = loop_it->cPointsBegin(); vert_it != loop_it->cPointsEnd(); vert_it++)
+      vertices.push_back(*vert_it);
+  }
+  DrawFilledPolygon(vertices, polygons, clr, flags);
+}
+
+void OpenGLRenderer::DrawFilledPolygon(std::vector<xn::vec2> const &vertices, std::vector<int> const &polygonSizes, xn::Colour clr, uint32_t flags)
+{
+  RENDERER(PolygonRenderer)->Draw(vertices, polygonSizes, clr, flags);
+}
+
+void OpenGLRenderer::SetViewMatrix(xn::mat33 const &mat)
 {
   for (int i = 0; i < Renderers_COUNT; i++)
-    m_pRenderers[i]->SetMatrix_World_View(mat);
+    m_pRenderers[i]->SetViewMatrix(mat);
 }
 
-IRenderer *CreateRenderer()
+Renderer *CreateRenderer()
 {
   return new OpenGLRenderer(10, 10);
 }
