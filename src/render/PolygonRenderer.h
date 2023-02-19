@@ -9,7 +9,7 @@ class IPolygonRenderer : public ObjectRenderer
 public:
 
   virtual ~IPolygonRenderer() {}
-  virtual void Draw(std::vector<xn::seg> const &, xn::Colour, uint32_t flags) = 0;
+  virtual void Draw(std::vector<xn::vec2> const &vertices, std::vector<int> const &polygonSizes, xn::Colour, uint32_t flags) = 0;
 };
 
 IPolygonRenderer *CreatePolygonRenderer();

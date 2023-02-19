@@ -10,7 +10,7 @@
 
 #include "App.h"
 #include "Logger.h"
-#include "IRenderer.h"
+#include "Renderer.h"
 #include "DefaultData.h"
 #include "ImGuiUIContext.h"
 #include "MessageBus.h"
@@ -42,7 +42,6 @@ App::App()
   , m_pMsgBus(nullptr)
   , m_pCanvas(nullptr)
   , m_pRenderer(nullptr)
-  , m_pScene(nullptr)
   , m_activeModuleID(INVALID_ID)
   , m_cameraView()
   , m_modalStack()
@@ -90,7 +89,6 @@ App::App()
   m_pRenderer = CreateRenderer();
   m_pCanvas = new Canvas("Output", m_pMsgBus);
   m_pCanvas->SetSize(xn::vec2(DefaultData::data.windowWidth, DefaultData::data.windowHeight));
-  m_pScene = new Scene();
 
   NewProject();
   LoadPlugins();
@@ -125,7 +123,6 @@ App::~App()
   delete m_pCanvas;
   delete m_pUIContext;
   delete m_pProject;
-  delete m_pScene;
   delete m_pMsgBus;
   delete m_pProjectController;
   g_pMsgBus = nullptr;
@@ -135,7 +132,6 @@ App::~App()
     if (kv.second.pInstance != nullptr)
       kv.second.pPlugin->DestroyModule(&kv.second.pInstance);
     delete kv.second.pPlugin;
-    delete kv.second.pScene;
   }
 
   glfwDestroyWindow(m_pWindow);
@@ -271,14 +267,10 @@ void App::HandleModules()
     if (m_geometryDirty)
       kv.second.pInstance->SetGeometry(m_scenePolygonLoops);
 
-    kv.second.pInstance->DoFrame(m_pUIContext, kv.second.pScene);
+    kv.second.pInstance->DoFrame(m_pUIContext);
 
     if (!kv.second.pInstance->IsOpen())
-    {
       kv.second.pPlugin->DestroyModule(&kv.second.pInstance);
-      delete kv.second.pScene;
-      kv.second.pScene = nullptr;
-    }
   }
   m_geometryDirty = false;
 }
@@ -313,7 +305,6 @@ void App::OpenModule(uint32_t id, ModuleData *pData)
     data.name = pData->pPlugin->GetModuleName();
 
     pData->pInstance = pData->pPlugin->CreateModule(&data);
-    pData->pScene = new Scene();
     pData->pInstance->SetGeometry(m_scenePolygonLoops);
   }
 }
@@ -365,25 +356,25 @@ void App::Render()
 
   xn::mat33 T_View_World = m_cameraView.GetMatrix_View_World();
   xn::mat33 T_Screen_View = m_pCanvas->GetMatrix_Screen_View();
+  xn::mat33 T_View_Screen = T_Screen_View.GetInverse();
   xn::mat33 T_World_View = T_View_World.GetInverse();
   xn::mat33 T_World_Screen = xn::mat33(T_Screen_View * T_View_World).GetInverse();
 
-  m_pRenderer->SetMatrix_World_View(T_World_View);
-  m_pProjectController->SetMatrix_World_Screen(T_World_Screen);
-  m_pProjectController->UpdateScene(m_pScene);
+  m_pRenderer->SetViewMatrix(T_World_View);
+  m_pProjectController->SetMatrices(T_World_View, T_View_Screen);
+  m_pProjectController->DrawBackSprites(m_pRenderer);
 
-  m_pScene->Draw(m_pRenderer);
-  m_pScene->Clear();
-
-  // TODO sort module scenes to draw correctly.
+  // TODO sort module to draw correctly.
+  m_pRenderer->SetViewMatrix(T_World_View);
   for (auto &kv : m_registeredModules)
   {
     if (kv.second.pInstance == nullptr)
       continue;
 
-    kv.second.pScene->Draw(m_pRenderer);
-    kv.second.pScene->Clear();
+    kv.second.pInstance->Render(m_pRenderer);
   }
+
+  m_pProjectController->DrawFrontSprites(m_pRenderer);
 
   m_pRenderer->EndDraw();
   m_pCanvas->BlitImage((void*)m_pRenderer->GetTexture(), w, h);
@@ -441,7 +432,7 @@ void App::HandleMessage(Message_MouseButtonUp *pMsg)
 
   if (pFocus)
   {
-    pFocus->MouseUp(pMsg->button);
+    pFocus->MouseUp(pMsg->modState);
   }
   else
   {
@@ -462,7 +453,7 @@ void App::HandleMessage(Message_MouseButtonDown *pMsg)
 
   if (pFocus)
   {
-    pFocus->MouseDown(pMsg->button, ScreenToWorld(pMsg->position));
+    pFocus->MouseDown(pMsg->modState, ScreenToWorld(pMsg->position));
   }
   else
   {
@@ -485,7 +476,7 @@ void App::HandleMessage(Message_MouseMove *pMsg)
 
   if (pFocus)
   {
-    pFocus->MouseMove(ScreenToWorld(pMsg->position));
+    pFocus->MouseMove(pMsg->modState, ScreenToWorld(pMsg->position));
   }
   else
   {
@@ -496,7 +487,7 @@ void App::HandleMessage(Message_MouseMove *pMsg)
     }
     else
     {
-      m_pProjectController->MouseMove(pMsg->position);
+      m_pProjectController->MouseMove(pMsg->modState, pMsg->position);
     }
   }
 }

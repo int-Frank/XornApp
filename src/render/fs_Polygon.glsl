@@ -1,13 +1,18 @@
 R"(
 #version 430
 
-layout(std430, binding = 0) buffer myLayout
+layout(std430, binding = 0) buffer vertLayout
 {
-    vec4 edges[];
+    vec2 vertices[];
+};
+
+layout(std430, binding = 1) buffer polygonLayout
+{
+    int polygonSizes[];
 };
 
 uniform vec4 u_colour;
-uniform int u_edgeCount;
+uniform int u_polygonCount;
 uniform vec2 u_resolution;
 
 out vec4 colour;
@@ -21,10 +26,8 @@ float Dot(in vec2 a, in vec2 b)
   return (a.x * b.x) + (a.y * b.y);
 }
 
-vec2 ClosestPointToSegment(in vec2 point, in vec4 segment)
+vec2 ClosestPointToSegment(in vec2 point, in vec2 p0, in vec2 p1)
 {
-  vec2 p0 = vec2(segment.x, segment.y);
-  vec2 p1 = vec2(segment.z, segment.w);
   vec2 v = p1 - p0;
   float u = 0.0;
 
@@ -50,16 +53,29 @@ vec2 ClosestPointToPolygon(in vec2 point)
 {
   float minDist = 3.402823466e+38;
   vec2 closestPoint = vec2(0.0, 0.0);
-  for (int i = 0; i < u_edgeCount; i++)
+
+  for (int p = 0; p < u_polygonCount; p++)
   {
-    vec2 cp = ClosestPointToSegment(point, edges[i]);
-    vec2 v = cp - point;
-    float dist = Dot(v, v);
-    if (dist < minDist)
+    int size = polygonSizes[p];
+    int currentVertex = 0;
+    for (int i = 0; i < size; i++)
     {
-      minDist = dist;
-      closestPoint = cp;
+      int j = currentVertex + i;
+      int k = currentVertex + ((i + 1) % size);
+
+      vec2 p0 = vertices[j];
+      vec2 p1 = vertices[k];
+
+      vec2 cp = ClosestPointToSegment(point, p0, p1);
+      vec2 v = cp - point;
+      float dist = Dot(v, v);
+      if (dist < minDist)
+      {
+        minDist = dist;
+        closestPoint = cp;
+      }
     }
+    currentVertex = currentVertex + size;
   }
   return closestPoint;
 }
@@ -70,7 +86,7 @@ vec2 ClosestPointToPolygon(in vec2 point)
 //   2: on boundary
 // Adapted from "Optimal Reliable Point-in-Polygon Test and Differential Coding Boolean Operations on Polygons"
 // Authors: Jianqiang Hao, Jianzhi Sun, Yi Chen, Qiang Cai and Li Tan 
-int PointInsidePolygon(in vec2 point)
+int PointInsidePolygon(in vec2 point, in int start, in int size)
 {
   int k = 0;
   float f = 0.0;
@@ -81,10 +97,13 @@ int PointInsidePolygon(in vec2 point)
   
   int code = outside;
   
-  for (int i = 0; i < u_edgeCount; i++)
+  for (int i = 0; i < size; i++)
   {
-    vec2 p0 = vec2(edges[i].x, edges[i].y);
-    vec2 p1 = vec2(edges[i].z, edges[i].w);
+    int j = start + i;
+    int k = start + ((i + 1) % size);
+
+    vec2 p0 = vertices[j];
+    vec2 p1 = vertices[k];
 
     float xi = p0.x;
     float yi = p0.y;
@@ -165,11 +184,39 @@ int PointInsidePolygon(in vec2 point)
   return code;
 }
 
+bool PointInsidePolygon(in vec2 point)
+{
+  int currentSize = polygonSizes[0];
+  if (PointInsidePolygon(point, 0, currentSize) == outside)
+  {
+    return false;
+  }
+
+  if (PointInsidePolygon(point, 0, currentSize) == onBoundary)
+  {
+    return true;
+  }
+
+  int currentVertex = currentSize;
+  for (int i = 1; i < u_polygonCount; i++)
+  {
+    currentSize = polygonSizes[i];
+
+    if (PointInsidePolygon(point, currentVertex, currentSize) == inside)
+    {
+      return false;
+    }
+
+    currentVertex = currentVertex + currentSize;
+  }
+  return true;
+}
+
 void main(void)
 {
   vec2 point = (gl_FragCoord.xy / u_resolution) * 2.0 - 1.0;
 
-  if (PointInsidePolygon(point) == outside)
+  if (!PointInsidePolygon(point))
   {
     vec2 cp = ClosestPointToPolygon(point);
     cp = (cp + 1.0) / 2.0 * u_resolution;

@@ -18,7 +18,7 @@
 struct GLFWwindow;
 class Logger;
 class MessageBus;
-class IRenderer;
+class Renderer;
 
 namespace xn
 {
@@ -32,7 +32,6 @@ class App
   {
     Plugin *pPlugin;
     xn::Module *pInstance;
-    Scene *pScene;
     bool hasFocus;
   };
 
@@ -83,8 +82,7 @@ private:
   xn::UIContext *m_pUIContext;
   MessageBus *m_pMsgBus;
   Canvas *m_pCanvas;
-  IRenderer *m_pRenderer;
-  Scene *m_pScene;
+  Renderer *m_pRenderer;
   Project *m_pProject;
   IProjectController *m_pProjectController;
 

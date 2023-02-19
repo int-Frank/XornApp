@@ -11,7 +11,7 @@ enum HoverState
 {
   HS_None = 0,
   HS_Hover = 1,
-  HS_Acitve = 2,
+  HS_Active = 2,
   HS_COUNT
 };
 

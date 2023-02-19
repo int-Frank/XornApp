@@ -1,14 +1,16 @@
 #ifndef INPUT_H
 #define INPUT_H
 
-#define MOUSE_BUTTON_MOVE ::xn::MouseInput::RightButton
-#define MOUSE_BUTTON_SELECT ::xn::MouseInput::LeftButton
+#define MOUSE_BUTTON_MOVE ::MouseInput::RightButton
+#define MOUSE_BUTTON_SELECT ::MouseInput::LeftButton
+#define MOUSE_BUTTON_MODULE ::MouseInput::MiddleButton
 
-enum ModKey_
+enum class MouseInput
 {
-  MK_shift  = 1 << 0,
-  MK_ctrl   = 1 << 1,
-  MK_alt    = 1 << 2
+  LeftButton,
+  RightButton,
+  MiddleButton,
+  COUNT
 };
 
 #endif

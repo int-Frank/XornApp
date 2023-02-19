@@ -28,6 +28,8 @@ public:
 
 struct ProjectControllerStateData
 {
+  xn::mat33 T_World_View;
+  xn::mat33 T_View_Screen;
   xn::mat33 T_World_Screen;
   SceneState sceneState;
   IActionList *pActions;

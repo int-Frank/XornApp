@@ -2,15 +2,14 @@
 #define IROTATEWIDGET_H
 
 #include "xnGeometry.h"
-
-class IRenderer;
+#include "Renderer.h"
 
 class IRotateWidget
 {
 public:
 
   virtual ~IRotateWidget() {}
-  virtual void Draw(IRenderer *) = 0;
+  virtual void Draw(Renderer *) = 0;
 
   virtual void Move(xn::vec2 const &position) = 0;
   virtual float SetMouse(xn::vec2 const &) = 0; // returns angle

@@ -3,7 +3,7 @@
 
 #include "Common.h"
 #include "IRotateWidget.h"
-#include "IRenderer.h"
+#include "Renderer.h"
 #include "xnColour.h"
 
 class RotateWidget : public IRotateWidget
@@ -20,7 +20,7 @@ public:
 
   RotateWidget(xn::vec2 const &anchor);
 
-  void Draw(IRenderer *) override;
+  void Draw(Renderer *) override;
   void Move(xn::vec2 const &position) override;
   float SetMouse(xn::vec2 const &) override;
   bool MouseDown(xn::vec2 const &) override;
@@ -66,7 +66,7 @@ void RotateWidget::Move(xn::vec2 const &position)
   m_buttonPosition += v;
 }
 
-void RotateWidget::Draw(IRenderer *pRenderer)
+void RotateWidget::Draw(Renderer *pRenderer)
 {
   pRenderer->DrawLine(xn::seg(m_anchor, m_buttonPosition),
     s_state.lineThickness,
@@ -83,7 +83,7 @@ void RotateWidget::Draw(IRenderer *pRenderer)
 
 float RotateWidget::SetMouse(xn::vec2 const &mouse)
 {
-  if (m_state == HS_Acitve)
+  if (m_state == HS_Active)
     m_buttonPosition = mouse;
   else if (MouseHover(mouse))
     m_state = HS_Hover;
@@ -97,7 +97,7 @@ bool RotateWidget::MouseDown(xn::vec2 const &mouse)
   if (!MouseHover(mouse))
     return false;
 
-  m_state = HS_Acitve;
+  m_state = HS_Active;
   return true;
 }
 

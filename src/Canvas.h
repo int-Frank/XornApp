@@ -4,7 +4,6 @@
 #include <string>
 
 #include "xnGeometry.h"
-#include "xnIScene.h"
 
 class MessageBus;
 class Message;

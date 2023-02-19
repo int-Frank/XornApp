@@ -15,7 +15,7 @@ ProjectControllerStateMoveSelected::ProjectControllerStateMoveSelected(ProjectCo
   }
 }
 
-ProjectControllerState *ProjectControllerStateMoveSelected::MouseMove(xn::vec2 const &mouse)
+ProjectControllerState *ProjectControllerStateMoveSelected::MouseMove(uint32_t modState, xn::vec2 const &mouse)
 {
   // TODO Add action!
 
@@ -25,23 +25,4 @@ ProjectControllerState *ProjectControllerStateMoveSelected::MouseMove(xn::vec2 c
 ProjectControllerState *ProjectControllerStateMoveSelected::MouseUp(uint32_t modState, xn::vec2 const &)
 {
   return new ProjectControllerStateIdle(m_pStateData);
-}
-
-void ProjectControllerStateMoveSelected::UpdateScene(xn::IScene *pScene)
-{
-  /*for (auto it = m_pStateData->pProject->loops.Begin(); it != m_pStateData->pProject->loops.End(); it++)
-  {
-    if (m_pStateData->sceneState.selectedPolygons.exists(it->first))
-    {
-      pScene->AddPolygon(it->second.GetTransformed(),
-        DefaultData::data.renderData.polygonAspect[HS_Acitve].thickness,
-        DefaultData::data.renderData.polygonAspect[HS_Acitve].colour, 0, 0);
-    }
-    else
-    {
-      pScene->AddPolygon(it->second.GetTransformed(),
-        DefaultData::data.renderData.polygonAspect[HS_None].thickness,
-        DefaultData::data.renderData.polygonAspect[HS_None].colour, 0, 0);
-    }
-  }*/
 }

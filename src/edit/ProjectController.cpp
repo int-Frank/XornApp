@@ -5,6 +5,7 @@
 #include "ActionList.h"
 #include "IRotateWidget.h"
 #include "DefaultData.h"
+#include "Renderer.h"
 
 class ProjectController : public IProjectController
 {
@@ -13,13 +14,14 @@ public:
   ~ProjectController();
   ProjectController(Project *);
 
-  void SetMatrix_World_Screen(xn::mat33 const &) override;
+  void SetMatrices(xn::mat33 const &T_World_View, xn::mat33 const &T_View_Screen) override;
 
-  void MouseMove(xn::vec2 const &) override;
+  void MouseMove(uint32_t modState, xn::vec2 const &) override;
   void MouseDown(uint32_t modState, xn::vec2 const &) override;
   void MouseUp(uint32_t modState, xn::vec2 const &) override;
 
-  void UpdateScene(xn::IScene *) override;
+  void DrawBackSprites(Renderer *) override;
+  void DrawFrontSprites(Renderer *) override;
 
   void Undo() override;
   void Redo() override;
@@ -42,6 +44,8 @@ ProjectController::ProjectController(Project *pProject)
   , m_pStateData(nullptr)
 {
   m_pStateData = new ProjectControllerStateData{};
+  m_pStateData->T_World_View.Identity();
+  m_pStateData->T_View_Screen.Identity();
   m_pStateData->T_World_Screen.Identity();
   m_pStateData->pProject = pProject;
   m_pStateData->pActions = CreateActionList();
@@ -56,21 +60,23 @@ ProjectController::~ProjectController()
   delete m_pState;
 }
 
-void ProjectController::SetMatrix_World_Screen(xn::mat33 const &m)
+void ProjectController::SetMatrices(xn::mat33 const &T_World_View, xn::mat33 const &T_View_Screen)
 {
-  m_pStateData->T_World_Screen = m;
+  m_pStateData->T_World_View = T_World_View;
+  m_pStateData->T_View_Screen = T_View_Screen;
+  m_pStateData->T_World_Screen = T_World_View * T_View_Screen;
 }
 
-#define UPDATE_STATE(f) auto pState = m_pState->f;\
+#define UPDATE_STATE(fn) auto pState = m_pState->fn;\
 if (pState != nullptr)\
 {\
   delete m_pState;\
   m_pState = pState;\
 }
 
-void ProjectController::MouseMove(xn::vec2 const &p)
+void ProjectController::MouseMove(uint32_t modState, xn::vec2 const &p)
 {
-  UPDATE_STATE(MouseMove(p));
+  UPDATE_STATE(MouseMove(modState, p));
 }
 
 void ProjectController::MouseDown(uint32_t modState, xn::vec2 const &p)
@@ -83,17 +89,16 @@ void ProjectController::MouseUp(uint32_t modState, xn::vec2 const &p)
   UPDATE_STATE(MouseUp(modState, p));
 }
 
-void ProjectController::UpdateScene(xn::IScene *pScene)
+void  ProjectController::DrawFrontSprites(Renderer *pRenderer)
 {
   for (auto it = m_pStateData->pProject->loops.Begin(); it != m_pStateData->pProject->loops.End(); it++)
   {
-    auto polygon = it->second.GetTransformed();
-
     if (m_pStateData->sceneState.selectedPolygons.exists(it->first))
     {
-      pScene->AddPolygon(polygon,
-        DefaultData::data.renderData.polygonAspect[HS_Acitve].thickness,
-        DefaultData::data.renderData.polygonAspect[HS_Acitve].colour, 0, 0);
+      auto polygon = it->second.GetTransformed();
+      pRenderer->DrawPolygon(polygon,
+        DefaultData::data.renderData.polygonAspect[HS_Active].thickness,
+        DefaultData::data.renderData.polygonAspect[HS_Active].colour, 0);
 
       std::vector<xn::vec2> vertices;
       std::vector<xn::vec2> midVertices;
@@ -105,35 +110,38 @@ void ProjectController::UpdateScene(xn::IScene *pScene)
         vertices.push_back(seg.GetP0());
       }
 
-      pScene->AddFilledCircleGroup(vertices,
+      pRenderer->DrawFilledCircleGroup(vertices,
         DefaultData::data.renderData.vertexAspect.radius,
-        DefaultData::data.renderData.vertexAspect.colour, 0, 0);
+        DefaultData::data.renderData.vertexAspect.colour, 0);
 
-      pScene->AddFilledCircleGroup(midVertices,
+      pRenderer->DrawFilledCircleGroup(midVertices,
         DefaultData::data.renderData.splitVertexAspect.radius,
-        DefaultData::data.renderData.splitVertexAspect.colour, 0, 0);
-    }
-    else if (it->first == m_pStateData->sceneState.hoverPolygon)
-    {
-      pScene->AddPolygon(polygon,
-        DefaultData::data.renderData.polygonAspect[HS_Hover].thickness,
-        DefaultData::data.renderData.polygonAspect[HS_Hover].colour, 0, 0);
-    }
-    else
-    {
-      pScene->AddPolygon(polygon,
-        DefaultData::data.renderData.polygonAspect[HS_None].thickness,
-        DefaultData::data.renderData.polygonAspect[HS_None].colour, 0, 0);
+        DefaultData::data.renderData.splitVertexAspect.colour, 0);
     }
   }
+
+  //m_pState->UpdateScene(pScene);
 
   SetRotateWidget();
   if (m_pStateData->sceneState.pRotate != nullptr)
   {
 
   }
+}
 
-  m_pState->UpdateScene(pScene);
+void ProjectController::DrawBackSprites(Renderer *pRenderer)
+{
+  for (auto it = m_pStateData->pProject->loops.Begin(); it != m_pStateData->pProject->loops.End(); it++)
+  {
+    if (m_pStateData->sceneState.selectedPolygons.exists(it->first))
+      continue;
+
+    auto polygon = it->second.GetTransformed();
+    auto state = it->first == m_pStateData->sceneState.hoverPolygon ? HS_Hover : HS_None;
+    pRenderer->DrawPolygon(polygon,
+      DefaultData::data.renderData.polygonAspect[state].thickness,
+      DefaultData::data.renderData.polygonAspect[state].colour, 0);
+  }
 }
 
 void ProjectController::SetRotateWidget()

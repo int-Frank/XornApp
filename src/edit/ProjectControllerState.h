@@ -1,12 +1,13 @@
 #ifndef PROJECTCONTROLLERSTATE_H
 #define PROJECTCONTROLLERSTATE_H
 
-#include "xnIScene.h"
 #include "xnCommon.h"
 
 #include "ProjectControllerStateData.h"
 #include "Input.h"
 #include "ActionList.h"
+
+class Renderer;
 
 class ProjectControllerState
 {
@@ -18,11 +19,11 @@ public:
 
   }
 
-  virtual ProjectControllerState *MouseMove(xn::vec2 const &) { return nullptr; }
+  virtual ProjectControllerState *MouseMove(uint32_t modState, xn::vec2 const &) { return nullptr; }
   virtual ProjectControllerState *MouseDown(uint32_t modState, xn::vec2 const &) { return nullptr; }
   virtual ProjectControllerState *MouseUp(uint32_t modState, xn::vec2 const &) { return nullptr; }
   
-  virtual void UpdateScene(xn::IScene *) = 0;
+  virtual void Render(Renderer *) {}
 
   virtual void Undo() {};
   virtual void Redo() {};
@@ -37,11 +38,12 @@ public:
 
   ProjectControllerStateIdle(ProjectControllerStateData *);
 
-  ProjectControllerState *MouseMove(xn::vec2 const &) override;
+  ProjectControllerState *MouseMove(uint32_t modState, xn::vec2 const &) override;
   ProjectControllerState *MouseDown(uint32_t modState, xn::vec2 const &) override;
-  void UpdateScene(xn::IScene *) override;
+  
   void Undo() override;
   void Redo() override;
+
 private:
 
   PolygonID PolygonUnderMouse(xn::vec2 const &) const;
@@ -55,9 +57,9 @@ public:
 
   ProjectControllerStateMultiSelect(ProjectControllerStateData *, xn::vec2 const &mouseAnchor);
 
-  ProjectControllerState *MouseMove(xn::vec2 const &) override;
+  ProjectControllerState *MouseMove(uint32_t modState, xn::vec2 const &) override;
   ProjectControllerState *MouseUp(uint32_t modState, xn::vec2 const &) override;
-  void UpdateScene(xn::IScene *) override {}
+  void Render(Renderer *) override {}
 
 private:
 
@@ -70,9 +72,8 @@ public:
 
   ProjectControllerStateMoveSelected(ProjectControllerStateData *, xn::vec2 const &mouseAnchor);
 
-  ProjectControllerState *MouseMove(xn::vec2 const &) override;
+  ProjectControllerState *MouseMove(uint32_t modState, xn::vec2 const &) override;
   ProjectControllerState *MouseUp(uint32_t modState, xn::vec2 const &) override;
-  void UpdateScene(xn::IScene *) override;
 
 private:
 
@@ -86,9 +87,8 @@ public:
 
   ProjectControllerStateMoveVertex(ProjectControllerStateData *, xn::vec2 const & offset, PolygonID, uint32_t index);
 
-  ProjectControllerState *MouseMove(xn::vec2 const &) override;
+  ProjectControllerState *MouseMove(uint32_t modState, xn::vec2 const &) override;
   ProjectControllerState *MouseUp(uint32_t modState, xn::vec2 const &) override;
-  void UpdateScene(xn::IScene *) override {};
  
 private:
 
@@ -105,9 +105,8 @@ class ProjectControllerStateRotateSelected : public ProjectControllerState
 public:
 
   ProjectControllerStateRotateSelected(ProjectControllerStateData *);
-  ProjectControllerState *MouseMove(xn::vec2 const &) override;
+  ProjectControllerState *MouseMove(uint32_t modState, xn::vec2 const &) override;
   ProjectControllerState *MouseUp(uint32_t modState, xn::vec2 const &) override;
-  void UpdateScene(xn::IScene *) override {}
 
 };
 

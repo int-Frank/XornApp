@@ -40,7 +40,7 @@ public:
 
   }
 
-  void HandleMouseUp(xn::MouseInput button, vec2 const &mousePos)
+  void HandleMouseUp(MouseInput button, vec2 const &mousePos)
   {
     Message_MouseButtonUp *pMsg = pMsgBus->NewMessage<Message_MouseButtonUp>();
     pMsg->button = button;
@@ -50,7 +50,7 @@ public:
     mouseButtonDown[(int)button] = false;
   }
 
-  void HandleMouseDown(xn::MouseInput button, vec2 const &mousePos)
+  void HandleMouseDown(MouseInput button, vec2 const &mousePos)
   {
     Message_MouseButtonDown *pMsg = pMsgBus->NewMessage<Message_MouseButtonDown>();
     pMsg->button = button;
@@ -71,6 +71,7 @@ public:
     vec2 newViewMousePos = newImageMousePos;
     Message_MouseMove *pMsg = pMsgBus->NewMessage<Message_MouseMove>();
     pMsg->position = newViewMousePos;
+    pMsg->modState = GetModState();
     pMsgBus->Post(pMsg);
     oldImageMousePos = newImageMousePos;
   }
@@ -94,7 +95,7 @@ public:
   xn::vec2 renderSize;
   xn::vec2 position;
   float scroll;
-  bool mouseButtonDown[(int)xn::MouseInput::COUNT];
+  bool mouseButtonDown[(int)MouseInput::COUNT];
   vec2 oldImageMousePos;
 };
 
@@ -142,14 +143,14 @@ void Canvas::BeginFrame()
   vec2 mousePos(io.MousePos.x, io.MousePos.y);
 
   // Handle mouse button up...
-  if (!ImGui::IsMouseDown(ImGuiMouseButton_Left) && m_pimpl->mouseButtonDown[(int)xn::MouseInput::LeftButton])
-    m_pimpl->HandleMouseUp(xn::MouseInput::LeftButton, mousePos);
+  if (!ImGui::IsMouseDown(ImGuiMouseButton_Left) && m_pimpl->mouseButtonDown[(int)MouseInput::LeftButton])
+    m_pimpl->HandleMouseUp(MouseInput::LeftButton, mousePos);
 
-  if (!ImGui::IsMouseDown(ImGuiMouseButton_Right) && m_pimpl->mouseButtonDown[(int)xn::MouseInput::RightButton])
-    m_pimpl->HandleMouseUp(xn::MouseInput::RightButton, mousePos);
+  if (!ImGui::IsMouseDown(ImGuiMouseButton_Right) && m_pimpl->mouseButtonDown[(int)MouseInput::RightButton])
+    m_pimpl->HandleMouseUp(MouseInput::RightButton, mousePos);
 
-  if (!ImGui::IsMouseDown(ImGuiMouseButton_Middle) && m_pimpl->mouseButtonDown[(int)xn::MouseInput::MiddleButton])
-    m_pimpl->HandleMouseUp(xn::MouseInput::MiddleButton, mousePos);
+  if (!ImGui::IsMouseDown(ImGuiMouseButton_Middle) && m_pimpl->mouseButtonDown[(int)MouseInput::MiddleButton])
+    m_pimpl->HandleMouseUp(MouseInput::MiddleButton, mousePos);
 
   // Handle mouse move
   m_pimpl->HandleMouseMove(mousePos);
@@ -157,14 +158,14 @@ void Canvas::BeginFrame()
   // Handle mouse button down...
   if (is_hovered)
   {
-    if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && !m_pimpl->mouseButtonDown[(int)xn::MouseInput::LeftButton])
-      m_pimpl->HandleMouseDown(xn::MouseInput::LeftButton, mousePos);
+    if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && !m_pimpl->mouseButtonDown[(int)MouseInput::LeftButton])
+      m_pimpl->HandleMouseDown(MouseInput::LeftButton, mousePos);
 
-    if (ImGui::IsMouseDown(ImGuiMouseButton_Right) && !m_pimpl->mouseButtonDown[(int)xn::MouseInput::RightButton])
-      m_pimpl->HandleMouseDown(xn::MouseInput::RightButton, mousePos);
+    if (ImGui::IsMouseDown(ImGuiMouseButton_Right) && !m_pimpl->mouseButtonDown[(int)MouseInput::RightButton])
+      m_pimpl->HandleMouseDown(MouseInput::RightButton, mousePos);
 
-    if (ImGui::IsMouseDown(ImGuiMouseButton_Middle) && !m_pimpl->mouseButtonDown[(int)xn::MouseInput::MiddleButton])
-      m_pimpl->HandleMouseDown(xn::MouseInput::MiddleButton, mousePos);
+    if (ImGui::IsMouseDown(ImGuiMouseButton_Middle) && !m_pimpl->mouseButtonDown[(int)MouseInput::MiddleButton])
+      m_pimpl->HandleMouseDown(MouseInput::MiddleButton, mousePos);
   }
 
   // Zoom

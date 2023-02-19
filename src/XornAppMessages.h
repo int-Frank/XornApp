@@ -4,6 +4,7 @@
 #include "DgVector.h"
 #include "Message.h"
 #include "xnCommon.h"
+#include "Input.h"
 
 enum class MessageType
 {
@@ -19,17 +20,18 @@ enum class MessageType
 
 MESSAGE_HEADER(MouseButtonDown)
   uint32_t modState;
-  xn::MouseInput button;
+  MouseInput button;
   Dg::Vector2<float> position;
 };
 
 MESSAGE_HEADER(MouseButtonUp)
   uint32_t modState;
-  xn::MouseInput button;
+  MouseInput button;
   Dg::Vector2<float> position;
 };
 
 MESSAGE_HEADER(MouseMove)
+  uint32_t modState;
   Dg::Vector2<float> position;
 };
 

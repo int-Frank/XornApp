@@ -17,7 +17,7 @@ ProjectControllerStateIdle::ProjectControllerStateIdle(ProjectControllerStateDat
 
 }
 
-ProjectControllerState *ProjectControllerStateIdle::MouseMove(xn::vec2 const &mouse)
+ProjectControllerState *ProjectControllerStateIdle::MouseMove(uint32_t modState, xn::vec2 const &mouse)
 {
   m_pStateData->sceneState.hoverPolygon = PolygonUnderMouse(mouse);
   return nullptr;
@@ -40,7 +40,7 @@ ProjectControllerState *ProjectControllerStateIdle::MouseDown(uint32_t modState,
   if (m_pStateData->sceneState.hoverPolygon != INVALID_POLYGON_ID)
   {
     bool selectedExists = m_pStateData->sceneState.selectedPolygons.exists(m_pStateData->sceneState.hoverPolygon);
-    if ((modState & MK_shift) != 0)
+    if ((modState & xn::MK_shift) != 0)
     {
       if (selectedExists)
         m_pStateData->sceneState.selectedPolygons.erase(m_pStateData->sceneState.hoverPolygon);
@@ -55,11 +55,6 @@ ProjectControllerState *ProjectControllerStateIdle::MouseDown(uint32_t modState,
   }
 
   return new ProjectControllerStateMultiSelect(m_pStateData, mouse);
-}
-
-void ProjectControllerStateIdle::UpdateScene(xn::IScene *pScene)
-{
-
 }
 
 PolygonID ProjectControllerStateIdle::PolygonUnderMouse(xn::vec2 const &mouse) const
@@ -180,7 +175,7 @@ ProjectControllerStateMultiSelect::ProjectControllerStateMultiSelect(ProjectCont
 
 }
 
-ProjectControllerState *ProjectControllerStateMultiSelect::MouseMove(xn::vec2 const &)
+ProjectControllerState *ProjectControllerStateMultiSelect::MouseMove(uint32_t modState, xn::vec2 const &)
 {
   return nullptr;
 }
@@ -200,7 +195,7 @@ ProjectControllerStateRotateSelected::ProjectControllerStateRotateSelected(Proje
 
 }
 
-ProjectControllerState *ProjectControllerStateRotateSelected::MouseMove(xn::vec2 const &)
+ProjectControllerState *ProjectControllerStateRotateSelected::MouseMove(uint32_t modState, xn::vec2 const &)
 {
   return nullptr;
 }

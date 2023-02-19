@@ -26,7 +26,7 @@ ProjectControllerStateMoveVertex::ProjectControllerStateMoveVertex(ProjectContro
   m_offset = mousePosition - screenPoint;
 }
 
-ProjectControllerState *ProjectControllerStateMoveVertex::MouseMove(xn::vec2 const &mouse)
+ProjectControllerState *ProjectControllerStateMoveVertex::MouseMove(uint32_t modState, xn::vec2 const &mouse)
 {
   if (!m_first)
   {

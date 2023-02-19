@@ -4,12 +4,9 @@
 #include "xnCommon.h"
 #include "xnGeometry.h"
 #include "Project.h"
-#include "edit/Input.h"
+#include "Input.h"
 
-namespace xn
-{
-  class IScene;
-}
+class Renderer;
 
 class IProjectController
 {
@@ -17,13 +14,14 @@ public:
 
   virtual ~IProjectController() {}
 
-  virtual void SetMatrix_World_Screen(xn::mat33 const &) = 0;
+  virtual void SetMatrices(xn::mat33 const &T_World_View, xn::mat33 const &T_View_Screen) = 0;
 
-  virtual void MouseMove(xn::vec2 const &) = 0;
+  virtual void MouseMove(uint32_t modState, xn::vec2 const &) = 0;
   virtual void MouseDown(uint32_t modState, xn::vec2 const &) = 0;
   virtual void MouseUp(uint32_t modState, xn::vec2 const &) = 0;
-  
-  virtual void UpdateScene(xn::IScene *) = 0;
+
+  virtual void DrawBackSprites(Renderer *) = 0;
+  virtual void DrawFrontSprites(Renderer *) = 0;
 
   virtual void Undo() = 0;
   virtual void Redo() = 0;
