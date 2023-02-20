@@ -360,7 +360,6 @@ void App::Render()
   xn::mat33 T_World_View = T_View_World.GetInverse();
   xn::mat33 T_World_Screen = xn::mat33(T_Screen_View * T_View_World).GetInverse();
 
-  m_pRenderer->SetViewMatrix(T_World_View);
   m_pProjectController->SetMatrices(T_World_View, T_View_Screen);
   m_pProjectController->DrawBackSprites(m_pRenderer);
 

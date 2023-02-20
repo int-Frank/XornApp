@@ -91,6 +91,7 @@ void ProjectController::MouseUp(uint32_t modState, xn::vec2 const &p)
 
 void  ProjectController::DrawFrontSprites(Renderer *pRenderer)
 {
+  pRenderer->SetViewMatrix(m_pStateData->T_World_View);
   for (auto it = m_pStateData->pProject->loops.Begin(); it != m_pStateData->pProject->loops.End(); it++)
   {
     if (m_pStateData->sceneState.selectedPolygons.exists(it->first))
@@ -125,12 +126,14 @@ void  ProjectController::DrawFrontSprites(Renderer *pRenderer)
   SetRotateWidget();
   if (m_pStateData->sceneState.pRotate != nullptr)
   {
-
+    pRenderer->SetViewMatrix(m_pStateData->T_View_Screen.GetInverse());
+    m_pStateData->sceneState.pRotate->Draw(pRenderer);
   }
 }
 
 void ProjectController::DrawBackSprites(Renderer *pRenderer)
 {
+  pRenderer->SetViewMatrix(m_pStateData->T_World_View);
   for (auto it = m_pStateData->pProject->loops.Begin(); it != m_pStateData->pProject->loops.End(); it++)
   {
     if (m_pStateData->sceneState.selectedPolygons.exists(it->first))
