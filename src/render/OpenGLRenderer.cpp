@@ -12,6 +12,7 @@
 #include "DefaultData.h"
 #include "MyException.h"
 #include "LineRenderer.h"
+#include "CircleRenderer.h"
 #include "FilledCircleRenderer.h"
 #include "PolygonRenderer.h"
 
@@ -47,7 +48,8 @@ public:
   void BeginDraw() override;
   void DrawLine(xn::seg const &, float thickness, xn::Colour clr, uint32_t flags) override;
   void DrawLineGroup(std::vector<xn::seg> const &, float thickness, xn::Colour clr, uint32_t flags) override;
-  void DrawCircle(xn::vec2 const &centre, float size, float thickness, xn::Colour clr, uint32_t flags) override {}
+  void DrawCircle(xn::vec2 const &centre, float size, float thickness, xn::Colour clr, uint32_t flags) override;
+  void DrawCircleGroup(std::vector<xn::vec2> const &centres, float size, float thickness, xn::Colour clr, uint32_t flags) override;
   void DrawFilledCircle(xn::vec2 const &centre, float size, xn::Colour clr, uint32_t flags) override;
   void DrawFilledCircleGroup(std::vector<xn::vec2> const &centres, float size, xn::Colour clr, uint32_t flags) override;
   void DrawPolygon(xn::DgPolygon const &, float thickness, xn::Colour clr, uint32_t flags) override;
@@ -70,6 +72,7 @@ private:
   enum Renderers
   {
     LineRenderer = 0,
+    CircleRenderer,
     FilledCircleRenderer,
     PolygonRenderer,
     Renderers_COUNT
@@ -95,6 +98,7 @@ OpenGLRenderer::OpenGLRenderer(uint32_t width, uint32_t height)
   , m_textureMultisample(0)
 {
   m_pRenderers[LineRenderer] = CreateLineRenderer();
+  m_pRenderers[CircleRenderer] = CreateCircleRenderer();
   m_pRenderers[FilledCircleRenderer] = CreateFilledCircleRenderer();
   m_pRenderers[PolygonRenderer] = CreatePolygonRenderer();
 
@@ -231,6 +235,17 @@ void OpenGLRenderer::DrawLineGroup(std::vector<xn::seg> const &segments, float t
     }
     RENDERER(FilledCircleRenderer)->Draw(points, thickness, clr, flags);
   }
+}
+
+void OpenGLRenderer::DrawCircle(xn::vec2 const &centre, float size, float thickness, xn::Colour clr, uint32_t flags)
+{
+  std::vector<xn::vec2> positions{ centre };
+  RENDERER(CircleRenderer)->Draw(positions, size, thickness, clr, flags);
+}
+
+void OpenGLRenderer::DrawCircleGroup(std::vector<xn::vec2> const &positions, float size, float thickness, xn::Colour clr, uint32_t flags)
+{
+  RENDERER(CircleRenderer)->Draw(positions, size, thickness, clr, flags);
 }
 
 void OpenGLRenderer::DrawFilledCircle(xn::vec2 const &centre, float size, xn::Colour clr, uint32_t flags)

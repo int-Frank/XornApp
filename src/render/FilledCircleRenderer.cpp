@@ -45,7 +45,7 @@ FilledCircleRenderer::FilledCircleRenderer()
   glUseProgram(m_shaderProgram);
   GLuint loc = glGetUniformLocation(m_shaderProgram, "u_offsets");
   if (loc == -1)
-    throw MyException("Failed to set offsets for the circle renderer.");
+    throw MyException("Failed to set offsets for the filled circle renderer.");
 
   float offsets[12] =
   {
@@ -71,7 +71,7 @@ void FilledCircleRenderer::SetViewMatrix(xn::mat33 const &mat)
   glUseProgram(m_shaderProgram);
   GLuint loc = glGetUniformLocation(m_shaderProgram, "u_mView");
   if (loc == -1)
-    throw MyException("Failed to set world to view matrix for the circle renderer.");
+    throw MyException("Failed to set world to view matrix for the filled circle renderer.");
   glUniformMatrix3fv(loc, 1, GL_FALSE, mat.GetData());
   glUseProgram(prog);
 }
@@ -83,7 +83,7 @@ void FilledCircleRenderer::SetResolution(xn::vec2 const &sz)
   glUseProgram(m_shaderProgram);
   GLuint loc = glGetUniformLocation(m_shaderProgram, "u_resolution");
   if (loc == -1)
-    throw MyException("Failed to set window size for the circle renderer.");
+    throw MyException("Failed to set window size for the filled circle renderer.");
   glUniform2fv(loc, 1, sz.GetData());
   glUseProgram(prog);
 }
@@ -111,7 +111,7 @@ void FilledCircleRenderer::Draw(std::vector<xn::vec2> const &positions, float si
   glUseProgram(m_shaderProgram);
   loc = glGetUniformLocation(m_shaderProgram, "u_colour");
   if (loc == -1)
-    throw MyException("Failed to set colour for the circle renderer.");
+    throw MyException("Failed to set colour for the filled circle renderer.");
 
   float colour[4] =
   {
@@ -125,7 +125,7 @@ void FilledCircleRenderer::Draw(std::vector<xn::vec2> const &positions, float si
 
   loc = glGetUniformLocation(m_shaderProgram, "u_size");
   if (loc == -1)
-    throw MyException("Failed to set radius for the circle renderer.");
+    throw MyException("Failed to set radius for the filled circle renderer.");
   glUniform1f(loc, size);
 
   glDrawArraysInstanced(GL_TRIANGLES, 0, 6, (GLsizei)positions.size());
