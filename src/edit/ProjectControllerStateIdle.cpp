@@ -49,6 +49,9 @@ ProjectControllerState *ProjectControllerStateIdle::MouseDown(uint32_t modState,
       return nullptr;
     }
 
+    if (selectedExists)
+      return new ProjectControllerStateTransition(m_pStateData, mouse, m_pStateData->sceneState.hoverPolygon);
+
     m_pStateData->sceneState.selectedPolygons.clear();
     m_pStateData->sceneState.selectedPolygons.insert(m_pStateData->sceneState.hoverPolygon);
     return new ProjectControllerStateMoveSelected(m_pStateData, mouse);
