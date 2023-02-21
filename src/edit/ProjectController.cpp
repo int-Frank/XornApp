@@ -47,6 +47,7 @@ ProjectController::ProjectController(Project *pProject)
   m_pStateData->T_World_View.Identity();
   m_pStateData->T_View_Screen.Identity();
   m_pStateData->T_World_Screen.Identity();
+  m_pStateData->T_Screen_World.Identity();
   m_pStateData->pProject = pProject;
   m_pStateData->pActions = CreateActionList();
 
@@ -65,6 +66,7 @@ void ProjectController::SetMatrices(xn::mat33 const &T_World_View, xn::mat33 con
   m_pStateData->T_World_View = T_World_View;
   m_pStateData->T_View_Screen = T_View_Screen;
   m_pStateData->T_World_Screen = T_World_View * T_View_Screen;
+  m_pStateData->T_Screen_World = m_pStateData->T_World_Screen.GetInverse();
 }
 
 #define UPDATE_STATE(fn) auto pState = m_pState->fn;\

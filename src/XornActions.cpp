@@ -2,11 +2,40 @@
 #include "Project.h"
 
 //------------------------------------------------------------------------------
+// ActionGroup
+//------------------------------------------------------------------------------
+
+ActionGroup::~ActionGroup()
+{
+  for (auto pAction : m_actions)
+    delete pAction;
+}
+
+void ActionGroup::AddAction(Action *pAction)
+{
+  m_actions.push_back(pAction);
+}
+
+bool ActionGroup::Do()
+{
+  for (auto pAction : m_actions)
+    pAction->Do();
+  return true;
+}
+
+bool ActionGroup::Undo()
+{
+  for (auto pAction : m_actions)
+    pAction->Undo();
+  return true;
+}
+
+//------------------------------------------------------------------------------
 // Action_TransformPolygon
 //------------------------------------------------------------------------------
 
 Action_TransformPolygon::Action_TransformPolygon(ActionData const &data, PolygonID polygonID, xn::Transform const &oldTransform, xn::Transform const &newTransform)
-  : Action(data)
+  : ProjectAction(data)
   , m_polygonID(polygonID)
   , m_newTransform(newTransform)
   , m_oldTransform(oldTransform)
@@ -85,7 +114,7 @@ bool Action_TransformPolygon::Undo()
 //------------------------------------------------------------------------------
 
 Action_MoveVertex::Action_MoveVertex(ActionData const &data, PolygonID polygonID, uint32_t pointIndex, xn::vec2 const &oldPoint, xn::vec2 const &newPoint)
-  : Action(data)
+  : ProjectAction(data)
   , m_polygonID(polygonID)
   , m_index(pointIndex)
   , m_oldPoint(oldPoint)
@@ -129,7 +158,7 @@ bool Action_MoveVertex::Undo()
 //------------------------------------------------------------------------------
 
 Action_AddVertex::Action_AddVertex(ActionData const &data, PolygonID polygonID, uint32_t index, xn::vec2 const &newPoint)
-  : Action(data)
+  : ProjectAction(data)
   , m_polygonID(polygonID)
   , m_index(index)
   , m_newPoint(newPoint)
@@ -172,7 +201,7 @@ bool Action_AddVertex::Undo()
 //------------------------------------------------------------------------------
 
 Action_RemoveVertex::Action_RemoveVertex(ActionData const &data, PolygonID polygonID, uint32_t index, xn::vec2 const &oldPoint)
-  : Action(data)
+  : ProjectAction(data)
   , m_polygonID(polygonID)
   , m_index(index)
   , m_oldPoint(oldPoint)

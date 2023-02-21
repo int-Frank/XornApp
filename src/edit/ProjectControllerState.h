@@ -76,8 +76,8 @@ public:
   ProjectControllerState *MouseUp(uint32_t modState, xn::vec2 const &) override;
 
 private:
-
-  Dg::Map_AVL<PolygonID, xn::Transform> m_transforms;
+  
+  ActionID m_actionID;
   xn::vec2 m_mouseAnchor;
 };
 
@@ -93,11 +93,9 @@ public:
 private:
 
   xn::vec2 m_offset;
-  xn::vec2 m_originalPoint;
   ActionID m_actionID;
   PolygonID m_polygonID;
   uint32_t m_index;
-  bool m_first;
 };
 
 class ProjectControllerStateRotateSelected : public ProjectControllerState

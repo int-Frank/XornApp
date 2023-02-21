@@ -18,13 +18,22 @@ class Action
 {
 public:
 
-  Action(ActionData const &data)
+  virtual ~Action() {}
+  virtual bool Do() = 0;
+  virtual bool Undo() = 0;
+};
+
+class ProjectAction : public Action
+{
+public:
+
+  ProjectAction(ActionData const &data)
     : m_actionData(data)
   {
 
   }
 
-  virtual ~Action() {}
+  virtual ~ProjectAction() {}
   virtual bool Do() = 0;
   virtual bool Undo() = 0;
 

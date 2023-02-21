@@ -10,13 +10,12 @@
 ProjectControllerStateMoveVertex::ProjectControllerStateMoveVertex(ProjectControllerStateData *pState, xn::vec2 const &mousePosition, PolygonID polygonID, uint32_t vertexIndex)
   : ProjectControllerState(pState)
   , m_offset()
-  , m_originalPoint(pState->pProject->loops.Get(polygonID)->vertices[vertexIndex])
   , m_actionID(INVALID_ACTION_ID)
   , m_polygonID(polygonID)
   , m_index(vertexIndex)
-  , m_first(true)
 {
-  xn::vec2 screenPoint = m_originalPoint;
+  xn::vec2 originalPoint = m_pStateData->pProject->loops.Get(polygonID)->vertices[vertexIndex];
+  xn::vec2 screenPoint = originalPoint;
   xn::vec3 screenPoint3 = Dg::ToVector3(screenPoint, 1.f);
   auto pLoop = m_pStateData->pProject->loops.Get(m_polygonID);
   xn::mat33 m = pLoop->T_Model_World.ToMatrix33() * m_pStateData->T_World_Screen;
@@ -28,15 +27,15 @@ ProjectControllerStateMoveVertex::ProjectControllerStateMoveVertex(ProjectContro
 
 ProjectControllerState *ProjectControllerStateMoveVertex::MouseMove(uint32_t modState, xn::vec2 const &mouse)
 {
-  if (!m_first)
+  if (m_actionID != INVALID_ACTION_ID)
   {
     auto topID = m_pStateData->pActions->TopID();
     if (topID != m_actionID)
       return new ProjectControllerStateIdle(m_pStateData);
     m_pStateData->pActions->Undo();
   }
-  m_first = false;
 
+  xn::vec2 originalPoint = m_pStateData->pProject->loops.Get(m_polygonID)->vertices[m_index];
   xn::vec2 point = mouse - m_offset;
   xn::vec3 point3 = Dg::ToVector3(point, 1.f);
   auto pLoop = m_pStateData->pProject->loops.Get(m_polygonID);
@@ -45,7 +44,7 @@ ProjectControllerState *ProjectControllerStateMoveVertex::MouseMove(uint32_t mod
   point = Dg::ToVector2(point3);
 
   ActionData actionData(m_pStateData->pProject);
-  auto pAction = new Action_MoveVertex(actionData, m_polygonID, m_index, m_originalPoint, point);
+  auto pAction = new Action_MoveVertex(actionData, m_polygonID, m_index, originalPoint, point);
   m_actionID = m_pStateData->pActions->AddAndExecute(pAction);
 
   return nullptr;

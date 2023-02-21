@@ -8,7 +8,21 @@
 #include "xnGeometry.h"
 #include "Project.h"
 
-class Action_TransformPolygon : public Action
+class ActionGroup : public Action
+{
+public:
+
+  ~ActionGroup();
+  void AddAction(Action *);
+
+  bool Do() override;
+  bool Undo() override;
+
+private:
+  std::vector<Action *> m_actions;
+};
+
+class Action_TransformPolygon : public ProjectAction
 {
 public:
 
@@ -53,7 +67,7 @@ private:
 //  SceneObject m_oldObject;
 //};
 
-class Action_MoveVertex : public Action
+class Action_MoveVertex : public ProjectAction
 {
 public:
 
@@ -71,7 +85,7 @@ private:
   xn::vec2 m_newPoint;
 };
 
-class Action_AddVertex : public Action
+class Action_AddVertex : public ProjectAction
 {
 public:
 
@@ -88,7 +102,7 @@ private:
   xn::vec2 m_newPoint;
 };
 
-class Action_RemoveVertex : public Action
+class Action_RemoveVertex : public ProjectAction
 {
 public:
 
