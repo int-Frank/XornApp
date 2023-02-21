@@ -179,7 +179,10 @@ void ProjectController::SetRotateWidget()
   centre3 = centre3 * m_pStateData->T_World_Screen;
   centre = Dg::ToVector2(centre3);
 
-  m_pStateData->sceneState.pRotate = CreateRotateWidget(centre);
+  if (m_pStateData->sceneState.pRotate == nullptr)
+    m_pStateData->sceneState.pRotate = CreateRotateWidget(centre);
+  else
+    m_pStateData->sceneState.pRotate->SetPosition(centre);
 }
 
 void ProjectController::Undo()
