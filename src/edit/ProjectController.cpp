@@ -143,6 +143,7 @@ void ProjectController::DrawBackSprites(Renderer *pRenderer)
 
     auto polygon = it->second.GetTransformed();
     auto state = it->first == m_pStateData->sceneState.hoverPolygon ? HS_Hover : HS_None;
+
     pRenderer->DrawPolygon(polygon,
       DefaultData::data.renderData.polygonAspect[state].thickness,
       DefaultData::data.renderData.polygonAspect[state].colour, 0);

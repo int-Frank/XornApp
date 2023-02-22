@@ -15,6 +15,7 @@
 #include "CircleRenderer.h"
 #include "FilledCircleRenderer.h"
 #include "PolygonRenderer.h"
+#include "ConvexPolygonRenderer.h"
 
 #define RENDERER(x) ((I ## x*)m_pRenderers[x])
 
@@ -76,6 +77,7 @@ private:
     CircleRenderer,
     FilledCircleRenderer,
     PolygonRenderer,
+    ConvexPolygonRenderer,
     Renderers_COUNT
   };
 
@@ -102,6 +104,7 @@ OpenGLRenderer::OpenGLRenderer(uint32_t width, uint32_t height)
   m_pRenderers[CircleRenderer] = CreateCircleRenderer();
   m_pRenderers[FilledCircleRenderer] = CreateFilledCircleRenderer();
   m_pRenderers[PolygonRenderer] = CreatePolygonRenderer();
+  m_pRenderers[ConvexPolygonRenderer] = CreateConvexPolygonRenderer();
 
   Init(width, height);
 }
@@ -311,7 +314,7 @@ void OpenGLRenderer::DrawFilledPolygon(std::vector<xn::vec2> const &vertices, st
 
 void OpenGLRenderer::DrawFilledConvexPolygon(std::vector<xn::vec2> const &vertices, xn::Colour clr, uint32_t flags)
 {
-
+  RENDERER(ConvexPolygonRenderer)->Draw(vertices, clr, flags);
 }
 
 void OpenGLRenderer::SetViewMatrix(xn::mat33 const &mat)
