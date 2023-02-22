@@ -57,6 +57,7 @@ public:
   void DrawFilledPolygon(xn::DgPolygon const &, xn::Colour clr, uint32_t flags) override;
   void DrawFilledPolygon(xn::PolygonWithHoles const &, xn::Colour clr, uint32_t flags) override;
   void DrawFilledPolygon(std::vector<xn::vec2> const &vertices, std::vector<int> const &polygonSizes, xn::Colour clr, uint32_t flags) override;
+  void DrawFilledConvexPolygon(std::vector<xn::vec2> const &vertices, xn::Colour clr, uint32_t flags);
   void EndDraw() override;
 
   void SetViewMatrix(xn::mat33 const &) override;
@@ -306,6 +307,11 @@ void OpenGLRenderer::DrawFilledPolygon(xn::PolygonWithHoles const &polygon, xn::
 void OpenGLRenderer::DrawFilledPolygon(std::vector<xn::vec2> const &vertices, std::vector<int> const &polygonSizes, xn::Colour clr, uint32_t flags)
 {
   RENDERER(PolygonRenderer)->Draw(vertices, polygonSizes, clr, flags);
+}
+
+void OpenGLRenderer::DrawFilledConvexPolygon(std::vector<xn::vec2> const &vertices, xn::Colour clr, uint32_t flags)
+{
+
 }
 
 void OpenGLRenderer::SetViewMatrix(xn::mat33 const &mat)

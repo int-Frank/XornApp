@@ -99,11 +99,11 @@ int PointInsidePolygon(in vec2 point, in int start, in int size)
   
   for (int i = 0; i < size; i++)
   {
-    int j = start + i;
-    int k = start + ((i + 1) % size);
+    int m = start + i;
+    int n = start + ((i + 1) % size);
 
-    vec2 p0 = vertices[j];
-    vec2 p1 = vertices[k];
+    vec2 p0 = vertices[m];
+    vec2 p1 = vertices[n];
 
     float xi = p0.x;
     float yi = p0.y;
@@ -187,12 +187,13 @@ int PointInsidePolygon(in vec2 point, in int start, in int size)
 bool PointInsidePolygon(in vec2 point)
 {
   int currentSize = polygonSizes[0];
-  if (PointInsidePolygon(point, 0, currentSize) == outside)
+  int code = PointInsidePolygon(point, 0, currentSize);
+  if (code == outside)
   {
     return false;
   }
 
-  if (PointInsidePolygon(point, 0, currentSize) == onBoundary)
+  if (code == onBoundary)
   {
     return true;
   }
@@ -215,7 +216,7 @@ bool PointInsidePolygon(in vec2 point)
 void main(void)
 {
   vec2 point = (gl_FragCoord.xy / u_resolution) * 2.0 - 1.0;
-
+  
   if (!PointInsidePolygon(point))
   {
     vec2 cp = ClosestPointToPolygon(point);
