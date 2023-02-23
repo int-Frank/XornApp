@@ -46,8 +46,8 @@ private:
 RotateWidget::Aspect const RotateWidget::s_state =
 {
   0x55FFFF55, 100.f, 4.f,
-  {0xFFFFFFFF, 0xFF00FFFF, 0xFFFF00FF}, 15.f,
-  0xFF00FF00, 5.f
+  {0xFF7272F8, 0xFF8686F8, 0xFF8686F8}, 15.f,
+  0xFF00FF00, 10.f
 };
 
 IRotateWidget *CreateRotateWidget(xn::vec2 const &anchor)
@@ -94,6 +94,7 @@ float RotateWidget::SetMouse(xn::vec2 const &mouse)
     xn::vec2 v = mouse - m_position;
     if (v.IsZero())
       v = xn::vec2(1.f, 0.f);
+    v = Dg::Normalize(v);
     m_womble = m_position + s_state.ringDiameter / 2.f * v;
   }
   else if (MouseHover(mouse))
@@ -119,6 +120,7 @@ bool RotateWidget::MouseDown(xn::vec2 const &mouse)
 void RotateWidget::Unclick(xn::vec2 const &mouse)
 {
   m_state = HS_None;
+  m_womble = ButtonPosition();
   SetMouse(mouse);
 }
 

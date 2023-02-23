@@ -113,11 +113,11 @@ private:
   uint32_t m_index;
 };
 
-class ProjectControllerStateRotateSelected : public ProjectControllerState
+class ProjectControllerStateRotate : public ProjectControllerState
 {
 public:
 
-  ProjectControllerStateRotateSelected(ProjectControllerStateData *);
+  ProjectControllerStateRotate(ProjectControllerStateData *);
   ProjectControllerState *MouseMove(uint32_t modState, xn::vec2 const &) override;
   ProjectControllerState *MouseUp(uint32_t modState, xn::vec2 const &) override;
 

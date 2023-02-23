@@ -19,6 +19,9 @@ ProjectControllerStateIdle::ProjectControllerStateIdle(ProjectControllerStateDat
 
 ProjectControllerState *ProjectControllerStateIdle::MouseMove(uint32_t modState, xn::vec2 const &mouse)
 {
+  if (m_pStateData->sceneState.pRotate != nullptr)
+    m_pStateData->sceneState.pRotate->SetMouse(mouse);
+
   m_pStateData->sceneState.hoverPolygon = PolygonUnderMouse(mouse);
   return nullptr;
 }
@@ -28,7 +31,7 @@ ProjectControllerState *ProjectControllerStateIdle::MouseDown(uint32_t modState,
   m_pStateData->sceneState.hoverPolygon = INVALID_POLYGON_ID;
 
   if (m_pStateData->sceneState.pRotate != nullptr && m_pStateData->sceneState.pRotate->MouseDown(mouse))
-    return new ProjectControllerStateRotateSelected(m_pStateData);
+    return new ProjectControllerStateRotate(m_pStateData);
 
   uint32_t activeVertex;
   PolygonID activeVertexPolygon;
@@ -184,26 +187,6 @@ ProjectControllerState *ProjectControllerStateMultiSelect::MouseMove(uint32_t mo
 }
 
 ProjectControllerState *ProjectControllerStateMultiSelect::MouseUp(uint32_t modState, xn::vec2 const &)
-{
-  return nullptr;
-}
-
-//------------------------------------------------------------------------
-// ProjectControllerStateRotateSelected
-//------------------------------------------------------------------------
-
-ProjectControllerStateRotateSelected::ProjectControllerStateRotateSelected(ProjectControllerStateData *pState)
-  : ProjectControllerState(pState)
-{
-
-}
-
-ProjectControllerState *ProjectControllerStateRotateSelected::MouseMove(uint32_t modState, xn::vec2 const &)
-{
-  return nullptr;
-}
-
-ProjectControllerState *ProjectControllerStateRotateSelected::MouseUp(uint32_t modState, xn::vec2 const &)
 {
   return nullptr;
 }
