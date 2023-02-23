@@ -2,9 +2,9 @@
 #define PROJECT_H
 
 #include <iostream>
+#include <map>
 
 #include "Common.h"
-#include "DgMap_AVL.h"
 #include "xnGeometry.h"
 #include "xnFlagArray.h"
 
@@ -31,7 +31,7 @@ public:
 
 class LoopCollection
 {
-  typedef Dg::Map_AVL<PolygonID, ScenePolygonLoop>::const_iterator_rand const_iterator;
+  typedef std::map<PolygonID, ScenePolygonLoop>::const_iterator const_iterator;
 public:
 
   LoopCollection();
@@ -42,8 +42,8 @@ public:
   void Remove(PolygonID);
   ScenePolygonLoop *Get(PolygonID);
 
-  const_iterator Begin() { return m_loopMap.cbegin_rand(); }
-  const_iterator End() { return m_loopMap.cend_rand(); }
+  const_iterator Begin() { return m_loopMap.cbegin(); }
+  const_iterator End() { return m_loopMap.cend(); }
 
   std::vector<xn::PolygonLoop> GetLoops() const;
 
@@ -53,7 +53,7 @@ public:
 
 private:
   PolygonID m_nextID;
-  Dg::Map_AVL<PolygonID, ScenePolygonLoop> m_loopMap;
+  std::map<PolygonID, ScenePolygonLoop> m_loopMap;
 };
 
 class Project

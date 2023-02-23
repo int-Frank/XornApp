@@ -312,7 +312,7 @@ std::ostream& operator<<(std::ostream& os, LoopCollection const &obj)
 {
   size_t i = 0;
   os << '[';
-  for (auto it = obj.m_loopMap.cbegin_rand(); it != obj.m_loopMap.cend_rand(); it++, i++)
+  for (auto it = obj.m_loopMap.cbegin(); it != obj.m_loopMap.cend(); it++, i++)
   {
     os << it->second;
     if (i + 1 != obj.m_loopMap.size())

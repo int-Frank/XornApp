@@ -42,7 +42,7 @@ LoopCollection::LoopCollection()
 
 PolygonID LoopCollection::Add(ScenePolygonLoop const &loop)
 {
-  m_loopMap.insert(Dg::Pair<PolygonID, ScenePolygonLoop>(m_nextID, loop));
+  m_loopMap.insert(std::pair<PolygonID, ScenePolygonLoop>(m_nextID, loop));
   PolygonID id = m_nextID;
   m_nextID++;
   return id;
@@ -73,7 +73,7 @@ bool LoopCollection::GetAABB(xn::aabb *pOut) const
     return false;
 
   bool first = true;
-  for (auto it = m_loopMap.cbegin_rand(); it != m_loopMap.cend_rand(); it++)
+  for (auto it = m_loopMap.cbegin(); it != m_loopMap.cend(); it++)
   {
     auto loop = it->second.GetTransformed();
     xn::aabb aabb;
@@ -97,7 +97,7 @@ bool LoopCollection::GetAABB(xn::aabb *pOut) const
 std::vector<xn::PolygonLoop> LoopCollection::GetLoops() const
 {
   std::vector<xn::PolygonLoop> result;
-  for (auto it = m_loopMap.cbegin_rand(); it != m_loopMap.cend_rand(); it++)
+  for (auto it = m_loopMap.cbegin(); it != m_loopMap.cend(); it++)
     result.push_back(it->second.GetTransformed());
   return result;
 }
