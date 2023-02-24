@@ -1,7 +1,9 @@
 #include "ViewWindow.h"
 
 ViewWindow::ViewWindow()
-  : m_T_View_World()
+  : m_position(0.f, 0.f)
+  , m_rotation(0.f)
+  , m_scale(1.f, 1.f)
   , m_ar(1.f)
 {
 
@@ -9,27 +11,27 @@ ViewWindow::ViewWindow()
 
 void ViewWindow::Scale(float val)
 {
-  m_T_View_World.scale *= val;
+  m_scale *= val;
 }
 
 void ViewWindow::SetScale(float val)
 {
-  m_T_View_World.scale = xn::vec2(val, val);
+  m_scale = xn::vec2(val, val);
 }
 
 void ViewWindow::Move(xn::vec2 const &delta)
 {
-  m_T_View_World.translation += delta;
+  m_position += delta;
 }
 
 void ViewWindow::SetPosition(xn::vec2 const &pos)
 {
-  m_T_View_World.translation = pos;
+  m_position = pos;
 }
 
 xn::vec2 ViewWindow::GetPosition() const
 {
-  return m_T_View_World.translation;
+  return m_position;
 }
 
 void ViewWindow::SetViewSize(xn::vec2 const &v)
@@ -39,12 +41,18 @@ void ViewWindow::SetViewSize(xn::vec2 const &v)
 
 xn::mat33 ViewWindow::GetMatrix_View_World() const
 {
-  auto t = m_T_View_World;
+  auto scale = m_scale;
 
   if (m_ar < 1.f)
-    t.scale.y() /= m_ar;
+    scale.y() /= m_ar;
   else if (m_ar > 1.f)
-    t.scale.x() *= m_ar;
+    scale.x() *= m_ar;
 
-  return t.ToMatrix33();
+  xn::mat33 mScale, mRotation, mTranslation;
+
+  mScale.Scaling(scale);
+  mRotation.Rotation(m_rotation);
+  mTranslation.Translation(m_position);
+
+  return mScale * mRotation * mTranslation;
 }

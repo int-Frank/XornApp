@@ -147,51 +147,22 @@ std::ostream &operator<<(std::ostream &os, xn::vec2 const &obj)
 #define ID_TRANSFORM_POSITION "position"
 #define ID_TRANSFORM_ROTATION "rotation"
 
-bool ReadTransform(std::istream &is, xn::Transform &obj)
+bool ReadTransform(std::istream &is, xn::mat33 &obj)
 {
-  ASSERT_NEXT('{');
-
-  while (true)
-  {
-    BREAK_ON('}');
-
-    std::string str;
-    CHECK(ReadString(is, str));
-    ASSERT_NEXT(':');
-
-    if (str == ID_TRANSFORM_SCALE)
-    {
-      CHECK(ReadVec2(is, obj.scale));
-    }
-    else if (str == ID_TRANSFORM_POSITION)
-    {
-      CHECK(ReadVec2(is, obj.translation));
-    }
-    else if (str == ID_TRANSFORM_ROTATION)
-    {
-      READ_NUMBER(obj.rotation);
-    }
-    else
-    {
-      LOG_WARNING("Unknown tag found when reading a transform: '%s'", str.c_str());
-      DiscardNextObject(is);
-    }
-
-    DISCARD_NEXT_IF(',');
-  }
-
+  float values[9] = {};
+  CHECK(ReadNumberArray(is, values, 9));
   return true;
 }
 
-std::ostream &operator<<(std::ostream &os, xn::Transform const &obj)
+std::ostream &operator<<(std::ostream &os, xn::mat33 const &obj)
 {
-  os << '{';
+  os << '[';
 
-  os << "\"" ID_TRANSFORM_SCALE "\":" << obj.scale;
-  os << ",\"" ID_TRANSFORM_POSITION "\":" << obj.translation;
-  os << ",\"" ID_TRANSFORM_ROTATION "\":" << obj.rotation;
+  for (int i = 0; i < 8; i++)
+    os << obj[i] << ',';
+  os << obj[8];
 
-  os << '}';
+  os << ']';
   return os;
 }
 

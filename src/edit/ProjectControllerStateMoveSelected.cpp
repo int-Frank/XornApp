@@ -32,9 +32,11 @@ ProjectControllerState *ProjectControllerStateMoveSelected::MouseMove(uint32_t m
 
   for (auto it = m_pStateData->sceneState.selectedPolygons.cbegin_rand(); it != m_pStateData->sceneState.selectedPolygons.cend_rand(); it++)
   {
-    xn::Transform oldTransform = m_pStateData->pProject->loops.Get(*it)->T_Model_World;
-    xn::Transform newTransform = oldTransform;
-    newTransform.translation += vector;
+    xn::mat33 oldTransform = m_pStateData->pProject->loops.Get(*it)->T_Model_World;
+
+    xn::mat33 translation;
+    translation.Translation(vector);
+    xn::mat33 newTransform = oldTransform * translation;
 
     Action_TransformPolygon *pAction = new Action_TransformPolygon(actionData , *it, oldTransform, newTransform);
     pActionGroup->AddAction(pAction);

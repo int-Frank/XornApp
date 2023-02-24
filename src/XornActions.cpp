@@ -34,7 +34,7 @@ bool ActionGroup::Undo()
 // Action_TransformPolygon
 //------------------------------------------------------------------------------
 
-Action_TransformPolygon::Action_TransformPolygon(ActionData const &data, PolygonID polygonID, xn::Transform const &oldTransform, xn::Transform const &newTransform)
+Action_TransformPolygon::Action_TransformPolygon(ActionData const &data, PolygonID polygonID, xn::mat33 const &oldTransform, xn::mat33 const &newTransform)
   : ProjectAction(data)
   , m_polygonID(polygonID)
   , m_newTransform(newTransform)

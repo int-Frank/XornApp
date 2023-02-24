@@ -6,12 +6,7 @@
         [ 500, 0 ],
         [ 500, 500 ],
         [ 0, 500 ]
-      ],
-      "transform": {
-        "scale": [ 1, 1 ],
-        "position": [ 0, 0 ],
-        "rotation": 0
-      }
+      ]
     },
     {
       "points": [
@@ -27,12 +22,7 @@
         [ 38, 249 ],
         [ 100, 343 ],
         [ 194, 343 ]
-      ],
-      "transform": {
-        "scale": [ 1, 1 ],
-        "position": [ 0, 0 ],
-        "rotation": 0
-      }
+      ]
     },
     {
       "points": [
@@ -52,108 +42,63 @@
         [ 252, 248 ],
         [ 313, 343 ],
         [ 406, 344 ]
-      ],
-      "transform": {
-        "scale": [ 1, 1 ],
-        "position": [ 0, 0 ],
-        "rotation": 0
-      }
+      ]
     },
     {
       "points": [
         [ 99, 376 ],
         [ 80, 412 ],
         [ 120, 410 ]
-      ],
-      "transform": {
-        "scale": [ 1, 1 ],
-        "position": [ 0, 0 ],
-        "rotation": 0
-      }
+      ]
     },
     {
       "points": [
         [ 217, 474 ],
         [ 260, 471 ],
         [ 238, 438 ]
-      ],
-      "transform": {
-        "scale": [ 1, 1 ],
-        "position": [ 0, 0 ],
-        "rotation": 0
-      }
+      ]
     },
     {
       "points": [
         [ 263, 367 ],
         [ 303, 379 ],
         [ 296, 338 ]
-      ],
-      "transform": {
-        "scale": [ 1, 1 ],
-        "position": [ 0, 0 ],
-        "rotation": 0
-      }
+      ]
     },
     {
       "points": [
         [ 412, 366 ],
         [ 415, 408 ],
         [ 449, 385 ]
-      ],
-      "transform": {
-        "scale": [ 1, 1 ],
-        "position": [ 0, 0 ],
-        "rotation": 0
-      }
+      ]
     },
     {
       "points": [
         [ 58, 90 ],
         [ 98, 79 ],
         [ 69, 50 ]
-      ],
-      "transform": {
-        "scale": [ 1, 1 ],
-        "position": [ 0, 0 ],
-        "rotation": 0
-      }
+      ]
     },
     {
       "points": [
         [ 164, 42 ],
         [ 202, 54 ],
         [ 196, 13 ]
-      ],
-      "transform": {
-        "scale": [ 1, 1 ],
-        "position": [ 0, 0 ],
-        "rotation": 0
-      }
+      ]
     },
     {
       "points": [
         [ 300, 106 ],
         [ 344, 115 ],
         [ 331, 74 ]
-      ],
-      "transform": {
-        "scale": [ 1, 1 ],
-        "position": [ 0, 0 ],
-        "rotation": 0
-      }
+      ]
     },
     {
       "points": [
         [ 412, 131 ],
         [ 449, 113 ],
         [ 415, 89 ]
-      ],
-      "transform": {
-        "scale": [ 1, 1 ],
-        "position": [ 0, 0 ],
-        "rotation": 0
-      }
+      ]
     }
   ]
 }

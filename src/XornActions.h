@@ -27,7 +27,7 @@ class Action_TransformPolygon : public ProjectAction
 public:
 
   ~Action_TransformPolygon() {};
-  Action_TransformPolygon(ActionData const &, PolygonID polygonID, xn::Transform const &oldTransform, xn::Transform const &newTransform);
+  Action_TransformPolygon(ActionData const &, PolygonID polygonID, xn::mat33 const &oldTransform, xn::mat33 const &newTransform);
 
   bool Do() override;
   bool Undo() override;
@@ -35,8 +35,8 @@ public:
 private:
 
   PolygonID m_polygonID;
-  xn::Transform m_oldTransform;
-  xn::Transform m_newTransform;
+  xn::mat33 m_oldTransform;
+  xn::mat33 m_newTransform;
 };
 
 //class Action_AddSceneObject : public Action

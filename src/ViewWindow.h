@@ -23,7 +23,10 @@ public:
 
 private:
 
-  xn::Transform m_T_View_World;
+  // T_View_World
+  xn::vec2 m_position;
+  float m_rotation;
+  xn::vec2 m_scale;
   float m_ar;
 };
 

@@ -18,7 +18,7 @@ ProjectControllerStateMoveVertex::ProjectControllerStateMoveVertex(ProjectContro
   xn::vec2 screenPoint = originalPoint;
   xn::vec3 screenPoint3 = Dg::ToVector3(screenPoint, 1.f);
   auto pLoop = m_pStateData->pProject->loops.Get(m_polygonID);
-  xn::mat33 m = pLoop->T_Model_World.ToMatrix33() * m_pStateData->T_World_Screen;
+  xn::mat33 m = pLoop->T_Model_World * m_pStateData->T_World_Screen;
   screenPoint3 = screenPoint3 * m;
   screenPoint = Dg::ToVector2(screenPoint3);
 
@@ -39,7 +39,7 @@ ProjectControllerState *ProjectControllerStateMoveVertex::MouseMove(uint32_t mod
   xn::vec2 point = mouse - m_offset;
   xn::vec3 point3 = Dg::ToVector3(point, 1.f);
   auto pLoop = m_pStateData->pProject->loops.Get(m_polygonID);
-  xn::mat33 m = pLoop->T_Model_World.ToMatrix33() * m_pStateData->T_World_Screen;
+  xn::mat33 m = pLoop->T_Model_World * m_pStateData->T_World_Screen;
   point3 = point3 * m.GetInverse();
   point = Dg::ToVector2(point3);
 

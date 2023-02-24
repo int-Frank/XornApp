@@ -106,7 +106,7 @@ bool ProjectControllerStateIdle::VertexUnderMouse(xn::vec2 const &mouse, Polygon
     {
       auto vertex = loop_it->second.vertices[i];
       xn::vec3 vertex3(vertex.x(), vertex.y(), 1.f);
-      vertex3 = vertex3 * (loop_it->second.T_Model_World.ToMatrix33() * m_pStateData->T_World_Screen);
+      vertex3 = vertex3 * (loop_it->second.T_Model_World * m_pStateData->T_World_Screen);
       vertex = xn::vec2(vertex3.x(), vertex3.y());
 
       float dist = Dg::MagSq(vertex - mouse);
@@ -138,7 +138,7 @@ bool ProjectControllerStateIdle::SplitVertexUnderMouse(xn::vec2 const &mouse, Po
 
       xn::vec2 centreWorld = (vertex + vNext) / 2.f;
       xn::vec3 centreScreen3(centreWorld.x(), centreWorld.y(), 1.f);
-      centreScreen3 = centreScreen3 * (loop_it->second.T_Model_World.ToMatrix33() * m_pStateData->T_World_Screen);
+      centreScreen3 = centreScreen3 * (loop_it->second.T_Model_World * m_pStateData->T_World_Screen);
       xn::vec2 centreScreen = xn::vec2(centreScreen3.x(), centreScreen3.y());
 
       float dist = Dg::MagSq(centreScreen - mouse);

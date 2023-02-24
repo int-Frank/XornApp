@@ -6,24 +6,14 @@
         [ -50, 50 ],
         [ -50, -50 ],
         [ 50, -50 ]
-      ],
-      "transform": {
-        "scale": [ 1, 1 ],
-        "position": [ 0, 0 ],
-        "rotation": 0
-      }
+      ]
     },
     {
       "points": [
         [ 0, 10 ],
         [ 15, -8 ],
         [ -15, -8 ]
-      ],
-      "transform": {
-        "scale": [ 1, 1 ],
-        "position": [ 0, 0 ],
-        "rotation": 0
-      }
+      ]
     }
   ]
 }

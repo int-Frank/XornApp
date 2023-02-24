@@ -29,7 +29,7 @@ public:
 
   xn::FlagArray<ScenePolygonLoopFlag> flags;
   Dg::DynamicArray<xn::vec2> vertices;
-  xn::Transform T_Model_World;
+  xn::mat33 T_Model_World;
 };
 
 class LoopCollection

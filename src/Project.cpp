@@ -14,12 +14,12 @@
 
 ScenePolygonLoop::ScenePolygonLoop()
 {
-
+  T_Model_World.Identity();
 }
 
 xn::PolygonLoop ScenePolygonLoop::GetTransformed() const
 {
-  return GetLoop().GetTransformed(T_Model_World.ToMatrix33());
+  return GetLoop().GetTransformed(T_Model_World);
 }
 
 xn::PolygonLoop ScenePolygonLoop::GetLoop() const
