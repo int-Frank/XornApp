@@ -176,7 +176,7 @@ bool Action_AddVertex::Do()
   if (m_index >= pLoop->vertices.size())
     return false;
 
-  pLoop->vertices.insert(pLoop->vertices.begin() + m_index, m_newPoint);
+  pLoop->vertices.insert(m_index, m_newPoint);
 
   return true;
 }
@@ -191,7 +191,7 @@ bool Action_AddVertex::Undo()
   if (m_index >= pLoop->vertices.size())
     return false;
 
-  pLoop->vertices.erase(pLoop->vertices.begin() + m_index);
+  pLoop->vertices.erase(m_index);
 
   return true;
 }
@@ -219,7 +219,7 @@ bool Action_RemoveVertex::Do()
   if (m_index >= pLoop->vertices.size())
     return false;
 
-  pLoop->vertices.erase(pLoop->vertices.begin() + m_index);
+  pLoop->vertices.erase(m_index);
 
   return true;
 }
@@ -234,7 +234,7 @@ bool Action_RemoveVertex::Undo()
   if (m_index >= pLoop->vertices.size())
     return false;
 
-  pLoop->vertices.insert(pLoop->vertices.begin() + m_index, m_oldPoint);
+  pLoop->vertices.insert(m_index, m_oldPoint);
 
   return true;
 }

@@ -237,7 +237,7 @@ void OpenGLRenderer::DrawLineGroup(std::vector<xn::seg> const &segments, float t
       if (!PointExists(points, s.GetP1()))
         points.push_back(s.GetP1());
     }
-    RENDERER(FilledCircleRenderer)->Draw(points, thickness, clr, flags);
+    RENDERER(FilledCircleRenderer)->Draw(points, thickness * 1.9f, clr, flags);
   }
 }
 

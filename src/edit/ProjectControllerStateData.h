@@ -30,6 +30,7 @@ struct ProjectControllerStateData
 {
   xn::mat33 T_World_View;
   xn::mat33 T_View_Screen;
+  xn::mat33 T_Screen_View;
   xn::mat33 T_World_Screen;
   xn::mat33 T_Screen_World;
   SceneState sceneState;

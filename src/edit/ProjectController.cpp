@@ -46,6 +46,7 @@ ProjectController::ProjectController(Project *pProject)
   m_pStateData = new ProjectControllerStateData{};
   m_pStateData->T_World_View.Identity();
   m_pStateData->T_View_Screen.Identity();
+  m_pStateData->T_Screen_View.Identity();
   m_pStateData->T_World_Screen.Identity();
   m_pStateData->T_Screen_World.Identity();
   m_pStateData->pProject = pProject;
@@ -65,6 +66,7 @@ void ProjectController::SetMatrices(xn::mat33 const &T_World_View, xn::mat33 con
 {
   m_pStateData->T_World_View = T_World_View;
   m_pStateData->T_View_Screen = T_View_Screen;
+  m_pStateData->T_Screen_View = T_View_Screen.GetInverse();
   m_pStateData->T_World_Screen = T_World_View * T_View_Screen;
   m_pStateData->T_Screen_World = m_pStateData->T_World_Screen.GetInverse();
 }
@@ -123,12 +125,12 @@ void  ProjectController::DrawFrontSprites(Renderer *pRenderer)
     }
   }
 
-  //m_pState->UpdateScene(pScene);
+  m_pState->Render(pRenderer);
 
   SetRotateWidget();
   if (m_pStateData->sceneState.pRotate != nullptr)
   {
-    pRenderer->SetViewMatrix(m_pStateData->T_View_Screen.GetInverse());
+    pRenderer->SetViewMatrix(m_pStateData->T_Screen_View);
     m_pStateData->sceneState.pRotate->Draw(pRenderer);
   }
 }

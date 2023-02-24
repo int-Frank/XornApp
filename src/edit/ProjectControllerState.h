@@ -74,11 +74,14 @@ public:
 
   ProjectControllerState *MouseMove(uint32_t modState, xn::vec2 const &) override;
   ProjectControllerState *MouseUp(uint32_t modState, xn::vec2 const &) override;
-  void Render(Renderer *) override {}
+  void Render(Renderer *) override;
 
 private:
 
-  xn::vec2 m_mouseAnchor;
+  xn::aabb m_box;
+
+  xn::vec2 m_mouse0;
+  xn::vec2 m_mouse1;
 };
 
 class ProjectControllerStateMoveSelected : public ProjectControllerState

@@ -199,7 +199,7 @@ std::ostream &operator<<(std::ostream &os, xn::Transform const &obj)
 // PolygonLoop IO
 //-------------------------------------------------------------------
 
-bool ReadLoop(std::istream &is, std::vector<xn::vec2> &loop)
+bool ReadLoop(std::istream &is, Dg::DynamicArray<xn::vec2> &loop)
 {
   ASSERT_NEXT('[');
 
@@ -217,7 +217,7 @@ bool ReadLoop(std::istream &is, std::vector<xn::vec2> &loop)
   return true;
 }
 
-std::ostream &operator<<(std::ostream &os, std::vector<xn::vec2> const &obj)
+std::ostream &operator<<(std::ostream &os, Dg::DynamicArray<xn::vec2> const &obj)
 {
   os << "[";
 
@@ -312,7 +312,7 @@ std::ostream& operator<<(std::ostream& os, LoopCollection const &obj)
 {
   size_t i = 0;
   os << '[';
-  for (auto it = obj.m_loopMap.cbegin(); it != obj.m_loopMap.cend(); it++, i++)
+  for (auto it = obj.m_loopMap.cbegin_rand(); it != obj.m_loopMap.cend_rand(); it++, i++)
   {
     os << it->second;
     if (i + 1 != obj.m_loopMap.size())

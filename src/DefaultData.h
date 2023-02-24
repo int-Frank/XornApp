@@ -1,10 +1,10 @@
 #ifndef DEFAULTDATA_H
 #define DEFAULTDATA_H
 
-#include <vector>
 #include <string>
 #include "Common.h"
 #include "xnColour.h"
+#include "DgDynamicArray.h"
 
 struct RenderData
 {
@@ -45,7 +45,7 @@ struct DefaultData
   std::string projectsPath;
   std::string pluginsPath;
 
-  std::vector<xn::vec2> defaultBoundary;
+  Dg::DynamicArray<xn::vec2> defaultBoundary;
   std::string defaultProjectName;
 
   ImVec2 buttonSize;

@@ -170,23 +170,3 @@ void ProjectControllerStateIdle::Redo()
 {
   m_pStateData->pActions->Redo();
 }
-
-//------------------------------------------------------------------------
-// ProjectControllerStateMultiSelect
-//------------------------------------------------------------------------
-
-ProjectControllerStateMultiSelect::ProjectControllerStateMultiSelect(ProjectControllerStateData *pState, xn::vec2 const &mouseAnchor)
-  : ProjectControllerState(pState)
-{
-
-}
-
-ProjectControllerState *ProjectControllerStateMultiSelect::MouseMove(uint32_t modState, xn::vec2 const &)
-{
-  return nullptr;
-}
-
-ProjectControllerState *ProjectControllerStateMultiSelect::MouseUp(uint32_t modState, xn::vec2 const &)
-{
-  return nullptr;
-}
