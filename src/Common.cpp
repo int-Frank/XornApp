@@ -7,6 +7,13 @@
 #include "DgMatrix33.h"
 #include "Common.h"
 
+xn::vec2 Multiply(xn::vec2 const &v, xn::mat33 const &m, float w)
+{
+  xn::vec3 v3(v.x(), v.y(), w);
+  v3 = v3 * m;
+  return xn::vec2(v3.x(), v3.y());
+}
+
 bool FileExists(std::string const &filePath)
 {
   std::ifstream f(filePath.c_str());

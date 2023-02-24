@@ -6,6 +6,7 @@
 #include "DgQueryPointSegment.h"
 #include "ActionList.h"
 #include "XornActions.h"
+#include "IRotateWidget.h"
 
 //------------------------------------------------------------------------
 // ProjectControllerStateIdle
@@ -30,8 +31,14 @@ ProjectControllerState *ProjectControllerStateIdle::MouseDown(uint32_t modState,
 {
   m_pStateData->sceneState.hoverPolygon = INVALID_POLYGON_ID;
 
-  if (m_pStateData->sceneState.pRotate != nullptr && m_pStateData->sceneState.pRotate->MouseDown(mouse))
-    return new ProjectControllerStateRotate(m_pStateData);
+  if (m_pStateData->sceneState.pRotate != nullptr)
+  {
+    auto button = m_pStateData->sceneState.pRotate->MouseDown(mouse);
+    if (button == IRotateWidget::Button::Rotate)
+      return new ProjectControllerStateRotate(m_pStateData);
+    if (button == IRotateWidget::Button::Move)
+      return new ProjectControllerStateMoveRotateWidget(m_pStateData, mouse);
+  }
 
   uint32_t activeVertex;
   PolygonID activeVertexPolygon;

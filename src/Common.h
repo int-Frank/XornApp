@@ -19,6 +19,8 @@ enum HoverState
 // Helper functions
 //--------------------------------------------------------------------------------
 
+xn::vec2 Multiply(xn::vec2 const &, xn::mat33 const &, float w = 1.f);
+
 bool FileExists(std::string const &);
 std::vector<std::string> GetFilesFromFolder(std::string const &path, std::string const &ext = "");
 std::vector<std::string> GetDirectoriesFromFolder(std::string const &path);

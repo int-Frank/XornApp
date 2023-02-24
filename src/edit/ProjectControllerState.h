@@ -19,6 +19,8 @@ public:
 
   }
 
+  void SetRotateWidget();
+
   virtual ProjectControllerState *MouseMove(uint32_t modState, xn::vec2 const &) { return nullptr; }
   virtual ProjectControllerState *MouseDown(uint32_t modState, xn::vec2 const &) { return nullptr; }
   virtual ProjectControllerState *MouseUp(uint32_t modState, xn::vec2 const &) { return nullptr; }
@@ -124,6 +126,22 @@ public:
   ProjectControllerState *MouseMove(uint32_t modState, xn::vec2 const &) override;
   ProjectControllerState *MouseUp(uint32_t modState, xn::vec2 const &) override;
 
+private:
+
+  ActionID m_actionID;
+};
+
+class ProjectControllerStateMoveRotateWidget : public ProjectControllerState
+{
+public:
+
+  ProjectControllerStateMoveRotateWidget(ProjectControllerStateData *, xn::vec2 const &offset);
+  ProjectControllerState *MouseMove(uint32_t modState, xn::vec2 const &) override;
+  ProjectControllerState *MouseUp(uint32_t modState, xn::vec2 const &) override;
+
+private:
+
+  xn::vec2 m_offset;
 };
 
 #endif

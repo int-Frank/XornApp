@@ -3,6 +3,7 @@
 
 #include "ProjectControllerState.h"
 #include "Renderer.h"
+#include "IRotateWidget.h"
 
 ProjectControllerStateMultiSelect::ProjectControllerStateMultiSelect(ProjectControllerStateData *pState, xn::vec2 const &mouseAnchor)
   : ProjectControllerState(pState)
@@ -60,14 +61,15 @@ ProjectControllerState *ProjectControllerStateMultiSelect::MouseUp(uint32_t modS
 
   for (auto it = m_pStateData->pProject->loops.Begin(); it != m_pStateData->pProject->loops.End(); it++)
   {
+    auto polygon = it->second.GetTransformed();
     if (m_pStateData->sceneState.selectedPolygons.exists(it->first))
       continue;
 
     bool inside = true;
-    for (size_t i = 0; i < it->second.vertices.size(); i++)
+    for (auto it_vert = polygon.cPointsBegin(); it_vert != polygon.cPointsEnd(); it_vert++)
     {
       Dg::TI2PointAABB<float> query;
-      auto result = query(it->second.vertices[i], m_box);
+      auto result = query(*it_vert, m_box);
       if (!result.isIntersecting)
       {
         inside = false;
@@ -78,5 +80,6 @@ ProjectControllerState *ProjectControllerStateMultiSelect::MouseUp(uint32_t modS
       m_pStateData->sceneState.selectedPolygons.insert(it->first);
   }
 
+  SetRotateWidget();
   return new ProjectControllerStateIdle(m_pStateData);
 }

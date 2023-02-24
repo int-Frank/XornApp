@@ -14,8 +14,11 @@ class RotateWidget : public IRotateWidget
     float ringDiameter;
     float ringThickness;
 
-    xn::Colour buttonColour[HS_COUNT];
-    float buttonRadius;
+    xn::Colour rotateButtonColour;
+    float rotateButtonSize;
+
+    xn::Colour moveButtonColour;
+    float moveButtonSize;
 
     xn::Colour wombleColour;
     float wombleRadius;
@@ -27,26 +30,29 @@ public:
 
   void Draw(xn::IRenderer *) override;
   void SetPosition(xn::vec2 const &position) override;
-  float SetMouse(xn::vec2 const &) override;
-  bool MouseDown(xn::vec2 const &) override;
+  xn::vec2 GetPosition() const override;
+  void SetMouse(xn::vec2 const &) override;
+  Button MouseDown(xn::vec2 const &) override;
   void Unclick(xn::vec2 const &) override;
+  float Angle() const override;
 
 private:
 
-  float Angle() const;
-  bool MouseHover(xn::vec2 const &);
+  bool MouseHoverRotate(xn::vec2 const &);
+  bool MouseHoverMove(xn::vec2 const &);
   xn::vec2 ButtonPosition() const;
 
   xn::vec2 m_position;
   xn::vec2 m_womble;
-  HoverState m_state;
+  bool m_isRotating;
   static Aspect const s_state;
 };
 
 RotateWidget::Aspect const RotateWidget::s_state =
 {
-  0x55FFFF55, 100.f, 4.f,
-  {0xFF7272F8, 0xFF8686F8, 0xFF8686F8}, 15.f,
+  0x55FFFF55, 80.f, 4.f,
+  0xFF7272F8, 12.f,
+  0xFF7272F8, 8.f,
   0xFF00FF00, 10.f
 };
 
@@ -58,7 +64,7 @@ IRotateWidget *CreateRotateWidget(xn::vec2 const &anchor)
 RotateWidget::RotateWidget(xn::vec2 const &anchor)
   : m_position(anchor)
   , m_womble()
-  , m_state(HS_None)
+  , m_isRotating(false)
 {
 
 }
@@ -66,6 +72,13 @@ RotateWidget::RotateWidget(xn::vec2 const &anchor)
 void RotateWidget::SetPosition(xn::vec2 const &position)
 {
   m_position = position;
+  if (!m_isRotating)
+    m_womble = m_position + xn::vec2(s_state.ringDiameter / 2.f, 0.f);
+}
+
+xn::vec2 RotateWidget::GetPosition() const
+{
+  return m_position;
 }
 
 void RotateWidget::Draw(xn::IRenderer *pRenderer)
@@ -76,10 +89,14 @@ void RotateWidget::Draw(xn::IRenderer *pRenderer)
     s_state.ringColour, 0);
 
   pRenderer->DrawFilledCircle(ButtonPosition(),
-    s_state.buttonRadius,
-    s_state.buttonColour[m_state], 0);
+    s_state.rotateButtonSize,
+    s_state.rotateButtonColour, 0);
 
-  if (m_state == HS_Active)
+  pRenderer->DrawFilledCircle(m_position,
+    s_state.moveButtonSize,
+    s_state.moveButtonColour, 0);
+
+  if (m_isRotating)
   {
     pRenderer->DrawFilledCircle(m_womble,
       s_state.wombleRadius,
@@ -87,9 +104,9 @@ void RotateWidget::Draw(xn::IRenderer *pRenderer)
   }
 }
 
-float RotateWidget::SetMouse(xn::vec2 const &mouse)
+void RotateWidget::SetMouse(xn::vec2 const &mouse)
 {
-  if (m_state == HS_Active)
+  if (m_isRotating)
   {
     xn::vec2 v = mouse - m_position;
     if (v.IsZero())
@@ -97,36 +114,33 @@ float RotateWidget::SetMouse(xn::vec2 const &mouse)
     v = Dg::Normalize(v);
     m_womble = m_position + s_state.ringDiameter / 2.f * v;
   }
-  else if (MouseHover(mouse))
-  {
-    m_state = HS_Hover;
-  }
-  else
-  {
-    m_state = HS_None;
-  }
-  return Angle();
 }
 
-bool RotateWidget::MouseDown(xn::vec2 const &mouse)
+RotateWidget::Button RotateWidget::MouseDown(xn::vec2 const &mouse)
 {
-  if (!MouseHover(mouse))
-    return false;
+  if (MouseHoverRotate(mouse))
+  {
+    m_isRotating = true;
+    return Button::Rotate;
+  }
 
-  m_state = HS_Active;
-  return true;
+  if (MouseHoverMove(mouse))
+    return Button::Move;
+
+  return Button::None;
 }
 
 void RotateWidget::Unclick(xn::vec2 const &mouse)
 {
-  m_state = HS_None;
+  m_isRotating = false;
   m_womble = ButtonPosition();
   SetMouse(mouse);
 }
 
 float RotateWidget::Angle() const
 {
-  return atan2f(m_womble.y(), m_womble.x());
+  xn::vec2 v = m_womble - m_position;
+  return atan2f(v.y(), v.x());
 }
 
 xn::vec2 RotateWidget::ButtonPosition() const
@@ -134,10 +148,18 @@ xn::vec2 RotateWidget::ButtonPosition() const
   return m_position + xn::vec2(s_state.ringDiameter / 2.f, 0.f);
 }
 
-bool RotateWidget::MouseHover(xn::vec2 const &mouse)
+bool RotateWidget::MouseHoverRotate(xn::vec2 const &mouse)
 {
   xn::vec2 offset = mouse - ButtonPosition();
-  float radiusSq = s_state.buttonRadius;
+  float radiusSq = s_state.rotateButtonSize / 2.f;
+  radiusSq *= radiusSq;
+  return Dg::MagSq(offset) < radiusSq;
+}
+
+bool RotateWidget::MouseHoverMove(xn::vec2 const &mouse)
+{
+  xn::vec2 offset = mouse - m_position;
+  float radiusSq = s_state.rotateButtonSize / 2.f;
   radiusSq *= radiusSq;
   return Dg::MagSq(offset) < radiusSq;
 }
