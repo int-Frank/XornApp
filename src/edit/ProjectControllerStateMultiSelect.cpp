@@ -55,9 +55,14 @@ ProjectControllerState *ProjectControllerStateMultiSelect::MouseUp(uint32_t modS
   m_box = xn::aabb(m_mouse0, m_mouse0);
   m_box += m_mouse1;
 
-  m_pStateData->sceneState.selectedPolygons.clear();
+  if ((modState & xn::MK_shift) == 0)
+    m_pStateData->sceneState.selectedPolygons.clear();
+
   for (auto it = m_pStateData->pProject->loops.Begin(); it != m_pStateData->pProject->loops.End(); it++)
   {
+    if (m_pStateData->sceneState.selectedPolygons.exists(it->first))
+      continue;
+
     bool inside = true;
     for (size_t i = 0; i < it->second.vertices.size(); i++)
     {
