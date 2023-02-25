@@ -16,7 +16,6 @@ public:
   SceneState()
     : selectedPolygons()
     , pRotate(nullptr)
-    , hoverPolygon(INVALID_POLYGON_ID)
   {
 
   }
@@ -24,7 +23,6 @@ public:
   Dg::Set_AVL<PolygonID> selectedPolygons;
   IRotateWidget *pRotate;
   xn::vec2 rotateWorldPosition;
-  PolygonID hoverPolygon;
 };
 
 struct ProjectControllerStateData

@@ -22,10 +22,7 @@ ProjectControllerState *ProjectControllerStateMoveSelected::MouseMove(uint32_t m
     m_pStateData->pActions->Undo();
   }
 
-  xn::vec2 vector = mouse - m_mouseAnchor;
-  xn::vec3 vector3 = Dg::ToVector3(vector, 0.f);
-  vector3 = vector3 * m_pStateData->T_Screen_World;
-  vector = Dg::ToVector2(vector3);
+  xn::vec2 vector = Multiply(mouse - m_mouseAnchor, m_pStateData->T_Screen_World, 0.f);
 
   ActionGroup *pActionGroup = new ActionGroup();
   ActionData actionData(m_pStateData->pProject);

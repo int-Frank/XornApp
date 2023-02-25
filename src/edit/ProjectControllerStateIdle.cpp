@@ -6,14 +6,11 @@
 #include "DgQueryPointSegment.h"
 #include "ActionList.h"
 #include "XornActions.h"
-#include "IRotateWidget.h"
-
-//------------------------------------------------------------------------
-// ProjectControllerStateIdle
-//------------------------------------------------------------------------
+#include "Renderer.h"
 
 ProjectControllerStateIdle::ProjectControllerStateIdle(ProjectControllerStateData *pData)
   : ProjectControllerState(pData)
+  , m_hoverPolygon(INVALID_POLYGON_ID)
 {
 
 }
@@ -22,14 +19,13 @@ ProjectControllerState *ProjectControllerStateIdle::MouseMove(uint32_t modState,
 {
   if (m_pStateData->sceneState.pRotate != nullptr)
     m_pStateData->sceneState.pRotate->SetMouse(mouse);
-
-  m_pStateData->sceneState.hoverPolygon = PolygonUnderMouse(mouse);
+  m_hoverPolygon = PolygonUnderMouse(mouse);
   return nullptr;
 }
 
 ProjectControllerState *ProjectControllerStateIdle::MouseDown(uint32_t modState, xn::vec2 const &mouse)
 {
-  m_pStateData->sceneState.hoverPolygon = INVALID_POLYGON_ID;
+  m_hoverPolygon = INVALID_POLYGON_ID;
 
   if (m_pStateData->sceneState.pRotate != nullptr)
   {
@@ -46,24 +42,24 @@ ProjectControllerState *ProjectControllerStateIdle::MouseDown(uint32_t modState,
   if (VertexUnderMouse(mouse, &activeVertexPolygon, &activeVertex))
     return new ProjectControllerStateMoveVertex(m_pStateData, mouse, activeVertexPolygon, activeVertex);
 
-  m_pStateData->sceneState.hoverPolygon = PolygonUnderMouse(mouse);
-  if (m_pStateData->sceneState.hoverPolygon != INVALID_POLYGON_ID)
+  m_hoverPolygon = PolygonUnderMouse(mouse);
+  if (m_hoverPolygon != INVALID_POLYGON_ID)
   {
-    bool selectedExists = m_pStateData->sceneState.selectedPolygons.exists(m_pStateData->sceneState.hoverPolygon);
+    bool selectedExists = m_pStateData->sceneState.selectedPolygons.exists(m_hoverPolygon);
     if ((modState & xn::MK_shift) != 0)
     {
       if (selectedExists)
-        m_pStateData->sceneState.selectedPolygons.erase(m_pStateData->sceneState.hoverPolygon);
+        m_pStateData->sceneState.selectedPolygons.erase(m_hoverPolygon);
       else
-        m_pStateData->sceneState.selectedPolygons.insert(m_pStateData->sceneState.hoverPolygon);
+        m_pStateData->sceneState.selectedPolygons.insert(m_hoverPolygon);
       return nullptr;
     }
 
     if (selectedExists)
-      return new ProjectControllerStateTransition(m_pStateData, mouse, m_pStateData->sceneState.hoverPolygon);
+      return new ProjectControllerStateTransition(m_pStateData, mouse, m_hoverPolygon);
 
     m_pStateData->sceneState.selectedPolygons.clear();
-    m_pStateData->sceneState.selectedPolygons.insert(m_pStateData->sceneState.hoverPolygon);
+    m_pStateData->sceneState.selectedPolygons.insert(m_hoverPolygon);
     return new ProjectControllerStateMoveSelected(m_pStateData, mouse);
   }
 
@@ -78,11 +74,9 @@ PolygonID ProjectControllerStateIdle::PolygonUnderMouse(xn::vec2 const &mouse) c
     for (auto edge = loop.cEdgesBegin(); edge != loop.cEdgesEnd(); edge++)
     {
       auto seg = edge.ToSegment();
-      xn::vec3 p0_3(seg.GetP0().x(), seg.GetP0().y(), 1.f);
-      xn::vec3 p1_3(seg.GetP1().x(), seg.GetP1().y(), 1.f);
 
-      auto p0 = p0_3 * m_pStateData->T_World_Screen;
-      auto p1 = p1_3 * m_pStateData->T_World_Screen;
+      xn::vec2 p0 = Multiply(seg.GetP0(), m_pStateData->T_World_Screen);
+      xn::vec2 p1 = Multiply(seg.GetP1(), m_pStateData->T_World_Screen);
 
       seg.Set(p0, p1);
 
@@ -111,10 +105,7 @@ bool ProjectControllerStateIdle::VertexUnderMouse(xn::vec2 const &mouse, Polygon
 
     for (uint32_t i = 0; i < (uint32_t)loop_it->second.vertices.size(); i++)
     {
-      auto vertex = loop_it->second.vertices[i];
-      xn::vec3 vertex3(vertex.x(), vertex.y(), 1.f);
-      vertex3 = vertex3 * (loop_it->second.T_Model_World * m_pStateData->T_World_Screen);
-      vertex = xn::vec2(vertex3.x(), vertex3.y());
+      xn::vec2 vertex = Multiply(loop_it->second.vertices[i], loop_it->second.T_Model_World * m_pStateData->T_World_Screen);
 
       float dist = Dg::MagSq(vertex - mouse);
       float threshold = DefaultData::data.renderData.vertexAspect.radius;
@@ -143,12 +134,10 @@ bool ProjectControllerStateIdle::SplitVertexUnderMouse(xn::vec2 const &mouse, Po
       auto vertex = loop_it->second.vertices[i];
       auto vNext = loop_it->second.vertices[(i + 1) % loop_it->second.vertices.size()];
 
-      xn::vec2 centreWorld = (vertex + vNext) / 2.f;
-      xn::vec3 centreScreen3(centreWorld.x(), centreWorld.y(), 1.f);
-      centreScreen3 = centreScreen3 * (loop_it->second.T_Model_World * m_pStateData->T_World_Screen);
-      xn::vec2 centreScreen = xn::vec2(centreScreen3.x(), centreScreen3.y());
+      xn::vec2 pointWorld = (vertex + vNext) / 2.f;
+      xn::vec2 pointScreen = Multiply(pointWorld, loop_it->second.T_Model_World * m_pStateData->T_World_Screen);
 
-      float dist = Dg::MagSq(centreScreen - mouse);
+      float dist = Dg::MagSq(pointScreen - mouse);
       float threshold = DefaultData::data.renderData.splitVertexAspect.radius;
       threshold *= threshold;
       if (dist < threshold)
@@ -156,7 +145,7 @@ bool ProjectControllerStateIdle::SplitVertexUnderMouse(xn::vec2 const &mouse, Po
         ActionData actionData(m_pStateData->pProject);
 
         auto index = (i + 1) % loop_it->second.vertices.size();
-        auto pAction = new Action_AddVertex(actionData, loop_it->first, index, centreWorld);
+        auto pAction = new Action_AddVertex(actionData, loop_it->first, index, pointWorld);
         m_pStateData->pActions->AddAndExecute(pAction);
         *pPolygonID = loop_it->first;
         *pVertexIndex = index;
@@ -166,6 +155,17 @@ bool ProjectControllerStateIdle::SplitVertexUnderMouse(xn::vec2 const &mouse, Po
   }
 
   return nullptr;
+}
+
+void ProjectControllerStateIdle::Render(Renderer *pRenderer)
+{
+  if (m_hoverPolygon == INVALID_POLYGON_ID || m_pStateData->sceneState.selectedPolygons.exists(m_hoverPolygon))
+    return;
+
+  auto polygon = m_pStateData->pProject->loops.Get(m_hoverPolygon)->GetTransformed();
+  pRenderer->DrawPolygon(polygon,
+    DefaultData::data.renderData.polygonAspect[HS_Hover].thickness,
+    DefaultData::data.renderData.polygonAspect[HS_Hover].colour, 0);
 }
 
 void ProjectControllerStateIdle::Undo() 

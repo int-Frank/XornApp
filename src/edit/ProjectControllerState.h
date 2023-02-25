@@ -42,6 +42,8 @@ public:
 
   ProjectControllerState *MouseMove(uint32_t modState, xn::vec2 const &) override;
   ProjectControllerState *MouseDown(uint32_t modState, xn::vec2 const &) override;
+  
+  void Render(Renderer *);
 
   void Undo() override;
   void Redo() override;
@@ -51,6 +53,8 @@ private:
   PolygonID PolygonUnderMouse(xn::vec2 const &) const;
   bool VertexUnderMouse(xn::vec2 const &, PolygonID *, uint32_t *) const;
   bool SplitVertexUnderMouse(xn::vec2 const &, PolygonID *, uint32_t *) const;
+
+  PolygonID m_hoverPolygon;
 };
 
 class ProjectControllerStateTransition : public ProjectControllerState

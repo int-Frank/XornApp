@@ -14,14 +14,9 @@ ProjectControllerStateMoveVertex::ProjectControllerStateMoveVertex(ProjectContro
   , m_polygonID(polygonID)
   , m_index(vertexIndex)
 {
-  xn::vec2 originalPoint = m_pStateData->pProject->loops.Get(polygonID)->vertices[vertexIndex];
-  xn::vec2 screenPoint = originalPoint;
-  xn::vec3 screenPoint3 = Dg::ToVector3(screenPoint, 1.f);
   auto pLoop = m_pStateData->pProject->loops.Get(m_polygonID);
-  xn::mat33 m = pLoop->T_Model_World * m_pStateData->T_World_Screen;
-  screenPoint3 = screenPoint3 * m;
-  screenPoint = Dg::ToVector2(screenPoint3);
-
+  xn::vec2 originalPoint = m_pStateData->pProject->loops.Get(polygonID)->vertices[vertexIndex];
+  xn::vec2 screenPoint = Multiply(originalPoint, pLoop->T_Model_World * m_pStateData->T_World_Screen);
   m_offset = mousePosition - screenPoint;
 }
 
@@ -35,13 +30,11 @@ ProjectControllerState *ProjectControllerStateMoveVertex::MouseMove(uint32_t mod
     m_pStateData->pActions->Undo();
   }
 
-  xn::vec2 originalPoint = m_pStateData->pProject->loops.Get(m_polygonID)->vertices[m_index];
-  xn::vec2 point = mouse - m_offset;
-  xn::vec3 point3 = Dg::ToVector3(point, 1.f);
   auto pLoop = m_pStateData->pProject->loops.Get(m_polygonID);
-  xn::mat33 m = pLoop->T_Model_World * m_pStateData->T_World_Screen;
-  point3 = point3 * m.GetInverse();
-  point = Dg::ToVector2(point3);
+
+  xn::mat33 m = xn::mat33(pLoop->T_Model_World * m_pStateData->T_World_Screen).GetInverse();
+  xn::vec2 originalPoint = m_pStateData->pProject->loops.Get(m_polygonID)->vertices[m_index];
+  xn::vec2 point = Multiply(mouse - m_offset, m);
 
   ActionData actionData(m_pStateData->pProject);
   auto pAction = new Action_MoveVertex(actionData, m_polygonID, m_index, originalPoint, point);

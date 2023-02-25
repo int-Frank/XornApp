@@ -96,17 +96,18 @@ void ProjectController::MouseUp(uint32_t modState, xn::vec2 const &p)
 void  ProjectController::DrawFrontSprites(Renderer *pRenderer)
 {
   pRenderer->SetViewMatrix(m_pStateData->T_World_View);
+
+  std::vector<xn::seg> edges;
+  std::vector<xn::vec2> vertices;
+  std::vector<xn::vec2> midVertices;
+
   for (auto it = m_pStateData->pProject->loops.Begin(); it != m_pStateData->pProject->loops.End(); it++)
   {
     if (m_pStateData->sceneState.selectedPolygons.exists(it->first))
     {
       auto polygon = it->second.GetTransformed();
-      pRenderer->DrawPolygon(polygon,
-        DefaultData::data.renderData.polygonAspect[HS_Active].thickness,
-        DefaultData::data.renderData.polygonAspect[HS_Active].colour, 0);
-
-      std::vector<xn::vec2> vertices;
-      std::vector<xn::vec2> midVertices;
+      for (auto edge_it = polygon.cEdgesBegin(); edge_it != polygon.cEdgesEnd(); edge_it++)
+        edges.push_back(edge_it.ToSegment());
 
       for (auto edge_it = polygon.cEdgesBegin(); edge_it != polygon.cEdgesEnd(); edge_it++)
       {
@@ -114,16 +115,20 @@ void  ProjectController::DrawFrontSprites(Renderer *pRenderer)
         midVertices.push_back(seg.GetCenter());
         vertices.push_back(seg.GetP0());
       }
-
-      pRenderer->DrawFilledCircleGroup(vertices,
-        DefaultData::data.renderData.vertexAspect.radius,
-        DefaultData::data.renderData.vertexAspect.colour, 0);
-
-      pRenderer->DrawFilledCircleGroup(midVertices,
-        DefaultData::data.renderData.splitVertexAspect.radius,
-        DefaultData::data.renderData.splitVertexAspect.colour, 0);
     }
   }
+
+  pRenderer->DrawLineGroup(edges,
+    DefaultData::data.renderData.polygonAspect[HS_Active].thickness,
+    DefaultData::data.renderData.polygonAspect[HS_Active].colour, 0);
+
+  pRenderer->DrawFilledCircleGroup(vertices,
+    DefaultData::data.renderData.vertexAspect.radius,
+    DefaultData::data.renderData.vertexAspect.colour, 0);
+
+  pRenderer->DrawFilledCircleGroup(midVertices,
+    DefaultData::data.renderData.splitVertexAspect.radius,
+    DefaultData::data.renderData.splitVertexAspect.colour, 0);
 
   m_pState->Render(pRenderer);
 
@@ -137,18 +142,20 @@ void  ProjectController::DrawFrontSprites(Renderer *pRenderer)
 void ProjectController::DrawBackSprites(Renderer *pRenderer)
 {
   pRenderer->SetViewMatrix(m_pStateData->T_World_View);
+  std::vector<xn::seg> edges;
   for (auto it = m_pStateData->pProject->loops.Begin(); it != m_pStateData->pProject->loops.End(); it++)
   {
     if (m_pStateData->sceneState.selectedPolygons.exists(it->first))
       continue;
 
     auto polygon = it->second.GetTransformed();
-    auto state = it->first == m_pStateData->sceneState.hoverPolygon ? HS_Hover : HS_None;
-
-    pRenderer->DrawPolygon(polygon,
-      DefaultData::data.renderData.polygonAspect[state].thickness,
-      DefaultData::data.renderData.polygonAspect[state].colour, 0);
+    for (auto edge_it = polygon.cEdgesBegin(); edge_it != polygon.cEdgesEnd(); edge_it++)
+      edges.push_back(edge_it.ToSegment());
   }
+
+  pRenderer->DrawLineGroup(edges,
+    DefaultData::data.renderData.polygonAspect[HS_None].thickness,
+    DefaultData::data.renderData.polygonAspect[HS_None].colour, 0);
 }
 
 void ProjectController::Undo()

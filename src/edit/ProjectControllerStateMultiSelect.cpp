@@ -43,15 +43,8 @@ ProjectControllerState *ProjectControllerStateMultiSelect::MouseMove(uint32_t mo
 
 ProjectControllerState *ProjectControllerStateMultiSelect::MouseUp(uint32_t modState, xn::vec2 const &mouse)
 {
-  m_mouse1 = mouse;
-
-  xn::vec3 p3 = Dg::ToVector3(m_mouse0, 1.f);
-  p3 = p3 * m_pStateData->T_Screen_World;
-  m_mouse0 = Dg::ToVector2(p3);
-
-  p3 = Dg::ToVector3(m_mouse1, 1.f);
-  p3 = p3 * m_pStateData->T_Screen_World;
-  m_mouse1 = Dg::ToVector2(p3);
+  m_mouse1 = Multiply(mouse, m_pStateData->T_Screen_World);
+  m_mouse0 = Multiply(m_mouse0, m_pStateData->T_Screen_World);
 
   m_box = xn::aabb(m_mouse0, m_mouse0);
   m_box += m_mouse1;
