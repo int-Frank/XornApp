@@ -51,8 +51,7 @@ App::App()
   , m_isMouseDragging(false)
   , m_mousePositionAnchor(0.f, 0.f)
   , m_cameraPositionAnchor(0.f, 0.f)
-  , m_geometryDirty(true)
-  , m_projectDirty(false)
+  , m_projectDirty(true)
   , m_showDemoWindow(false)
   , m_shouldQuit(false)
 {
@@ -115,6 +114,8 @@ void App::Run()
       ImGui::ShowDemoWindow(&m_showDemoWindow);
 
     Render();
+
+    m_pProject->newGeometry = false;
   }
 }
 
@@ -256,7 +257,7 @@ void App::HandleModals()
 
 void App::HandleModules()
 {
-  if (m_geometryDirty)
+  if (m_pProject->newGeometry)
     m_scenePolygonLoops = m_pProject->loops.GetLoops();
 
   for (auto &kv : m_registeredModules)
@@ -264,7 +265,7 @@ void App::HandleModules()
     if (kv.second.pInstance == nullptr)
       continue;
 
-    if (m_geometryDirty)
+    if (m_pProject->newGeometry)
       kv.second.pInstance->SetGeometry(m_scenePolygonLoops);
 
     kv.second.pInstance->DoFrame(m_pUIContext);
@@ -272,7 +273,6 @@ void App::HandleModules()
     if (!kv.second.pInstance->IsOpen())
       kv.second.pPlugin->DestroyModule(&kv.second.pInstance);
   }
-  m_geometryDirty = false;
 }
 
 void App::LoadPlugins()
@@ -542,7 +542,6 @@ void App::OpenProject(std::string const &filePath)
   delete m_pProject;
   m_pProject = pNewProject;
   m_saveFile = filePath;
-  m_geometryDirty = true;
   m_projectDirty = false;
 
   FitViewToProject();
@@ -564,7 +563,6 @@ void App::ImportProject(std::string const &filePath)
   delete m_pProject;
   m_pProject = pNewProject;
   m_saveFile = filePath + ".json";
-  m_geometryDirty = true;
   m_projectDirty = false;
 
   FitViewToProject();
@@ -583,7 +581,6 @@ void App::NewProject()
 
   m_pProject->loops.Add(loop);
 
-  m_geometryDirty = true;
   m_projectDirty = true;
   m_saveFile.clear();
 

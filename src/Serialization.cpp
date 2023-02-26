@@ -327,6 +327,7 @@ bool Project::Read(std::istream &is)
     PEEK(c);
   } while (c != '}');
 
+  newGeometry = true;
   return true;
 }
 
@@ -350,6 +351,7 @@ bool Project::Read(std::string const &filePath)
   bool success = Read(ifs);
   if (!success)
     Clear();
+  newGeometry = true;
   return success;
 }
 

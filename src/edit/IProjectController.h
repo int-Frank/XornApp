@@ -14,6 +14,9 @@ public:
 
   virtual ~IProjectController() {}
 
+  virtual void EnableEditing() = 0;
+  virtual void DisableEditing() = 0;
+
   virtual void SetMatrices(xn::mat33 const &T_World_View, xn::mat33 const &T_View_Screen) = 0;
 
   virtual void MouseMove(uint32_t modState, xn::vec2 const &) = 0;

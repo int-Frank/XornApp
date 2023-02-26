@@ -14,6 +14,9 @@ public:
   ~ProjectController();
   ProjectController(Project *);
 
+  void EnableEditing() override;
+  void DisableEditing() override;
+
   void SetMatrices(xn::mat33 const &T_World_View, xn::mat33 const &T_View_Screen) override;
 
   void MouseMove(uint32_t modState, xn::vec2 const &) override;
@@ -58,6 +61,26 @@ ProjectController::~ProjectController()
   delete m_pStateData->pActions;
   delete m_pStateData;
   delete m_pState;
+}
+
+void ProjectController::DisableEditing()
+{
+  delete m_pState;
+  m_pStateData->pActions->Clear();
+  delete m_pStateData->sceneState.pRotate;
+  m_pStateData->sceneState.pRotate = nullptr;
+  m_pStateData->sceneState.selectedPolygons.clear();
+  m_pState = new ProjectControllerState(m_pStateData);
+}
+
+void ProjectController::EnableEditing()
+{
+  delete m_pState;
+  m_pStateData->pActions->Clear();
+  delete m_pStateData->sceneState.pRotate;
+  m_pStateData->sceneState.pRotate = nullptr;
+  m_pStateData->sceneState.selectedPolygons.clear();
+  m_pState = new ProjectControllerStateIdle(m_pStateData);
 }
 
 void ProjectController::SetMatrices(xn::mat33 const &T_World_View, xn::mat33 const &T_View_Screen)

@@ -75,6 +75,7 @@ public:
 
   void Clear();
 
+  bool newGeometry; // This is set to true whenever the project geoetry changes.
   LoopCollection loops;
 };
 

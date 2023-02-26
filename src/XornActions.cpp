@@ -51,6 +51,7 @@ bool Action_TransformPolygon::Do()
     return false;
 
   pLoop->T_Model_World = m_newTransform;
+  m_actionData.pProject->newGeometry = true;
   return true;
 }
 
@@ -62,6 +63,7 @@ bool Action_TransformPolygon::Undo()
     return false;
 
   pLoop->T_Model_World = m_oldTransform;
+  m_actionData.pProject->newGeometry = true;
   return true;
 }
 
@@ -134,6 +136,7 @@ bool Action_MoveVertex::Do()
     return false;
 
   pLoop->vertices[m_index] = m_newPoint;
+  m_actionData.pProject->newGeometry = true;
 
   return true;
 }
@@ -149,6 +152,7 @@ bool Action_MoveVertex::Undo()
     return false;
 
   pLoop->vertices[m_index] = m_oldPoint;
+  m_actionData.pProject->newGeometry = true;
 
   return true;
 }
@@ -177,6 +181,7 @@ bool Action_AddVertex::Do()
     return false;
 
   pLoop->vertices.insert(m_index, m_newPoint);
+  m_actionData.pProject->newGeometry = true;
 
   return true;
 }
@@ -192,6 +197,7 @@ bool Action_AddVertex::Undo()
     return false;
 
   pLoop->vertices.erase(m_index);
+  m_actionData.pProject->newGeometry = true;
 
   return true;
 }
@@ -220,6 +226,7 @@ bool Action_RemoveVertex::Do()
     return false;
 
   pLoop->vertices.erase(m_index);
+  m_actionData.pProject->newGeometry = true;
 
   return true;
 }
@@ -235,6 +242,7 @@ bool Action_RemoveVertex::Undo()
     return false;
 
   pLoop->vertices.insert(m_index, m_oldPoint);
+  m_actionData.pProject->newGeometry = true;
 
   return true;
 }

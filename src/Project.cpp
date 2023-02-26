@@ -107,6 +107,7 @@ std::vector<xn::PolygonLoop> LoopCollection::GetLoops() const
 //--------------------------------------------------------------------------------
 
 Project::Project()
+  : newGeometry(true)
 {
 
 }
@@ -114,6 +115,7 @@ Project::Project()
 void Project::Clear()
 {
   loops.Clear();
+  newGeometry = true;
 }
 
 bool Project::ReadFromOBJFile(std::string const &filePath)
@@ -171,6 +173,7 @@ bool Project::ReadFromOBJFile(std::string const &filePath)
         loops.Add(loop);
       }
     }
+    newGeometry = true;
   }
 
   return true;

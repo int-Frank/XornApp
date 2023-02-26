@@ -98,8 +98,7 @@ private:
   xn::vec2 m_mousePositionAnchor;
   xn::vec2 m_cameraPositionAnchor;
 
-  bool m_geometryDirty;  // To determine if we need to recalculate geometry for the modules
-  bool m_projectDirty;   // To determine if we should prompt to save project
+  bool m_projectDirty;  // To determine if we need to prompt to save the project
   bool m_showDemoWindow;
   bool m_shouldQuit;
 };
