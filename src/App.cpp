@@ -8,6 +8,8 @@
 #include "xnModule.h"
 #include "xnModuleInitData.h"
 
+#include "DgParser_INI.h"
+
 #include "App.h"
 #include "Logger.h"
 #include "Renderer.h"
@@ -90,6 +92,21 @@ App::App()
   m_pCanvas->SetSize(xn::vec2(DefaultData::data.windowWidth, DefaultData::data.windowHeight));
 
   NewProject();
+
+  Dg::Parser_INI parser;
+  if (parser.Parse("./config.ini") == Dg::ErrorCode::None)
+  {
+    std::string str;
+    if (parser.AsString("DefaultProject", &str))
+    {
+      std::string ext = std::filesystem::path(str).extension().string();
+      if (ext == ".json")
+        OpenProject("./projects/" + str);
+      else if (ext == ".obj")
+        ImportProject("./projects/" + str);
+    }
+  }
+
   LoadPlugins();
 }
 

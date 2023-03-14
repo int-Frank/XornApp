@@ -381,3 +381,4 @@ imgui.ini
 *.vcxproj
 *.sln
 build/
+/config.ini
