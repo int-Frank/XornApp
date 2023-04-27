@@ -42,7 +42,7 @@ LoopCollection::LoopCollection()
 
 PolygonID LoopCollection::Add(ScenePolygonLoop const &loop)
 {
-  m_loopMap.insert(Dg::Pair<PolygonID, ScenePolygonLoop>(m_nextID, loop));
+  m_loopMap.insert(m_nextID, loop);
   PolygonID id = m_nextID;
   m_nextID++;
   return id;
