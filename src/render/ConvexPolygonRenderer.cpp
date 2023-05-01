@@ -75,7 +75,7 @@ void ConvexPolygonRenderer::Draw(std::vector<xn::vec2> const &vertices, xn::Colo
   {
     indices.push_back(0);
     indices.push_back(i);
-    indices.push_back(j);
+    indices.push_back((int)j);
     i++;
   }
 
