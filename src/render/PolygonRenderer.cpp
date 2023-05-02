@@ -17,7 +17,7 @@ public:
   PolygonRenderer();
   ~PolygonRenderer();
 
-  void Draw(std::vector<xn::vec2> const &vertices, std::vector<int> const &polygonSizes, xn::Colour, uint32_t flags) override;
+  void Draw(xn::vec2 const *pVerts, size_t vertCount, int const *pPolys, size_t polyCount, xn::Colour, uint32_t flags) override;
   void SetViewMatrix(xn::mat33 const &) override;
   void SetResolution(xn::vec2 const &) override;
 
@@ -77,17 +77,17 @@ void PolygonRenderer::SetResolution(xn::vec2 const &sz)
   glUseProgram(prog);
 }
 
-void PolygonRenderer::Draw(std::vector<xn::vec2> const &_vertices, std::vector<int> const &polygonSizes, xn::Colour clr, uint32_t flags)
+void PolygonRenderer::Draw(xn::vec2 const *pVerts, size_t vertCount, int const *pPolys, size_t polyCount, xn::Colour clr, uint32_t flags)
 {
-  if (_vertices.empty())
+  if (vertCount == 0)
     return;
 
   std::vector<xn::vec2> vertices;
   xn::vec2 minPt(FLT_MAX, FLT_MAX);
   xn::vec2 maxPt(-FLT_MAX, -FLT_MAX);
-  for (size_t i = 0; i < _vertices.size(); i++)
+  for (size_t i = 0; i < vertCount; i++)
   {
-    xn::vec2 p0 = _vertices[i];
+    xn::vec2 p0 = pVerts[i];
 
     if (p0.x() > maxPt.x()) maxPt.x() = p0.x();
     if (p0.x() < minPt.x()) minPt.x() = p0.x();
@@ -109,7 +109,7 @@ void PolygonRenderer::Draw(std::vector<xn::vec2> const &_vertices, std::vector<i
   glGenBuffers(1, &vertexBuffer);
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, vertexBuffer);
   glBufferData(GL_SHADER_STORAGE_BUFFER,
-    vertices.size() * sizeof(xn::vec2),
+    vertCount * sizeof(xn::vec2),
     vertices.data(),
     GL_STATIC_DRAW);
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, vertexBuffer);
@@ -118,8 +118,8 @@ void PolygonRenderer::Draw(std::vector<xn::vec2> const &_vertices, std::vector<i
   glGenBuffers(1, &polygonBuffer);
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, polygonBuffer);
   glBufferData(GL_SHADER_STORAGE_BUFFER,
-    polygonSizes.size() * sizeof(int),
-    polygonSizes.data(),
+    polyCount * sizeof(int),
+    pPolys,
     GL_STATIC_DRAW);
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, polygonBuffer);
 
@@ -167,7 +167,7 @@ void PolygonRenderer::Draw(std::vector<xn::vec2> const &_vertices, std::vector<i
   loc = glGetUniformLocation(m_shaderProgram, "u_polygonCount");
   if (loc == -1)
     throw MyException("Failed to set vertex count for the polygon renderer.");
-  glUniform1i(loc, (int)polygonSizes.size());
+  glUniform1i(loc, (int)polyCount);
 
   glDrawArrays(GL_TRIANGLES, 0, 6);
 

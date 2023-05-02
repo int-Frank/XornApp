@@ -48,17 +48,17 @@ public:
 
   void BeginDraw() override;
   void DrawLine(xn::seg const &, float thickness, xn::Colour clr, uint32_t flags) override;
-  void DrawLineGroup(std::vector<xn::seg> const &, float thickness, xn::Colour clr, uint32_t flags) override;
+  void DrawLineGroup(xn::seg const *, size_t segCount, float thickness, xn::Colour clr, uint32_t flags) override;
   void DrawCircle(xn::vec2 const &centre, float size, float thickness, xn::Colour clr, uint32_t flags) override;
-  void DrawCircleGroup(std::vector<xn::vec2> const &centres, float size, float thickness, xn::Colour clr, uint32_t flags) override;
+  void DrawCircleGroup(xn::vec2 const *, size_t circleCount, float size, float thickness, xn::Colour clr, uint32_t flags) override;
   void DrawFilledCircle(xn::vec2 const &centre, float size, xn::Colour clr, uint32_t flags) override;
-  void DrawFilledCircleGroup(std::vector<xn::vec2> const &centres, float size, xn::Colour clr, uint32_t flags) override;
+  void DrawFilledCircleGroup(xn::vec2 const *, size_t circleCount, float size, xn::Colour clr, uint32_t flags) override;
   void DrawPolygon(xn::DgPolygon const &, float thickness, xn::Colour clr, uint32_t flags) override;
-  void DrawPolygon(std::vector<xn::vec2> const &vertices, float thickness, xn::Colour clr, uint32_t flags) override;
+  void DrawPolygon(xn::vec2 const *, size_t vertCount, float thickness, xn::Colour clr, uint32_t flags) override;
   void DrawFilledPolygon(xn::DgPolygon const &, xn::Colour clr, uint32_t flags) override;
   void DrawFilledPolygon(xn::PolygonWithHoles const &, xn::Colour clr, uint32_t flags) override;
-  void DrawFilledPolygon(std::vector<xn::vec2> const &vertices, std::vector<int> const &polygonSizes, xn::Colour clr, uint32_t flags) override;
-  void DrawFilledConvexPolygon(std::vector<xn::vec2> const &vertices, xn::Colour clr, uint32_t flags);
+  void DrawFilledPolygon(xn::vec2 const *, size_t vertCount, int const *, size_t polyCount, xn::Colour clr, uint32_t flags) override;
+  void DrawFilledConvexPolygon(xn::vec2 const *pVerts, size_t vertCount, xn::Colour clr, uint32_t flags) override;
   void EndDraw() override;
 
   void SetViewMatrix(xn::mat33 const &) override;
@@ -213,54 +213,51 @@ void OpenGLRenderer::EndDraw()
 
 void OpenGLRenderer::DrawLine(xn::seg const &seg, float thickness, xn::Colour clr, uint32_t flags)
 {
-  std::vector<xn::seg> segments{seg};
-  RENDERER(LineRenderer)->Draw(segments, thickness, clr, flags);
+  RENDERER(LineRenderer)->Draw(&seg, 1, thickness, clr, flags);
 
   if (flags & xn::RF_RoundedEndPoints)
   {
-    std::vector<xn::vec2> points = {seg.GetP0(), seg.GetP1()};
-    RENDERER(FilledCircleRenderer)->Draw(points, thickness, clr, flags);
+    xn::vec2 points[2] = {seg.GetP0(), seg.GetP1()};
+    RENDERER(FilledCircleRenderer)->Draw(points, 2, thickness, clr, flags);
   }
 }
 
-void OpenGLRenderer::DrawLineGroup(std::vector<xn::seg> const &segments, float thickness, xn::Colour clr, uint32_t flags)
+void OpenGLRenderer::DrawLineGroup(xn::seg const *pSegs, size_t segCount, float thickness, xn::Colour clr, uint32_t flags)
 {
-  RENDERER(LineRenderer)->Draw(segments, thickness, clr, flags);
+  RENDERER(LineRenderer)->Draw(pSegs, segCount, thickness, clr, flags);
 
   if (flags & xn::RF_RoundedEndPoints)
   {
     std::vector<xn::vec2> points;
-    for (auto const &s : segments)
+    for (size_t i = 0; i < segCount; i++)
     {
-      if (!PointExists(points, s.GetP0()))
-        points.push_back(s.GetP0());
-      if (!PointExists(points, s.GetP1()))
-        points.push_back(s.GetP1());
+      if (!PointExists(points, pSegs[i].GetP0()))
+        points.push_back(pSegs[i].GetP0());
+      if (!PointExists(points, pSegs[i].GetP1()))
+        points.push_back(pSegs[i].GetP1());
     }
-    RENDERER(FilledCircleRenderer)->Draw(points, thickness * 1.9f, clr, flags);
+    RENDERER(FilledCircleRenderer)->Draw(points.data(), points.size(), thickness * 1.9f, clr, flags);
   }
 }
 
 void OpenGLRenderer::DrawCircle(xn::vec2 const &centre, float size, float thickness, xn::Colour clr, uint32_t flags)
 {
-  std::vector<xn::vec2> positions{ centre };
-  RENDERER(CircleRenderer)->Draw(positions, size, thickness, clr, flags);
+  RENDERER(CircleRenderer)->Draw(&centre, 1, size, thickness, clr, flags);
 }
 
-void OpenGLRenderer::DrawCircleGroup(std::vector<xn::vec2> const &positions, float size, float thickness, xn::Colour clr, uint32_t flags)
+void OpenGLRenderer::DrawCircleGroup(xn::vec2 const *pPositions, size_t circleCount, float size, float thickness, xn::Colour clr, uint32_t flags)
 {
-  RENDERER(CircleRenderer)->Draw(positions, size, thickness, clr, flags);
+  RENDERER(CircleRenderer)->Draw(pPositions, circleCount, size, thickness, clr, flags);
 }
 
 void OpenGLRenderer::DrawFilledCircle(xn::vec2 const &centre, float size, xn::Colour clr, uint32_t flags)
 {
-  std::vector<xn::vec2> positions{ centre };
-  RENDERER(FilledCircleRenderer)->Draw(positions, size, clr, flags);
+  RENDERER(FilledCircleRenderer)->Draw(&centre, 1, size, clr, flags);
 }
 
-void OpenGLRenderer::DrawFilledCircleGroup(std::vector<xn::vec2> const &positions, float size, xn::Colour clr, uint32_t flags)
+void OpenGLRenderer::DrawFilledCircleGroup(xn::vec2 const *pPositions, size_t circleCount, float size, xn::Colour clr, uint32_t flags)
 {
-  RENDERER(FilledCircleRenderer)->Draw(positions, size, clr, flags);
+  RENDERER(FilledCircleRenderer)->Draw(pPositions, circleCount, size, clr, flags);
 }
 
 void OpenGLRenderer::DrawPolygon(xn::DgPolygon const &polygon, float thickness, xn::Colour clr, uint32_t flags)
@@ -268,30 +265,29 @@ void OpenGLRenderer::DrawPolygon(xn::DgPolygon const &polygon, float thickness, 
   std::vector<xn::seg> edges;
   for (auto edge_it = polygon.cEdgesBegin(); edge_it != polygon.cEdgesEnd(); edge_it++)
     edges.push_back(edge_it.ToSegment());
-  DrawLineGroup(edges, thickness, clr, flags);
+  DrawLineGroup(edges.data(), edges.size(), thickness, clr, flags);
 }
 
-void OpenGLRenderer::DrawPolygon(std::vector<xn::vec2> const &vertices, float thickness, xn::Colour clr, uint32_t flags)
+void OpenGLRenderer::DrawPolygon(xn::vec2 const *pVerts, size_t vertCount, float thickness, xn::Colour clr, uint32_t flags)
 {
   std::vector<xn::seg> edges;
-  for (size_t i = 0; i < vertices.size(); i++)
+  for (size_t i = 0; i < vertCount; i++)
   {
-    xn::vec2 p0 = vertices[i];
-    xn::vec2 p1 = vertices[(i + 1) % vertices.size()];
+    xn::vec2 p0 = pVerts[i];
+    xn::vec2 p1 = pVerts[(i + 1) % vertCount];
     edges.push_back(xn::seg(p0, p1));
   }
-  DrawLineGroup(edges, thickness, clr, flags);
+  DrawLineGroup(edges.data(), edges.size(), thickness, clr, flags);
 }
 
 void OpenGLRenderer::DrawFilledPolygon(xn::DgPolygon const &polygon, xn::Colour clr, uint32_t flags)
 {
-  std::vector<int> polygons;
-  polygons.push_back((int)polygon.Size());
+  int polySize = (int)polygon.Size();
 
   std::vector<xn::vec2> vertices;
   for (auto vert_it = polygon.cPointsBegin(); vert_it != polygon.cPointsEnd(); vert_it++)
     vertices.push_back(*vert_it);
-  DrawFilledPolygon(vertices, polygons, clr, flags);
+  DrawFilledPolygon(vertices.data(), vertices.size(), &polySize, 1, clr, flags);
 }
 
 void OpenGLRenderer::DrawFilledPolygon(xn::PolygonWithHoles const &polygon, xn::Colour clr, uint32_t flags)
@@ -304,17 +300,17 @@ void OpenGLRenderer::DrawFilledPolygon(xn::PolygonWithHoles const &polygon, xn::
     for (auto vert_it = loop_it->cPointsBegin(); vert_it != loop_it->cPointsEnd(); vert_it++)
       vertices.push_back(*vert_it);
   }
-  DrawFilledPolygon(vertices, polygons, clr, flags);
+  DrawFilledPolygon(vertices.data(), vertices.size(), polygons.data(), polygons.size(), clr, flags);
 }
 
-void OpenGLRenderer::DrawFilledPolygon(std::vector<xn::vec2> const &vertices, std::vector<int> const &polygonSizes, xn::Colour clr, uint32_t flags)
+void OpenGLRenderer::DrawFilledPolygon(xn::vec2 const *pVerts, size_t vertCount, int const *pPolys, size_t polyCount, xn::Colour clr, uint32_t flags)
 {
-  RENDERER(PolygonRenderer)->Draw(vertices, polygonSizes, clr, flags);
+  RENDERER(PolygonRenderer)->Draw(pVerts, vertCount, pPolys, polyCount, clr, flags);
 }
 
-void OpenGLRenderer::DrawFilledConvexPolygon(std::vector<xn::vec2> const &vertices, xn::Colour clr, uint32_t flags)
+void OpenGLRenderer::DrawFilledConvexPolygon(xn::vec2 const *pVerts, size_t vertCount, xn::Colour clr, uint32_t flags)
 {
-  RENDERER(ConvexPolygonRenderer)->Draw(vertices, clr, flags);
+  RENDERER(ConvexPolygonRenderer)->Draw(pVerts, vertCount, clr, flags);
 }
 
 void OpenGLRenderer::SetViewMatrix(xn::mat33 const &mat)

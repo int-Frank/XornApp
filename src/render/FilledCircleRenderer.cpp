@@ -16,7 +16,7 @@ public:
   FilledCircleRenderer();
   ~FilledCircleRenderer();
 
-  void Draw(std::vector<xn::vec2> const &, float radius, xn::Colour, uint32_t flags);
+  void Draw(xn::vec2 const *, size_t circleCount, float radius, xn::Colour, uint32_t flags) override;
   void SetViewMatrix(xn::mat33 const &) override;
   void SetResolution(xn::vec2 const &) override;
 
@@ -88,7 +88,7 @@ void FilledCircleRenderer::SetResolution(xn::vec2 const &sz)
   glUseProgram(prog);
 }
 
-void FilledCircleRenderer::Draw(std::vector<xn::vec2> const &positions, float size, xn::Colour clr, uint32_t flags)
+void FilledCircleRenderer::Draw(xn::vec2 const *pPositions, size_t circleCount, float size, xn::Colour clr, uint32_t flags)
 {
   GLuint vao;
   glGenVertexArrays(1, &vao);
@@ -100,8 +100,8 @@ void FilledCircleRenderer::Draw(std::vector<xn::vec2> const &positions, float si
   glGenBuffers(1, &positionsBuffer);
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, positionsBuffer);
   glBufferData(GL_SHADER_STORAGE_BUFFER,
-               positions.size() * sizeof(xn::vec2),
-               positions.data(),
+               circleCount * sizeof(xn::vec2),
+               pPositions,
                GL_STATIC_DRAW);
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, positionsBuffer);
 
@@ -128,7 +128,7 @@ void FilledCircleRenderer::Draw(std::vector<xn::vec2> const &positions, float si
     throw MyException("Failed to set radius for the filled circle renderer.");
   glUniform1f(loc, size);
 
-  glDrawArraysInstanced(GL_TRIANGLES, 0, 6, (GLsizei)positions.size());
+  glDrawArraysInstanced(GL_TRIANGLES, 0, 6, (GLsizei)circleCount);
 
   // Clean up...
   glBindBuffer(GL_ARRAY_BUFFER, 0);

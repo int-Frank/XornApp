@@ -9,7 +9,7 @@ class IConvexPolygonRenderer : public ObjectRenderer
 public:
 
   virtual ~IConvexPolygonRenderer() {}
-  virtual void Draw(std::vector<xn::vec2> const &vertices, xn::Colour, uint32_t flags) = 0;
+  virtual void Draw(xn::vec2 const *pVerts, size_t vertCount, xn::Colour, uint32_t flags) = 0;
 };
 
 IConvexPolygonRenderer *CreateConvexPolygonRenderer();

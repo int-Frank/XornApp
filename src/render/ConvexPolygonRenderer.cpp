@@ -17,7 +17,7 @@ public:
   ConvexPolygonRenderer();
   ~ConvexPolygonRenderer();
 
-  void Draw(std::vector<xn::vec2> const &vertices, xn::Colour, uint32_t flags) override;
+  void Draw(xn::vec2 const *pVerts, size_t vertCount, xn::Colour, uint32_t flags) override;
   void SetViewMatrix(xn::mat33 const &) override;
   void SetResolution(xn::vec2 const &) override {};
 
@@ -64,14 +64,14 @@ void ConvexPolygonRenderer::SetViewMatrix(xn::mat33 const &mat)
   m_mView = mat;
 }
 
-void ConvexPolygonRenderer::Draw(std::vector<xn::vec2> const &vertices, xn::Colour clr, uint32_t flags)
+void ConvexPolygonRenderer::Draw(xn::vec2 const *pVerts, size_t vertCount, xn::Colour clr, uint32_t flags)
 {
-  if (vertices.size() < 3)
+  if (vertCount < 3)
     return;
 
   std::vector<int> indices;
   int i = 1;
-  for (size_t j = 2; j < vertices.size(); j++)
+  for (size_t j = 2; j < vertCount; j++)
   {
     indices.push_back(0);
     indices.push_back(i);
@@ -89,8 +89,8 @@ void ConvexPolygonRenderer::Draw(std::vector<xn::vec2> const &vertices, xn::Colo
   glGenBuffers(1, &vertexBuffer);
   glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
   glBufferData(GL_ARRAY_BUFFER,
-    vertices.size() * sizeof(xn::vec2),
-    vertices.data(),
+    vertCount * sizeof(xn::vec2),
+    pVerts,
     GL_STATIC_DRAW);
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(0);

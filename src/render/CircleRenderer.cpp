@@ -16,7 +16,7 @@ public:
   CircleRenderer();
   ~CircleRenderer();
 
-  void Draw(std::vector<xn::vec2> const &, float radius, float thickness, xn::Colour, uint32_t flags);
+  void Draw(xn::vec2 const *, size_t circleCount, float radius, float thickness, xn::Colour, uint32_t flags) override;
   void SetViewMatrix(xn::mat33 const &) override;
   void SetResolution(xn::vec2 const &) override;
 
@@ -88,7 +88,7 @@ void CircleRenderer::SetResolution(xn::vec2 const &sz)
   glUseProgram(prog);
 }
 
-void CircleRenderer::Draw(std::vector<xn::vec2> const &positions, float size, float thickness, xn::Colour clr, uint32_t flags)
+void CircleRenderer::Draw(xn::vec2 const *pPositions, size_t circleCount, float size, float thickness, xn::Colour clr, uint32_t flags)
 {
   GLuint vao;
   glGenVertexArrays(1, &vao);
@@ -100,8 +100,8 @@ void CircleRenderer::Draw(std::vector<xn::vec2> const &positions, float size, fl
   glGenBuffers(1, &positionsBuffer);
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, positionsBuffer);
   glBufferData(GL_SHADER_STORAGE_BUFFER,
-    positions.size() * sizeof(xn::vec2),
-    positions.data(),
+    circleCount * sizeof(xn::vec2),
+    pPositions,
     GL_STATIC_DRAW);
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, positionsBuffer);
 
@@ -133,7 +133,7 @@ void CircleRenderer::Draw(std::vector<xn::vec2> const &positions, float size, fl
     throw MyException("Failed to set thickness for the circle renderer.");
   glUniform1f(loc, thickness);
 
-  glDrawArraysInstanced(GL_TRIANGLES, 0, 6, (GLsizei)positions.size());
+  glDrawArraysInstanced(GL_TRIANGLES, 0, 6, (GLsizei)circleCount);
 
   // Clean up...
   glBindBuffer(GL_ARRAY_BUFFER, 0);

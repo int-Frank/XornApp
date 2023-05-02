@@ -141,15 +141,15 @@ void  ProjectController::DrawFrontSprites(Renderer *pRenderer)
     }
   }
 
-  pRenderer->DrawLineGroup(edges,
+  pRenderer->DrawLineGroup(edges.data(), edges.size(),
     DefaultData::data.renderData.polygonAspect[HS_Active].thickness,
     DefaultData::data.renderData.polygonAspect[HS_Active].colour, 0);
 
-  pRenderer->DrawFilledCircleGroup(vertices,
+  pRenderer->DrawFilledCircleGroup(vertices.data(), vertices.size(),
     DefaultData::data.renderData.vertexAspect.radius,
     DefaultData::data.renderData.vertexAspect.colour, 0);
 
-  pRenderer->DrawFilledCircleGroup(midVertices,
+  pRenderer->DrawFilledCircleGroup(midVertices.data(), midVertices.size(),
     DefaultData::data.renderData.splitVertexAspect.radius,
     DefaultData::data.renderData.splitVertexAspect.colour, 0);
 
@@ -176,7 +176,7 @@ void ProjectController::DrawBackSprites(Renderer *pRenderer)
       edges.push_back(edge_it.ToSegment());
   }
 
-  pRenderer->DrawLineGroup(edges,
+  pRenderer->DrawLineGroup(edges.data(), edges.size(),
     DefaultData::data.renderData.polygonAspect[HS_None].thickness,
     DefaultData::data.renderData.polygonAspect[HS_None].colour, 0);
 }

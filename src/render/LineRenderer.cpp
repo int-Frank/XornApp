@@ -16,7 +16,7 @@ public:
   LineRenderer();
   ~LineRenderer();
 
-  void Draw(std::vector<xn::seg> const &, float thickness, xn::Colour, uint32_t flags);
+  void Draw(xn::seg const *pSegs, size_t lineCount, float thickness, xn::Colour, uint32_t flags) override;
   void SetViewMatrix(xn::mat33 const &) override;
   void SetResolution(xn::vec2 const &) override;
 
@@ -72,7 +72,7 @@ void LineRenderer::SetResolution(xn::vec2 const &sz)
   glUseProgram(prog);
 }
 
-void LineRenderer::Draw(std::vector<xn::seg> const &segments, float thickness, xn::Colour clr, uint32_t flags)
+void LineRenderer::Draw(xn::seg const *pSegs, size_t segCount, float thickness, xn::Colour clr, uint32_t flags)
 {
   std::vector<xn::vec3> points;
   std::vector<xn::vec2> perpVectors;
@@ -80,12 +80,13 @@ void LineRenderer::Draw(std::vector<xn::seg> const &segments, float thickness, x
   // TODO Could probably be more efficient. Can we use instance rendering?
   //      Maybe gl_VertexID and index into a uniform/sso buffer?
   // Load data...
-  for each (auto & seg in segments)
+  for (size_t i = 0; i < segCount; i++)
   {
-    perpVectors.push_back(Dg::Perpendicular(Dg::Normalize(seg.Vect())));
 
-    xn::vec2 e0 = seg.GetP0();
-    xn::vec2 e1 = seg.GetP1();
+    perpVectors.push_back(Dg::Perpendicular(Dg::Normalize(pSegs[i].Vect())));
+
+    xn::vec2 e0 = pSegs[i].GetP0();
+    xn::vec2 e1 = pSegs[i].GetP1();
 
     xn::vec3 p0(e0.x(), e0.y(), 1.f);
     xn::vec3 p1(e0.x(), e0.y(), -1.f);

@@ -28,8 +28,8 @@ void ProjectControllerStateMultiSelect::Render(Renderer *pRenderer)
   renderBox.push_back(xn::vec2(p1.x(), p0.y()));
 
   pRenderer->SetViewMatrix(m_pStateData->T_Screen_View);
-  pRenderer->DrawFilledConvexPolygon(renderBox, 0x33FFAAAA, 0);
-  pRenderer->DrawPolygon(renderBox, 2.f, 0xDDFFAAAA, xn::RF_RoundedEndPoints);
+  pRenderer->DrawFilledConvexPolygon(renderBox.data(), renderBox.size(), 0x33FFAAAA, 0);
+  pRenderer->DrawPolygon(renderBox.data(), renderBox.size(), 2.f, 0xDDFFAAAA, xn::RF_RoundedEndPoints);
 }
 
 ProjectControllerState *ProjectControllerStateMultiSelect::MouseMove(uint32_t modState, xn::vec2 const &mouse)
