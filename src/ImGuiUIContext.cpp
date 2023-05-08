@@ -137,3 +137,8 @@ bool ImGuiUIContext::Checkbox(char const *pLabel, bool *pVal)
 {
   return ImGui::Checkbox(pLabel, pVal);
 }
+
+bool ImGuiUIContext::InputText(const char *label, char *buf, size_t buf_size)
+{
+  return ImGui::InputText(label, buf, buf_size);
+}
