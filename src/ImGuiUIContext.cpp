@@ -142,3 +142,18 @@ bool ImGuiUIContext::InputText(const char *label, char *buf, size_t buf_size)
 {
   return ImGui::InputText(label, buf, buf_size);
 }
+
+bool ImGuiUIContext::Combo(const char *pLabel, int *pCurrentItem, const char *const pItems[], int itemCount, int displayItemsCount)
+{
+  return ImGui::Combo(pLabel, pCurrentItem, pItems, itemCount, displayItemsCount);
+}
+
+bool ImGuiUIContext::RadioButton(const char *pLabel, int *pValue, int buttonHandle)
+{
+  return ImGui::RadioButton(pLabel, pValue, buttonHandle);
+}
+
+void ImGuiUIContext::SameLine()
+{
+  ImGui::SameLine();
+}

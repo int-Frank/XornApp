@@ -33,6 +33,9 @@ public:
   void Text(const char *fmt, ...) override;
   bool Checkbox(char const *pLabel, bool *pVal) override;
   bool InputText(const char *label, char *buf, size_t buf_size) override;
+  bool Combo(const char *pLabel, int *pCurrentItem, const char *const pItems[], int itemCount, int displayItemsCount = -1) override;
+  bool RadioButton(const char *pLabel, int *pValue, int buttonHandle) override;
+  void SameLine() override;
 
   bool SliderFloat(const char *label, float *v, float v_min, float v_max, const char *format = "%.3f", xn::UIFlags const *pFlags = nullptr) override;
   bool SliderInt(const char *label, int *v, int v_min, int v_max, const char *format = "%d", xn::UIFlags const *pFlags = nullptr) override;
