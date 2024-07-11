@@ -1,22 +1,29 @@
 #include "ProjectControllerState.h"
 
 
-ProjectControllerStateTransition::ProjectControllerStateTransition(ProjectControllerStateData *pState, xn::vec2 const &mouseAnchor, PolygonID id)
+ProjectControllerStateTransition::ProjectControllerStateTransition(ProjectControllerStateData *pState, ProjectControllerState *pNextState, PolygonID id)
   : ProjectControllerState(pState)
-  , m_polygonUnderMouse(id)
-  , m_mouseAnchor(mouseAnchor)
+  , m_hoverPolygon(id)
+  , m_pNextState(pNextState)
 {
 
 }
 
+ProjectControllerStateTransition::~ProjectControllerStateTransition()
+{
+  delete m_pNextState;
+}
+
 ProjectControllerState *ProjectControllerStateTransition::MouseMove(uint32_t modState, xn::vec2 const &mouse)
 {
-  return new ProjectControllerStateMoveSelected(m_pStateData, m_mouseAnchor);
+  ProjectControllerState* pNextState = m_pNextState;
+  m_pNextState = nullptr;
+  return pNextState;
 }
 
 ProjectControllerState *ProjectControllerStateTransition::MouseUp(uint32_t modState, xn::vec2 const &mouse)
 {
   m_pStateData->sceneState.selectedPolygons.clear();
-  m_pStateData->sceneState.selectedPolygons.insert(m_polygonUnderMouse);
+  m_pStateData->sceneState.selectedPolygons.insert(m_hoverPolygon);
   return new ProjectControllerStateIdle(m_pStateData);
 }

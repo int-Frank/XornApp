@@ -13,6 +13,8 @@ class ProjectControllerState
 {
 public:
 
+  virtual ~ProjectControllerState() {}
+
   ProjectControllerState(ProjectControllerStateData *pData)
     : m_pStateData(pData)
   {
@@ -50,7 +52,7 @@ public:
 
 private:
 
-  PolygonID PolygonUnderMouse(xn::vec2 const &) const;
+  PolygonID PolygonUnderMouse(xn::vec2 const &, uint32_t* pVertexIndex) const;
   bool VertexUnderMouse(xn::vec2 const &, PolygonID *, uint32_t *) const;
   bool SplitVertexUnderMouse(xn::vec2 const &, PolygonID *, uint32_t *) const;
 
@@ -61,15 +63,17 @@ class ProjectControllerStateTransition : public ProjectControllerState
 {
 public:
 
-  ProjectControllerStateTransition(ProjectControllerStateData *, xn::vec2 const &mouseAnchor, PolygonID);
+  ~ProjectControllerStateTransition();
+
+  ProjectControllerStateTransition(ProjectControllerStateData *, ProjectControllerState* pNextState, PolygonID hoverPolygon);
 
   ProjectControllerState *MouseMove(uint32_t modState, xn::vec2 const &) override;
   ProjectControllerState *MouseUp(uint32_t modState, xn::vec2 const &) override;
 
 private:
 
-  PolygonID m_polygonUnderMouse;
-  xn::vec2 m_mouseAnchor;
+  PolygonID m_hoverPolygon;
+  ProjectControllerState* m_pNextState;
 };
 
 class ProjectControllerStateMultiSelect : public ProjectControllerState
@@ -114,6 +118,23 @@ public:
   ProjectControllerState *MouseMove(uint32_t modState, xn::vec2 const &) override;
   ProjectControllerState *MouseUp(uint32_t modState, xn::vec2 const &) override;
  
+private:
+
+  xn::vec2 m_offset;
+  ActionID m_actionID;
+  PolygonID m_polygonID;
+  uint32_t m_index;
+};
+
+class ProjectControllerStateMoveEdgePerpendicular : public ProjectControllerState
+{
+public:
+
+  ProjectControllerStateMoveEdgePerpendicular(ProjectControllerStateData*, xn::vec2 const& mousePosition, PolygonID polygonID, uint32_t vertexIndex);
+
+  ProjectControllerState* MouseMove(uint32_t modState, xn::vec2 const&) override;
+  ProjectControllerState* MouseUp(uint32_t modState, xn::vec2 const&) override;
+
 private:
 
   xn::vec2 m_offset;

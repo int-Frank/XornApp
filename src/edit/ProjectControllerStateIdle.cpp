@@ -19,7 +19,8 @@ ProjectControllerState *ProjectControllerStateIdle::MouseMove(uint32_t modState,
 {
   if (m_pStateData->sceneState.pRotate != nullptr)
     m_pStateData->sceneState.pRotate->SetMouse(mouse);
-  m_hoverPolygon = PolygonUnderMouse(mouse);
+  uint32_t unused = 0;
+  m_hoverPolygon = PolygonUnderMouse(mouse, &unused);
   return nullptr;
 }
 
@@ -42,11 +43,12 @@ ProjectControllerState *ProjectControllerStateIdle::MouseDown(uint32_t modState,
   if (VertexUnderMouse(mouse, &activeVertexPolygon, &activeVertex))
     return new ProjectControllerStateMoveVertex(m_pStateData, mouse, activeVertexPolygon, activeVertex);
 
-  m_hoverPolygon = PolygonUnderMouse(mouse);
+  uint32_t vertexIndex = 0;
+  m_hoverPolygon = PolygonUnderMouse(mouse, &vertexIndex);
   if (m_hoverPolygon != INVALID_POLYGON_ID)
   {
     bool selectedExists = m_pStateData->sceneState.selectedPolygons.exists(m_hoverPolygon);
-    if ((modState & xn::MK_shift) != 0)
+    if (HAS_MOD_SHIFT(modState))
     {
       if (selectedExists)
         m_pStateData->sceneState.selectedPolygons.erase(m_hoverPolygon);
@@ -56,22 +58,39 @@ ProjectControllerState *ProjectControllerStateIdle::MouseDown(uint32_t modState,
     }
 
     if (selectedExists)
-      return new ProjectControllerStateTransition(m_pStateData, mouse, m_hoverPolygon);
+    {
+      if (HAS_MOD_CTRL(modState) && m_pStateData->sceneState.selectedPolygons.size() == 1)
+      {
+        auto pNextState = new ProjectControllerStateMoveEdgePerpendicular(m_pStateData, mouse, m_hoverPolygon, vertexIndex);
+        return new ProjectControllerStateTransition(m_pStateData, pNextState, m_hoverPolygon);
+      }
+
+      auto pNextState = new ProjectControllerStateMoveSelected(m_pStateData, mouse);
+      return new ProjectControllerStateTransition(m_pStateData, pNextState, m_hoverPolygon);
+    }
 
     m_pStateData->sceneState.selectedPolygons.clear();
     m_pStateData->sceneState.selectedPolygons.insert(m_hoverPolygon);
+
+    if (HAS_MOD_CTRL(modState))
+    {
+      auto pNextState = new ProjectControllerStateMoveEdgePerpendicular(m_pStateData, mouse, m_hoverPolygon, vertexIndex);
+      return new ProjectControllerStateTransition(m_pStateData, pNextState, m_hoverPolygon);
+    }
+
     return new ProjectControllerStateMoveSelected(m_pStateData, mouse);
   }
 
   return new ProjectControllerStateMultiSelect(m_pStateData, mouse);
 }
 
-PolygonID ProjectControllerStateIdle::PolygonUnderMouse(xn::vec2 const &mouse) const
+PolygonID ProjectControllerStateIdle::PolygonUnderMouse(xn::vec2 const &mouse, uint32_t *pVertexIndex) const
 {
   for (auto loop_it = m_pStateData->pProject->loops.Begin(); loop_it != m_pStateData->pProject->loops.End(); loop_it++)
   {
     auto loop = loop_it->second.GetTransformed();
-    for (auto edge = loop.cEdgesBegin(); edge != loop.cEdgesEnd(); edge++)
+    uint32_t vertexIndex = 0;
+    for (auto edge = loop.cEdgesBegin(); edge != loop.cEdgesEnd(); edge++, vertexIndex++)
     {
       auto seg = edge.ToSegment();
 
@@ -86,7 +105,10 @@ PolygonID ProjectControllerStateIdle::PolygonUnderMouse(xn::vec2 const &mouse) c
       float threshold = DefaultData::data.renderData.polygonAspect[HS_Hover].thickness;
       threshold *= threshold;
       if (dist < threshold)
+      {
+        *pVertexIndex = vertexIndex;
         return loop_it->first;
+      }
     }
   }
 
